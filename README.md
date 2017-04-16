@@ -51,14 +51,14 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 ```
 
 If you only want particular a piece of data
-```#include <GPMF-parser.h>
 
+```#include <GPMF-parser.h>
 GPMF_stream gs_stream;
 if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 {
   if(GPMF_OK == GPMF_FindNext(&gs, STR2FOURCC("ACCL"), GPMF_RECURVSE_LEVELS))) {…}
-}```
-
+}
+```
 
 ## GMFP Deeper Dive
 
