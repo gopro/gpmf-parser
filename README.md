@@ -1,6 +1,6 @@
 # GPMF Introduction
 
-General Purpose Metadata Format (although it originals are GoPro Metadata Format.)  The GPMF structured storage format was originally proposed to store high-frequency periodic sensor within a video file like an MP4.  Action cameras like that from GoPro have limited computing resources beyond that need to store video and audio, so any telemetry storage needed to be lightweight in computation, memory usage and storage bandwidth. While JSON and XML systems where initially considered, the burden of the embedded camera system was too great, so something simpler was needed. While the proposed GPMF structure could be used stand-alone, our intended implementation uses an additional time-indexed track with an MP4, and with an application marker within JPEG images. GPMF share a Key, Length, Value structure (KLV), similar to Quicktime atoms or Interchange File Format (IFF), but better for self-describing sensor data.  Problems solved:
+General Purpose Metadata Format, originally GoPro Metadata Format.  The GPMF structured storage format was originally proposed to store high-frequency periodic sensor within a video file like an MP4.  Action cameras like that from GoPro have limited computing resources beyond that need to store video and audio, so any telemetry storage needed to be lightweight in computation, memory usage and storage bandwidth. While JSON and XML systems where initially considered, the burden of the embedded camera system was too great, so something simpler was needed. While the proposed GPMF structure could be used stand-alone, our intended implementation uses an additional time-indexed track with an MP4, and with an application marker within JPEG images. GPMF share a Key, Length, Value structure (KLV), similar to Quicktime atoms or Interchange File Format (IFF), but better for self-describing sensor data.  Problems solved:
 
 * The contents of new Keys can be parsed without prior knowledge.
 * Nested structures can be defined without &#39;Key&#39; dictionary.
@@ -9,7 +9,7 @@ General Purpose Metadata Format (although it originals are GoPro Metadata Format
 * Somewhat human (engineer) readable (i.e. hex-editor friendly.)
 * Timing and index for metadata can be stored within the wrapping MP4 of similar container format.
 
-GoPro Metadata Format (GPMF) is a modified Key, Length, Value solution, with a 32-bit aligned payload, that is both compact, full extensible and somewhat human readable in a hex editor.  GPMF allows for dependent creation of new FourCC tags, without requiring central registration to define the contents and whether the data is in a nested structure.
+GoPro Metadata Format (GPMF) is a modified Key, Length, Value solution, with a 32-bit aligned payload, that is both compact, full extensible and somewhat human readable in a hex editor.  GPMF allows for dependent creation of new FourCC tags, without requiring central registration to define the contents and whether the data is in a nested structure. GPMF is a real-time storage format, for the capture of sensor data as it happens. 
 
 ## GPMF-parser
 
@@ -425,3 +425,15 @@ File structure:
     ‘trak’ subtype ‘tmcd’, name “GoPro TCD”, starting timecode (time of day as frame since midnight)
     ‘trak’ subtype ‘meta’, name “GoPro MET”, GoPro Metadata (telemetry)
  ```
+ 
+ ### Where to find GPMF data
+ 
+As of April 2017, only GoPro HERO5 camera has a GPMF track.  HERO4Black will have GPMF flight telemetry when attach to the GoPro Karma drone.
+
+| FourCC | Property | approximate frquency (Hz) | SIUN | Comment |
+| --- | --- | --- |
+| ACCL | 3-axis accelerometer | 200 | m/s² |  |
+| GYRO | 3-axis gyroscope | 400 | rad/s |  |
+| GPS5 | lattitude, longitute, altitude, 2D ground speed, and 3D speed | 18 | deg, deg, m, m/s, m/s | HERO5 Black with GPS enabled |  
+| ISOG | Image sensor gain | 24, 25 or 30 (based video frame rate)| none | HERO5 v2.00 firmware |   
+| SHUT | Exposure time | 24, 25 or 30 (based video frame rate)| 's' | HERO5 v2.00 firmware |  
