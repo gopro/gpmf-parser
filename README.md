@@ -23,39 +23,43 @@ Clone the project from Github (git clone https://github.com/gopro/gpmf-parser).
 
 GPMF-parser.c and .h provide a payload decoder for any raw stream stored in compliant GPMF.  Extraction of the RAW GPMF from a video or image file is not covered by this tool.
 
-`#include &lt;GPMF-parser.h&gt;
-GPMF\_stream gs\_stream;
-if(GPMF\_OK == GPMF\_Init(&amp;gs\_stream, buffer\_with\_GPMF\_data, size\_of\_the\_buffer))
+`#include <GPMF-parser.h>
+
+GPMF_stream gs_stream;
+if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 {
   do
   {
-     switch(GPMF\_Key(&amp;gs\_stream))
+     switch(GPMF_Key(&gs_stream))
      {
-        case STR2FOURCC(&quot;ACCL&quot;):
-            /* Found accelerometer */
-            samples = GPMF\_Repeat(&amp;gs\_stream);
-            if(GPMF\_OK == GPMF\_ScaledData(&amp;gs, temp\_buffer, temp\_buffersize, 0, samples, GPMF\_TYPE\_FLOAT)) {…}
-            break;
+        case STR2FOURCC(“ACCL”):
+	     // Found accelerometer
+          samples = GPMF_Repeat(&gs_stream);
+          if(GPMF_OK == GPMF_ScaledData(&gs, temp_buffer, temp_buffersize, 0, samples, GPMF_TYPE_FLOAT)) {…}
+          break;
 
-        case STR2FOURCC(&quot;cust&quot;):
-            /* Found my custom data */
-            samples = GPMF\_Repeat(&amp;gs\_stream);
-            if(GPMF\_OK == GPMF\_FormattedData(&amp;gs, temp\_buffer, temp\_buffersize, 0, samples)) {…}
-            break;
+        case STR2FOURCC(“cust”): 
+	     // Found my custom data
+          samples = GPMF_Repeat(&gs_stream);
+          if(GPMF_OK == GPMF_FormattedData(&gs, temp_buffer, temp_buffersize, 0, samples)) {…}
+          break;
 
-        default: // if you don't know the Key you can skip to the next
-            break;
+        default: // if you don’t know the Key you can skip to the next
+          break;
      }
-  } while (GPMF\_OK == GPMF\_Next(&amp;gs\_stream, GPMF\_RECURVSE\_LEVELS)); // Scan through all GPMF data
-}
+  } while (GPMF_OK == GPMF_Next(&gs_stream, GPMF_RECURVSE_LEVELS)); // Scan through all GPMF data
+}   
 `
 
-If you only want particular a particular piece of data
+If you only want particular a piece of data
+`#include <GPMF-parser.h>
 
-`#include &lt;GPMF-parser.h&gt;
-GPMF\_stream gs\_stream;
-if(GPMF\_OK == GPMF\_Init(&amp;gs\_stream, buffer\_with\_GPMF\_data, size\_of\_the\_buffer))
-  if(GPMF\_OK == GPMF\_FindNext(&amp;gs, STR2FOURCC(&quot;ACCL&quot;), GPMF\_RECURVSE\_LEVELS))) {…}`
+GPMF_stream gs_stream;
+if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
+{
+  if(GPMF_OK == GPMF_FindNext(&gs, STR2FOURCC("ACCL"), GPMF_RECURVSE_LEVELS))) {…}
+}`
+
 
 ## GMFP Deeper Dive
 
@@ -187,20 +191,26 @@ This is a valid nested GPMF structure. DEVC describe 4\*7 = 28 bytes of data, wh
 
 Metadata, data that applies to other data, is forward looking within each nested GPMF entry. In the previous example the Device ID is applied to the Device Name, as they&#39;re part of the same nest and Device ID came before Device Name. This order of properties is particularly import when KLV 3-tuples modifies the meaning of data to follow in the same nest level, which is how SCAL and TYPE are applied.  Several modify properties can be transmitted, each adding metadata to modify the meaning of the **last** KLV in the nest (at this nest level.)  The SCAL key is used as sensors that measure physical properties typically output integers that must be scaled to produce a real-world value.  This scaling converting raw data to float or Q-numbers (fixed point float) could be performed in the device, but is often stored more efficiently as the original sensor values and a scale property. These are equivalent:
 
-'STRM null <size><repeat>
-   ACCL 'f' 12 100  <100 samples of x,y,z accelerometer data as 32-bit floats>
+`STRM null <size><repeat>
+
+   ACCL 'f' 12 100  <100 samples of x,y,z accelerometer data as 32-bit floats>`
  
-STRM null <size><repeat>
+`STRM null <size><repeat>
+
    SCAL 's' 2 1 scale
-   ACCL 's' 6 100 <100 samples of x,y,z accelerometer data as 16-bit shorts>'
+   
+   ACCL 's' 6 100 <100 samples of x,y,z accelerometer data as 16-bit shorts>`
 
 The second data stream is almost half the size of the first (1216 vs 628 bytes) for the same resulting precision.
 
 When adding units, the SCAL doesn&#39;t apply to SUIN, but only the ACCL the latest KLV in the stream&#39;s (STRM) nest.
 
 `STRM null <size><repeat> 
+
    SCAL 's' 2 1 scale
+   
    SIUN 'c' 4 1 "m/s²"
+   
    ACCL 's' 6 100 <100 samples of x,y,z accelerometer data as 16-bit shorts>`
 
 Note: The SI unit of &quot;m/s²&quot; is applied to each x,y,z axis, there is no need to declare the unit as
@@ -209,12 +219,18 @@ Note: The SI unit of &quot;m/s²&quot; is applied to each x,y,z axis, there is n
 
 A complete stream from a device could be:
 
-`STRM null <size><repeat> 
+`STRM null <size><repeat>
+
    TSMP 'L' 4 1  196
+   
    STNM 'c' 50 1  "Accelerometer (up/down, right/left, forward/back)"
+   
    TMPC 'f' 4 1  56.0723
+   
    SIUN 'c' 4 1  "m/s²"
+   
    SCAL 's' 2 1  418
+   
    ACCL 's' 6 100  4418, -628, -571, ...
 `
 
@@ -227,13 +243,21 @@ Virtual sensors, CV or computationally extracted metadata will become a common s
 In the example below is for a fast, periodic (once per frame), face detection algorithm (no delays):
 
 `STRM null <size><repeat> 
+
  TSMP 'L' 4 1 196
+ 
  STNM 'c' 50 1 "Face bounding boxes (age, gender, x1,y1,x2,y2)"
+ 
  TYPE 'c' 1 6  "SSffff",
+ 
  FACE '?' 20 3 <face1, face2, face3>
+ 
  FACE '?' 20 4 <face1, face2, face3, face4>
+ 
  FACE '?' 20 0 
+ 
  FACE '?' 20 2 <face1, face2>
+ 
  ...
 `
 
@@ -242,29 +266,52 @@ The timing information is extracted just like all other sensor, yet the multiple
 If the data where to occur with a significantly slower algorithm that is not periodic, say the first detection took 300ms, the second 400ms,, the third 100ms, the last 250ms, the timing relationship to the source frame would be lost.  While most of GPMF data can rely of the timing provided by MP4 indexing, to handling delayed and aperiodic data introduces TICK and TOCK to make the in and out times (in time is the beginning of the processing, out-time the end.
 
 `DEVC null <size0><repeat0> 
+
  DVID 'L' 4 1 1001
+ 
  DVNM 'c' 6 1 "Camera"
+ 
  TICK 'L' 4 1 10140
+ 
  STRM null <size><repeat> 
+ 
    TSMP 'L' 4 1 196
+   
    STNM 'c' 50 1 "Face bounding boxes (x1,y1,x2,y2,age,gender,flags,confidence)"
+   
    TYPE 'c' 1  6 "ffffBBBB",
+   
    FACE null <size1><repeat1>
+   
      TICK 'L' 4 1 10023
+     
      TOCK 'L' 4 1 10320
+     
      FACE '?' 20 3 <face1, face2, face3>
+     
    FACE null <size2><repeat2>
+   
      TICK 'L' 4 1 10347
+     
      TOCK 'L' 4 1 10751
+     
      FACE '?' 20 3 <face1, face2, face3, face4>
+     
    FACE null <size3><repeat3>
+   
      TICK 'L' 4 1 10347
+     
      TOCK 'L' 4 1 10751
+     
      FACE '?' 20 0
+     
    FACE null <size4><repeat4>
+   
     TICK 'L' 4 1 10347
+    
     TOCK 'L' 4 1 11005
-    FACE '?' 20 3 <face1, face2>
+    
+    FACE '?' 20 3 <face1, face2>    
 `
 
 As the CV processing in this example can take time, it will be common for the processing to begin before the payload frame it which it is written.  The first FACE samples begin their processing at 10023, yet the payload for normal sample data began at 10140 (within the top DEVC structure).
