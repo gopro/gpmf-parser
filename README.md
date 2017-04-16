@@ -315,8 +315,7 @@ As the CV processing in this example can take time, it will be common for the pr
 
 ### Modifiers supported
 
-| p (pico) | 10x-12
- |
+| p (pico) | 10x-12 |
 | --- | --- |
 | n (nano) | 10x^9 |
 | µ (micro) | 10x^6 |
@@ -330,8 +329,8 @@ As the CV processing in this example can take time, it will be common for the pr
 
 | speed, velocity | meter per second | m/s |
 | --- | --- | --- |
-| acceleration | meter per second squared   | m/s^2 |
-| luminance | candela per square meter | cd/m^2 |
+| acceleration | meter per second squared   | m/s² |
+| luminance | candela per square meter | cd/m² |
 | gyro | radians per second | rad/s |
 | Compass readings | milli Tesla or micro Tesla | mT or µT |
 | distance | kilometers, millimeter, etc | km or mm or .. |
@@ -428,10 +427,10 @@ File structure:
  
  ### Where to find GPMF data
  
-As of April 2017, only GoPro HERO5 camera has a GPMF track.  HERO4Black will have GPMF flight telemetry when attach to the GoPro Karma drone.
+As of April 2017, only GoPro HERO5 cameras have a GPMF track.  HERO4 Black will have GPMF flight telemetry when attach to the GoPro Karma drone. Both HERO4 and HERO5 can have third party BlueTooth sensor adding GPMF data.
 
 | FourCC | Property | approximate frquency (Hz) | SIUN | Comment |
-| --- | --- | --- |
+| --- | --- | --- | --- | --- |
 | ACCL | 3-axis accelerometer | 200 | m/s² |  |
 | GYRO | 3-axis gyroscope | 400 | rad/s |  |
 | GPS5 | lattitude, longitute, altitude, 2D ground speed, and 3D speed | 18 | deg, deg, m, m/s, m/s | HERO5 Black with GPS enabled |  
