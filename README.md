@@ -27,28 +27,27 @@ GPMF-parser.c and .h provide a payload decoder for any raw stream stored in comp
 `#include <GPMF-parser.h>
 GPMF_stream gs_stream;
 if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
-{`
-  do
-  {
-     switch(GPMF_Key(&gs_stream))
-     {
-        case STR2FOURCC(“ACCL”):
-          // Found accelerometer
-          samples = GPMF_Repeat(&gs_stream);
-          if(GPMF_OK == GPMF_ScaledData(&gs, temp_buffer, temp_buffersize, 0, samples, GPMF_TYPE_FLOAT)) {…}
-          break;
+{
+	do
+	{
+		switch(GPMF_Key(&gs_stream))
+		{
+		case STR2FOURCC(“ACCL”):
+		  // Found accelerometer
+		  samples = GPMF_Repeat(&gs_stream);
+		  if(GPMF_OK == GPMF_ScaledData(&gs, temp_buffer, temp_buffersize, 0, samples, GPMF_TYPE_FLOAT)) {…}
+		  break;
 	  
-        case STR2FOURCC(“cust”): 
-          // Found my custom data
-          samples = GPMF_Repeat(&gs_stream);
-          if(GPMF_OK == GPMF_FormattedData(&gs, temp_buffer, temp_buffersize, 0, samples)) {…}
-          break;
+		case STR2FOURCC(“cust”): 
+		  // Found my custom data
+		  samples = GPMF_Repeat(&gs_stream);
+		  if(GPMF_OK == GPMF_FormattedData(&gs, temp_buffer, temp_buffersize, 0, samples)) {…}
+		  break;
 	  
-        default: // if you don’t know the Key you can skip to the next
-          break;
-     }
-  } while (GPMF_OK == GPMF_Next(&gs_stream, GPMF_RECURVSE_LEVELS)); // Scan through all GPMF data
-}   
+		default: // if you don’t know the Key you can skip to the next
+		  break;
+	}
+} while (GPMF_OK == GPMF_Next(&gs_stream, GPMF_RECURVSE_LEVELS)); // Scan through all GPMF data
 `
 
 If you only want particular a piece of data
