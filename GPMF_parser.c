@@ -1,18 +1,24 @@
-// $Header$
-
 /*! @file GPMF_parser.c
-
-@brief GPMF Parser library
-
-Copyright (c) 2015-2017 GoPro Inc. All rights reserved.
-THIS SOURCE CODE IS THE PROPRIETARY INTELLECTUAL PROPERTY AND CONFIDENTIAL
-INFORMATION OF GOPRO, INC. AND IS PROTECTED UNDER U.S. AND INTERNATIONAL
-LAW. ANY USE OF THIS SOURCE CODE WITHOUT THE PRIOR WRITTEN AUTHORIZATION OF
-GOPRO IS STRICTLY PROHIBITED.
-
-@version 1.0.0
-*/
-
+ * 
+ *  @brief GPMF Parser library
+ *
+ *  @version 1.0.0
+ * 
+ *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
+ *   
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *  
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ * 
+ */
 
 #include <stdlib.h>
 #include <stdio.h>
