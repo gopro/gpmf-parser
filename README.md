@@ -43,7 +43,7 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 		  // Found my custom data
 		  samples = GPMF_Repeat(&gs_stream);
 		  if(GPMF_OK == GPMF_FormattedData(&gs, temp_buffer, temp_buffersize, 0, samples)) 
-		    { /* Project raw formatted data -- unscaled */ }
+		    { /* Process raw formatted data -- unscaled */ }
 		  break;
 	  
 		default: // if you don’t know the Key you can skip to the next
@@ -59,7 +59,15 @@ If you only want particular a piece of data
 GPMF_stream gs_stream;
 if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 {
-  if(GPMF_OK == GPMF_FindNext(&gs, STR2FOURCC("ACCL"), GPMF_RECURVSE_LEVELS))) {…}
+  if(GPMF_OK == GPMF_FindNext(&gs_stream, STR2FOURCC("ACCL"), GPMF_RECURVSE_LEVELS))) 
+   {
+   	uint32_t key = GPMF_Key(&gs_stream);
+   	char type = GPMF_Type(&gs_stream);
+   	uint32_t samples = GPMF_Repeat(&gs_stream);
+   	void *data = GPMF_RawData(&gs_stream);
+	
+	/* do your own byte-swapping and handling */	
+   }
 }
 ```
 
@@ -360,7 +368,7 @@ The &#39;?&#39; for the type field in &#39;myDD&#39; is used to indicate a compl
 As this will likely have units that differ per parameter, we need to send units for each element of the complex structure
 
 ```
-TYPE 'c' 1 4 "fssL"
+   TYPE 'c' 1 4 "fssL"
    SIUN 'c' 2 4 "µTmmmm " // for units µT mm mm and NONE
    myDD '?' 12 <repeat> <n samples of myDeviceData>
 ```
@@ -368,10 +376,10 @@ TYPE 'c' 1 4 "fssL"
 The same for scale, each unit will likely have a different scale. If no scale is required use 1, likely the flags field will not be scaled.
 
 ```
-TYPE &#39;c&#39; 1 4 &quot;fssL&quot;
-   SIUN &#39;c&#39; 3 4 &quot;µT mm mm &quot; // for units µT mm mm and NONE, here padded for readability (optional)
-   SCAL &#39;s&#39; 2 4 1000000, 1000, 1000, 1
-   myDD &#39;?&#39; 12 &lt;repeat&gt; &lt;n samples of myDeviceData&gt;
+   TYPE 'c' 1 4 "fssL"
+   SIUN 'c' 3 4 "µT mm mm " // for units µT mm mm and NONE, here padded for readability (optional)
+   SCAL 's' 2 4 1000000, 1000, 1000, 1
+   myDD '?' 12 <repeat> <n samples of myDeviceData>
 ```
 
 Arrays can be defined within the string TYPE as follows:
