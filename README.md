@@ -35,13 +35,13 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 		case STR2FOURCC(“ACCL”):
 		  // Found accelerometer
 		  samples = GPMF_Repeat(&gs_stream);
-		  if(GPMF_OK == GPMF_ScaledData(&gs, temp_buffer, temp_buffersize, 0, samples, GPMF_TYPE_FLOAT)) {…}
+		  if(GPMF_OK == GPMF_ScaledData(&gs, temp_buffer, temp_buffersize, 0, samples, GPMF_TYPE_FLOAT)) {/* … */ }
 		  break;
 	  
 		case STR2FOURCC(“cust”): 
 		  // Found my custom data
 		  samples = GPMF_Repeat(&gs_stream);
-		  if(GPMF_OK == GPMF_FormattedData(&gs, temp_buffer, temp_buffersize, 0, samples)) {…}
+		  if(GPMF_OK == GPMF_FormattedData(&gs, temp_buffer, temp_buffersize, 0, samples)) { /* … */ }
 		  break;
 	  
 		default: // if you don’t know the Key you can skip to the next
@@ -51,13 +51,13 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 ```
 
 If you only want particular a piece of data
-`#include <GPMF-parser.h>
+```#include <GPMF-parser.h>
 
 GPMF_stream gs_stream;
 if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 {
   if(GPMF_OK == GPMF_FindNext(&gs, STR2FOURCC("ACCL"), GPMF_RECURVSE_LEVELS))) {…}
-}`
+}```
 
 
 ## GMFP Deeper Dive
@@ -178,9 +178,9 @@ As sensor data like gyro and accelerometer commonly have three (or more) axes of
 
 Standalone GPMF does little for communicating the relationship between data, so that we need to nest so that metadata can describe other data.  Type of null is the flag that indicates the data field is any other GPMF KLV series.  We use nesting to describe any telemetry device like follows:
 
-`DEVC null 4 7
+```DEVC null 4 7
    DVID L 4 1 0x1001
-   DVNM c 1 6 Camera`
+   DVNM c 1 6 Camera```
 
 This is a valid nested GPMF structure. DEVC describe 4\*7 = 28 bytes of data, which are packed and aligned GPMF KLV values describing a camera device with a Device ID and a Device Name.
 
@@ -190,48 +190,39 @@ This is a valid nested GPMF structure. DEVC describe 4\*7 = 28 bytes of data, wh
 
 Metadata, data that applies to other data, is forward looking within each nested GPMF entry. In the previous example the Device ID is applied to the Device Name, as they&#39;re part of the same nest and Device ID came before Device Name. This order of properties is particularly import when KLV 3-tuples modifies the meaning of data to follow in the same nest level, which is how SCAL and TYPE are applied.  Several modify properties can be transmitted, each adding metadata to modify the meaning of the **last** KLV in the nest (at this nest level.)  The SCAL key is used as sensors that measure physical properties typically output integers that must be scaled to produce a real-world value.  This scaling converting raw data to float or Q-numbers (fixed point float) could be performed in the device, but is often stored more efficiently as the original sensor values and a scale property. These are equivalent:
 
-`STRM null <size><repeat>
+```STRM null <size><repeat>
 
-   ACCL 'f' 12 100  <100 samples of x,y,z accelerometer data as 32-bit floats>`
+   ACCL 'f' 12 100  <100 samples of x,y,z accelerometer data as 32-bit floats>```
  
-`STRM null <size><repeat>
+```STRM null <size><repeat>
 
    SCAL 's' 2 1 scale
    
-   ACCL 's' 6 100 <100 samples of x,y,z accelerometer data as 16-bit shorts>`
+   ACCL 's' 6 100 <100 samples of x,y,z accelerometer data as 16-bit shorts>```
 
 The second data stream is almost half the size of the first (1216 vs 628 bytes) for the same resulting precision.
 
 When adding units, the SCAL doesn&#39;t apply to SUIN, but only the ACCL the latest KLV in the stream&#39;s (STRM) nest.
 
-`STRM null <size><repeat> 
-
-   SCAL 's' 2 1 scale
-   
-   SIUN 'c' 4 1 "m/s²"
-   
-   ACCL 's' 6 100 <100 samples of x,y,z accelerometer data as 16-bit shorts>`
+```STRM null <size><repeat> 
+   SCAL 's' 2 1 scale   
+   SIUN 'c' 4 1 "m/s²"   
+   ACCL 's' 6 100 <100 samples of x,y,z accelerometer data as 16-bit shorts>```
 
 Note: The SI unit of &quot;m/s²&quot; is applied to each x,y,z axis, there is no need to declare the unit as
 
-`   SIUN 'c' 4 3 "m/s²","m/s²","m/s²"`
+```   SIUN 'c' 4 3 "m/s²","m/s²","m/s²"```
 
 A complete stream from a device could be:
 
-`STRM null <size><repeat>
-
-   TSMP 'L' 4 1  196
-   
-   STNM 'c' 50 1  "Accelerometer (up/down, right/left, forward/back)"
-   
-   TMPC 'f' 4 1  56.0723
-   
-   SIUN 'c' 4 1  "m/s²"
-   
-   SCAL 's' 2 1  418
-   
+```STRM null <size><repeat>
+   TSMP 'L' 4 1  196   
+   STNM 'c' 50 1  "Accelerometer (up/down, right/left, forward/back)"   
+   TMPC 'f' 4 1  56.0723   
+   SIUN 'c' 4 1  "m/s²"   
+   SCAL 's' 2 1  418   
    ACCL 's' 6 100  4418, -628, -571, ...
-`
+```
 
 Including a stream name to improve readability and TMPC for the temperature of the device that is collecting the accelerometer data.
 
@@ -241,77 +232,46 @@ Virtual sensors, CV or computationally extracted metadata will become a common s
 
 In the example below is for a fast, periodic (once per frame), face detection algorithm (no delays):
 
-`STRM null <size><repeat> 
-
- TSMP 'L' 4 1 196
- 
- STNM 'c' 50 1 "Face bounding boxes (age, gender, x1,y1,x2,y2)"
- 
- TYPE 'c' 1 6  "SSffff",
- 
- FACE '?' 20 3 <face1, face2, face3>
- 
- FACE '?' 20 4 <face1, face2, face3, face4>
- 
- FACE '?' 20 0 
- 
- FACE '?' 20 2 <face1, face2>
- 
+```STRM null <size><repeat> 
+ TSMP 'L' 4 1 196 
+ STNM 'c' 50 1 "Face bounding boxes (age, gender, x1,y1,x2,y2)" 
+ TYPE 'c' 1 6  "SSffff", 
+ FACE '?' 20 3 <face1, face2, face3> 
+ FACE '?' 20 4 <face1, face2, face3, face4> 
+ FACE '?' 20 0  
+ FACE '?' 20 2 <face1, face2> 
  ...
-`
+```
 
 The timing information is extracted just like all other sensor, yet the multiple entries of &quot;FACE&quot; vertically represent samples over time, and &quot;faceX&quot; are multiple samples at the same time. When no FACE are discovered, &quot;FACE ? 20 0&quot; is used to preserve the timing, just as GYRO report zeros when then camera is stationary.
 
 If the data where to occur with a significantly slower algorithm that is not periodic, say the first detection took 300ms, the second 400ms,, the third 100ms, the last 250ms, the timing relationship to the source frame would be lost.  While most of GPMF data can rely of the timing provided by MP4 indexing, to handling delayed and aperiodic data introduces TICK and TOCK to make the in and out times (in time is the beginning of the processing, out-time the end.
 
-`DEVC null <size0><repeat0> 
-
+```DEVC null <size0><repeat0> 
  DVID 'L' 4 1 1001
- 
- DVNM 'c' 6 1 "Camera"
- 
- TICK 'L' 4 1 10140
- 
- STRM null <size><repeat> 
- 
-   TSMP 'L' 4 1 196
-   
-   STNM 'c' 50 1 "Face bounding boxes (x1,y1,x2,y2,age,gender,flags,confidence)"
-   
-   TYPE 'c' 1  6 "ffffBBBB",
-   
+ DVNM 'c' 6 1 "Camera" 
+ TICK 'L' 4 1 10140 
+ STRM null <size><repeat>  
+   TSMP 'L' 4 1 196   
+   STNM 'c' 50 1 "Face bounding boxes (x1,y1,x2,y2,age,gender,flags,confidence)"   
+   TYPE 'c' 1  6 "ffffBBBB",   
    FACE null <size1><repeat1>
-   
-     TICK 'L' 4 1 10023
-     
-     TOCK 'L' 4 1 10320
-     
-     FACE '?' 20 3 <face1, face2, face3>
-     
-   FACE null <size2><repeat2>
-   
-     TICK 'L' 4 1 10347
-     
-     TOCK 'L' 4 1 10751
-     
-     FACE '?' 20 3 <face1, face2, face3, face4>
-     
-   FACE null <size3><repeat3>
-   
-     TICK 'L' 4 1 10347
-     
-     TOCK 'L' 4 1 10751
-     
-     FACE '?' 20 0
-     
-   FACE null <size4><repeat4>
-   
-    TICK 'L' 4 1 10347
-    
-    TOCK 'L' 4 1 11005
-    
-    FACE '?' 20 3 <face1, face2>    
-`
+     TICK 'L' 4 1 10023     
+     TOCK 'L' 4 1 10320     
+     FACE '?' 20 3 <face1, face2, face3>     
+   FACE null <size2><repeat2>   
+     TICK 'L' 4 1 10347     
+     TOCK 'L' 4 1 10751     
+     FACE '?' 20 3 <face1, face2, face3, face4>     
+   FACE null <size3><repeat3>   
+     TICK 'L' 4 1 10347     
+     TOCK 'L' 4 1 10751     
+     FACE '?' 20 0     
+   FACE null <size4><repeat4>   
+    TICK 'L' 4 1 10347    
+    TOCK 'L' 4 1 11005    
+    FACE '?' 20 3 <face1, face2>   
+```
 
 As the CV processing in this example can take time, it will be common for the processing to begin before the payload frame it which it is written.  The first FACE samples begin their processing at 10023, yet the payload for normal sample data began at 10140 (within the top DEVC structure).
 
@@ -365,46 +325,46 @@ As the SIUN is declared as an ASCII the character for degrees, squared, cubed an
 
 Not all telemetry data can be described as an array of a single basic type. To support complex structures, a TYPE field is added to the property hierarchy.   TYPE is always defined with &#39;c&#39; and used the same ASCII Type Chars to describe a complex structure.  Examples structure:
 
-`typedef struct
+```typedef struct
 {
    float field_strength;
    short x_offset, y_offset;
    unsigned long status_flags;
-} myDeviceData; //myDD`
+} myDeviceData; //myDD```
 
 The TYPE for the structure be a &#39;f&#39;,&#39;s&#39;,&#39;s&#39;,&#39;L&#39; (float, short, short, unsigned long) is declared as follows:
 
-`STRM null <size><repeat> 
+```STRM null <size><repeat> 
    TYPE 'c' 1 4 "fssL"
-   myDD '?' 12 <repeat> <n samples of myDeviceData>`
+   myDD '?' 12 <repeat> <n samples of myDeviceData>```
 
 The &#39;?&#39; for the type field in &#39;myDD&#39; is used to indicate a complex structure type.
 
 As this will likely have units that differ per parameter, we need to send units for each element of the complex structure
 
-`   TYPE 'c' 1 4 "fssL"
+```   TYPE 'c' 1 4 "fssL"
    SIUN 'c' 2 4 "µTmmmm " // for units µT mm mm and NONE
-   myDD '?' 12 <repeat> <n samples of myDeviceData>`
+   myDD '?' 12 <repeat> <n samples of myDeviceData>```
 
 The same for scale, each unit will likely have a different scale. If no scale is required use 1, likely the flags field will not be scaled.
 
-`   TYPE &#39;c&#39; 1 4 &quot;fssL&quot;
+```   TYPE &#39;c&#39; 1 4 &quot;fssL&quot;
    SIUN &#39;c&#39; 3 4 &quot;µT mm mm &quot; // for units µT mm mm and NONE, here padded for readability (optional)
    SCAL &#39;s&#39; 2 4 1000000, 1000, 1000, 1
-   myDD &#39;?&#39; 12 &lt;repeat&gt; &lt;n samples of myDeviceData&gt;`
+   myDD &#39;?&#39; 12 &lt;repeat&gt; &lt;n samples of myDeviceData&gt;```
 
 Arrays can be defined within the string TYPE as follows:
 
-`typedef struct
+```typedef struct
 {
    float farray[8];
    unsigned long flags;
-} myDeviceData; //myDD`
+} myDeviceData; //myDD```
 
 The use of &#39;[n]&#39; indicates the field is repeated n times.  So an array of eight floats as described with &quot;f[8]&quot;
 
-` TYPE 'c' 1 5 "f[8]L"
- myDD '?' 36 <repeat> <n samples of myDeviceData>`
+``` TYPE 'c' 1 5 "f[8]L"
+ myDD '?' 36 <repeat> <n samples of myDeviceData>```
 
 ## Sticky Metadata
 
@@ -423,17 +383,12 @@ GPMF data is stored much like every other media track within the MP4, where the 
 Telemetry carrying MP4 files will have a minimum of four tracks: Video, audio, timecode and telemetry (GPMF.)  A fifth track (&#39;SOS&#39;) is used in file recovery in HERO4 and HERO5, can be ignored.
 
 File structure:
-`
-  ftyp [type &#39;mp41&#39;]
-
+```
+    ftyp [type ‘mp41’]
   mdat [all the data for all tracks are interleaved]
-
   moov [all the header/index info]
-
-    &#39;trak&#39; subtype &#39;vide&#39;, name &quot;GoPro AVC&quot;, H.264 video data
-
-    &#39;trak&#39; subtype &#39;soun&#39;, name &quot;GoPro AAC&quot;, to AAC audio data
-
-    &#39;trak&#39; subtype &#39;tmcd&#39;, name &quot;GoPro TCD&quot;, starting timecode (time of day as frame since midnight)
-
-    &#39;trak&#39; subtype &#39;meta&#39;, name &quot;GoPro MET&quot;, GoPro Metadata (telemetry)`
+    ‘trak’ subtype ‘vide’, name “GoPro AVC”, H.264 video data 
+    ‘trak’ subtype ‘soun’, name “GoPro AAC”, to AAC audio data
+    ‘trak’ subtype ‘tmcd’, name “GoPro TCD”, starting timecode (time of day as frame since midnight)
+    ‘trak’ subtype ‘meta’, name “GoPro MET”, GoPro Metadata (telemetry)
+ ```
