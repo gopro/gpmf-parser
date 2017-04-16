@@ -23,7 +23,8 @@ Clone the project from Github (git clone https://github.com/gopro/gpmf-parser).
 
 GPMF-parser.c and .h provide a payload decoder for any raw stream stored in compliant GPMF.  Extraction of the RAW GPMF from a video or image file is not covered by this tool.
 
-`#include <GPMF-parser.h>
+`
+#include <GPMF-parser.h>
 
 GPMF_stream gs_stream;
 if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
@@ -33,17 +34,17 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
      switch(GPMF_Key(&gs_stream))
      {
         case STR2FOURCC(“ACCL”):
-	     // Found accelerometer
+          // Found accelerometer
           samples = GPMF_Repeat(&gs_stream);
           if(GPMF_OK == GPMF_ScaledData(&gs, temp_buffer, temp_buffersize, 0, samples, GPMF_TYPE_FLOAT)) {…}
           break;
-
+	  
         case STR2FOURCC(“cust”): 
 	     // Found my custom data
           samples = GPMF_Repeat(&gs_stream);
           if(GPMF_OK == GPMF_FormattedData(&gs, temp_buffer, temp_buffersize, 0, samples)) {…}
           break;
-
+	  
         default: // if you don’t know the Key you can skip to the next
           break;
      }
