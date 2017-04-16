@@ -24,9 +24,9 @@ Clone the project from Github (git clone https://github.com/gopro/gpmf-parser).
 GPMF-parser.c and .h provide a payload decoder for any raw stream stored in compliant GPMF.  Extraction of the RAW GPMF from a video or image file is not covered by this tool.
 
 
-`#include <GPMF-parser.h>
-GPMF_stream gs_stream;
-if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
+`#include <GPMF-parser.h>'
+'GPMF_stream gs_stream;'
+'if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))'
 {
 	do
 	{
