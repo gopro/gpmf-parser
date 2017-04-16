@@ -438,6 +438,6 @@ As of April 2017, only GoPro HERO5 cameras have a GPMF track.  HERO4 Black will 
 | GPSF | GPS Fix | 1 | none | 0 - no lock, 2 - 2D Lock, 3 - 3D lock |  
 | GPSP | GPS precision | 1 | none | Within the GPS5 stream, under 300 is good |  
 | ISOG | Image sensor gain | 24, 25 or 30 (based video frame rate)| none | HERO5 v2.00 firmware |   
-| SHUT | Exposure time | 24, 25 or 30 (based video frame rate)| 's' | HERO5 v2.00 firmware |  
+| SHUT | Exposure time | 24, 25 or 30 (based video frame rate)| s | HERO5 v2.00 firmware |  
 
 
