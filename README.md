@@ -132,24 +132,24 @@ Current types:
 
 | **Type Char** | **Definition** | **Comment** |
 | --- | --- | --- |
-| b | single byte signed number | -128 to 127 |
-| B | single byte unsigned number | 0 to 255 |
-| c | single byte &#39;c&#39; style ASCII character string | Does not need to be NULL terminated as the size/repeat set the length |
-| s | 16-bit signed number (int16\_t) | -32768 to 32768 |
-| S | 16-bit unsigned number (uint16\_t) | 0 to 65536 |
-| l | 32-bit signed unsigned number (int32\_t) |   |
-| L | 32-bit unsigned unsigned number (uint32\_t) |   |
-| d | 64-bit double precision float (IEEE 754) |   |
-| f | 32-bit single precision float (IEEE 754) |   |
-| F | 32-bit four character key -- FourCC |   |
-| G | 128-bit ID (like UUID) |   |
-| j | 64-bit signed unsigned number |   |
-| J | 64-bit unsigned unsigned number |   |
-| q | 32-bit Q Number Q15.16 | 16-bit signed integer (A) with 16-bit fixed point (B) for A.B value (range -32768.0 to 32767.99998) |
-| Q | 64-bit Q Number Q31.32 | 32-bit signed integer (A) with 32-bit fixed point (B) for A.B value. |
-| U | UTC Time 16-byte standard date and time string | Date + UTC Time format yymmddhhmmss.sss - (years 20xx covered) |
-| ? | data structure is complex | Structure is defined with a preceding TYPE |
-| null | Nested metadata | The data within is GPMF structured KLV data |
+| **b** | single byte signed integer | -128 to 127 |
+| **B** | single byte unsigned integer | 0 to 255 |
+| **c** | single byte &#39;c&#39; style ASCII character string | Optionally NULL terminated - size/repeat sets the length |
+| **s** | 16-bit signed integer (int16\_t) | -32768 to 32768 |
+| **S** | 16-bit unsigned integer (uint16\_t) | 0 to 65536 |
+| **l** | 32-bit signed integer (int32\_t) |   |
+| **L** | 32-bit unsigned integer (uint32\_t) |   |
+| **f** | 32-bit float (IEEE 754) |   |
+| **d** | 64-bit double precision (IEEE 754) |   |
+| **F** | 32-bit four character key -- FourCC |   |
+| **G** | 128-bit ID (like UUID) |   |
+| **j** | 64-bit signed unsigned number |   |
+| **J** | 64-bit unsigned unsigned number |   |
+| **q** | 32-bit Q Number Q15.16 | 16-bit integer (A) with 16-bit fixed point (B) for A.B value (range -32768.0 to 32767.99998) |
+| **Q** | 64-bit Q Number Q31.32 | 32-bit integer (A) with 32-bit fixed point (B) for A.B value. |
+| **U** | UTC Date and Time string | Date + UTC Time format yymmddhhmmss.sss - (years 20xx covered) |
+| **?** | data structure is complex | Structure is defined with a preceding TYPE |
+| **null** | Nested metadata | The data within is GPMF structured KLV data |
 |   |   |   |
 
 ## Alignment and Storage
