@@ -5,9 +5,9 @@ The GPMF structured storage format was originally proposed to store high-frequen
 * The contents of new Keys can be parsed without prior knowledge.
 * Nested structures can be defined without &#39;Key&#39; dictionary.
 * Structure prevents naming collisions between multiple sources.
-* Nested structures allow for the communication of metadata for telemetry, such as scale, units, and data ranges etc.
+* Nested structures allows for the communication of metadata for telemetry, such as scale, units, and data ranges etc.
 * Somewhat human (engineer) readable (i.e. hex-editor friendly.)
-* Timing and index for metadata can be stored within the wrapping MP4 of similar container format.
+* Timing and indexing for use existing methods stored within the wrapping MP4 of similar container format.
 
 GPMF -- GoPro Metadata Format  or General Purpose Metadata Format --  is a modified Key, Length, Value solution, with a 32-bit aligned payload, that is both compact, full extensible and somewhat human readable in a hex editor.  GPMF allows for dependent creation of new FourCC tags, without requiring central registration to define the contents and whether the data is in a nested structure. GPMF is optimized as a time of capture storage format for the collection of sensor data as it happens. 
 
