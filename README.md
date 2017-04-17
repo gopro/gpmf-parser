@@ -130,7 +130,7 @@ The final 8-bits, Type, is used to describe the data format within the sample.  
 
 Current types:
 
-| **Type Char** | **Definition** | **typedef**  **Comment** |
+| **Type Char** | **Definition** | **typedef** | **Comment** |
 | --- | --- | --- | --- |
 | **b** | single byte signed integer | int8\_t | -128 to 127 |
 | **B** | single byte unsigned integer | uint8\_t | 0 to 255 |
