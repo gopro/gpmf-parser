@@ -422,7 +422,7 @@ File structure:
     ‘trak’ subtype ‘vide’, name “GoPro AVC”, H.264 video data 
     ‘trak’ subtype ‘soun’, name “GoPro AAC”, to AAC audio data
     ‘trak’ subtype ‘tmcd’, name “GoPro TCD”, starting timecode (time of day as frame since midnight)
-    ‘trak’ subtype ‘meta’, name “GoPro MET”, GoPro Metadata (telemetry)
+    ‘trak’ subtype ‘meta’, name “GoPro MET”, GPMF telemetry
  ```
  
  ### Where to find GPMF data
