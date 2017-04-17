@@ -133,23 +133,23 @@ Current types:
 | **Type Char** | **Definition** | **typedef**  **Comment** |
 | --- | --- | --- | --- |
 | **b** | single byte signed integer | int8\_t | -128 to 127 |
-| **B** | single byte unsigned integer | uint8\_t |0 to 255 |
+| **B** | single byte unsigned integer | uint8\_t | 0 to 255 |
 | **c** | single byte &#39;c&#39; style ASCII character string | char | Optionally NULL terminated - size/repeat sets the length |
 | **s** | 16-bit signed integer | int16\_t | -32768 to 32768 |
 | **S** | 16-bit unsigned integer | uint16\_t | 0 to 65536 |
 | **l** | 32-bit signed integer | int32\_t |   |
 | **L** | 32-bit unsigned integer | uint32\_t |   |
-| **f** | 32-bit float (IEEE 754) | float |  |
-| **d** | 64-bit double precision (IEEE 754) | double |  |
-| **F** | 32-bit four character key -- FourCC | char fourcc[4] |   |
-| **G** | 128-bit ID (like UUID) | uint8\_t guid[4] |   |
-| **j** | 64-bit signed unsigned number | int64\_t |  |
+| **f** | 32-bit float (IEEE 754) | float |   |
+| **d** | 64-bit double precision (IEEE 754) | double |   |
+| **F** | 32-bit four character key -- FourCC | char fourcc\[4\] |   |
+| **G** | 128-bit ID (like UUID) | uint8\_t guid\[4\] |   |
+| **j** | 64-bit signed unsigned number | int64\_t |   |
 | **J** | 64-bit unsigned unsigned number | uint64\_t |   |
 | **q** | 32-bit Q Number Q15.16 | uint32\_t | 16-bit integer (A) with 16-bit fixed point (B) for A.B value (range -32768.0 to 32767.99998) |
 | **Q** | 64-bit Q Number Q31.32 | uint32\_t | 32-bit integer (A) with 32-bit fixed point (B) for A.B value. |
-| **U** | UTC Date and Time string | char utcdate[16] | Date + UTC Time format yymmddhhmmss.sss - (years 20xx covered) |
+| **U** | UTC Date and Time string | char utcdate\[16\] | Date + UTC Time format yymmddhhmmss.sss - (years 20xx covered) |
 | **?** | data structure is complex | TYPE | Structure is defined with a preceding TYPE |
-| **null** | Nested metadata |  | The data within is GPMF structured KLV data |
+| **null** | Nested metadata | uint32\_t | The data within is GPMF structured KLV data |
 
 ## Alignment and Storage
 
