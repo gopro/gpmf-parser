@@ -902,9 +902,6 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 
 				for (i = 0; i < elements; i++)
 				{
-					if (scalecount > 1)
-						scaledata8 += scaletypesize;
-
 					switch (inputtype)
 					{
 					case GPMF_TYPE_FLOAT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, float, uint32_t) break;
@@ -916,6 +913,9 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 						return GPMF_ERROR_TYPE_NOT_SUPPORTED;
 						break;
 					}
+
+					if (scalecount > 1)
+						scaledata8 += scaletypesize;
 				}
 			}
 			break;
