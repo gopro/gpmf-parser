@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.0.0
+ *  @version 1.0.1
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *   
@@ -781,7 +781,7 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 	}																										\
 	output = (uint8_t *)tmp;																				\
 }
-																					
+
 #define MACRO_CAST_SCALE																	\
 		switch (outputType)	{																\
 		case GPMF_TYPE_SIGNED_BYTE: 	MACRO_CAST_SCALE_SIGNED_TYPE(int8_t)	break;		\
@@ -794,7 +794,7 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 		case GPMF_TYPE_DOUBLE:			MACRO_CAST_SCALE_SIGNED_TYPE(double)	break;		\
 		default: break;																		\
 		}																									
-		
+
 #define MACRO_BSWAP_CAST_SCALE(swap, inputcast, tempcast)	\
 {														\
 	inputcast *val;										\
@@ -815,8 +815,9 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 		uint32_t sample_size = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 1]);
 		uint32_t output_sample_size = GPMF_SizeofType(outputType);
 		uint32_t remaining_sample_size = GPMF_DATA_PACKEDSIZE(ms->buffer[ms->pos + 1]);
-		uint8_t inputtype = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
-		uint32_t inputtypesize = GPMF_SizeofType(inputtype);
+		uint8_t inputtype[64] = { 0 };
+		uint32_t inputtypesize = 0;
+		uint32_t inputtypeelements = 0;
 		uint8_t scaletype = 0;
 		uint8_t scalecount = 0;
 		uint32_t scaletypesize = 0;
@@ -824,8 +825,10 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 		uint32_t tmpbuffer[64];
 		uint32_t tmpbuffersize = sizeof(tmpbuffer);
 		uint32_t elements;
-			
-		if (inputtype == GPMF_TYPE_NEST)
+
+		inputtype[0] = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
+
+		if (inputtype[0] == GPMF_TYPE_NEST)
 			return GPMF_ERROR_MEMORY;
 
 		remaining_sample_size -= sample_offset * sample_size; // skip samples
@@ -834,13 +837,35 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 		if (remaining_sample_size < sample_size * read_samples)
 			return GPMF_ERROR_MEMORY;
 
-		if (inputtype == GPMF_TYPE_COMPLEX)
-			return GPMF_ERROR_TYPE_NOT_SUPPORTED;
+		if (inputtype[0] == GPMF_TYPE_COMPLEX)
+		{
+			GPMF_stream fs;
+			GPMF_CopyState(ms, &fs);
+			if (GPMF_OK == GPMF_FindPrev(&fs, GPMF_KEY_TYPE))
+			{
+				char *data = (char *)GPMF_RawData(&fs);
+				int size = GPMF_RawDataSize(&fs);
 
-		elements = sample_size / inputtypesize;
+				if (size < sizeof(inputtype))
+				{
+					memcpy(inputtype, data, size);
+					inputtypeelements = elements = size;
+				}
+				else
+					return GPMF_ERROR_TYPE_NOT_SUPPORTED;
+			}
+		}
+		else
+		{
+			inputtype[0] = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
+			inputtypeelements = 1;
+			inputtypesize = GPMF_SizeofType(inputtype[0]);
+			elements = sample_size / inputtypesize;
+		}
 
 		if (output_sample_size * elements * read_samples > buffersize)
 			return GPMF_ERROR_MEMORY;
+
 
 		switch (outputType)	{
 		case GPMF_TYPE_SIGNED_BYTE:
@@ -852,79 +877,82 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 		case GPMF_TYPE_UNSIGNED_LONG:
 		case GPMF_TYPE_DOUBLE:
 			// All supported formats.
+		{
+			GPMF_stream fs;
+			GPMF_CopyState(ms, &fs);
+
+			if (GPMF_OK == GPMF_FindPrev(&fs, GPMF_KEY_SCALE))
 			{
-				GPMF_stream fs;
-				GPMF_CopyState(ms, &fs);
+				scaledata = (uint32_t *)GPMF_RawData(&fs);
+				scaletype = GPMF_SAMPLE_TYPE(fs.buffer[fs.pos + 1]);
 
-				if (GPMF_OK == GPMF_FindPrev(&fs, GPMF_KEY_SCALE))
+				switch (scaletype)
 				{
-					scaledata = (uint32_t *)GPMF_RawData(&fs);
-					scaletype = GPMF_SAMPLE_TYPE(fs.buffer[fs.pos + 1]);
-
-					switch (scaletype)
-					{
-					case GPMF_TYPE_SIGNED_BYTE:
-					case GPMF_TYPE_UNSIGNED_BYTE:
-					case GPMF_TYPE_SIGNED_SHORT:
-					case GPMF_TYPE_UNSIGNED_SHORT:
-					case GPMF_TYPE_SIGNED_LONG:
-					case GPMF_TYPE_UNSIGNED_LONG:
-					case GPMF_TYPE_FLOAT:
-						scalecount = GPMF_SAMPLES(fs.buffer[fs.pos + 1]);
-						scaletypesize = GPMF_SizeofType(scaletype);
-
-						if (scalecount > 1)
-							if (scalecount != elements)
-								return GPMF_ERROR_SCALE_COUNT;
-
-						GPMF_FormattedData(&fs, tmpbuffer, tmpbuffersize, 0, scalecount);
-
-						scaledata = (uint32_t *)tmpbuffer;
-						break;
-					default:
-						return GPMF_ERROR_TYPE_NOT_SUPPORTED;
-						break;
-					}
-				}
-				else
-				{
-					scaletype = 'L';
-					scalecount = 1;
-					tmpbuffer[0] = 1; // set the scale to 1 is no scale was provided
-					scaledata = (uint32_t *)tmpbuffer;
-				}
-			}
-
-			while (read_samples--)
-			{
-				uint32_t i;
-				uint8_t *scaledata8 = (uint8_t *)scaledata;
-
-				for (i = 0; i < elements; i++)
-				{
-					switch (inputtype)
-					{
-					case GPMF_TYPE_FLOAT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, float, uint32_t) break;
-					case GPMF_TYPE_SIGNED_SHORT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, int16_t, uint16_t) break;
-					case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, uint16_t, uint16_t) break;
-					case GPMF_TYPE_SIGNED_LONG:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, int32_t, uint32_t) break;
-					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, uint32_t, uint32_t) break;
-					default:
-						return GPMF_ERROR_TYPE_NOT_SUPPORTED;
-						break;
-					}
+				case GPMF_TYPE_SIGNED_BYTE:
+				case GPMF_TYPE_UNSIGNED_BYTE:
+				case GPMF_TYPE_SIGNED_SHORT:
+				case GPMF_TYPE_UNSIGNED_SHORT:
+				case GPMF_TYPE_SIGNED_LONG:
+				case GPMF_TYPE_UNSIGNED_LONG:
+				case GPMF_TYPE_FLOAT:
+					scalecount = GPMF_SAMPLES(fs.buffer[fs.pos + 1]);
+					scaletypesize = GPMF_SizeofType(scaletype);
 
 					if (scalecount > 1)
-						scaledata8 += scaletypesize;
+						if (scalecount != elements)
+							return GPMF_ERROR_SCALE_COUNT;
+
+					GPMF_FormattedData(&fs, tmpbuffer, tmpbuffersize, 0, scalecount);
+
+					scaledata = (uint32_t *)tmpbuffer;
+					break;
+				default:
+					return GPMF_ERROR_TYPE_NOT_SUPPORTED;
+					break;
 				}
 			}
-			break;
+			else
+			{
+				scaletype = 'L';
+				scalecount = 1;
+				tmpbuffer[0] = 1; // set the scale to 1 is no scale was provided
+				scaledata = (uint32_t *)tmpbuffer;
+			}
+		}
+
+		while (read_samples--)
+		{
+			uint32_t i;
+			uint8_t *scaledata8 = (uint8_t *)scaledata;
+
+			for (i = 0; i < elements; i++)
+			{
+				switch (inputtype[i % inputtypeelements])
+				{
+				case GPMF_TYPE_FLOAT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, float, uint32_t) break;
+				case GPMF_TYPE_SIGNED_BYTE:  MACRO_BSWAP_CAST_SCALE(NOSWAP8, int8_t, uint8_t) break;
+				case GPMF_TYPE_UNSIGNED_BYTE:  MACRO_BSWAP_CAST_SCALE(NOSWAP8, uint8_t, uint8_t) break;
+				case GPMF_TYPE_SIGNED_SHORT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, int16_t, uint16_t) break;
+				case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, uint16_t, uint16_t) break;
+				case GPMF_TYPE_SIGNED_LONG:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, int32_t, uint32_t) break;
+				case GPMF_TYPE_UNSIGNED_LONG:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, uint32_t, uint32_t) break;
+				case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP64, uint64_t, uint64_t) break;
+				case GPMF_TYPE_UNSIGNED_64BIT_INT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP64, uint64_t, uint64_t) break;
+				default:
+					return GPMF_ERROR_TYPE_NOT_SUPPORTED;
+					break;
+				}
+				if (scalecount > 1)
+					scaledata8 += scaletypesize;
+			}
+		}
+		break;
 
 		default:
 			return GPMF_ERROR_TYPE_NOT_SUPPORTED;
 			break;
 		}
-		
+
 		return GPMF_OK;
 	}
 

@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library include
  * 
- *  @version 1.0.0
+ *  @version 1.0.1
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *   
@@ -97,6 +97,7 @@ typedef enum
 #define BYTESWAP64(a)			(((a&0xff)<<56)|((a&0xff00)<<40)|((a&0xff0000)<<24)|((a&0xff000000)<<8) | ((a>>56)&0xff)|((a>>40)&0xff00)|((a>>24)&0xff0000)|((a>>8)&0xff000000) )
 #define BYTESWAP32(a)			(((a&0xff)<<24)|((a&0xff00)<<8)|((a>>8)&0xff00)|((a>>24)&0xff))
 #define BYTESWAP16(a)			((((a)>>8)&0xff)|(((a)<<8)&0xff00))
+#define NOSWAP8(a)				(a)
 
 #define GPMF_SAMPLES(a)			(((a>>24) & 0xff)|(((a>>16)&0xff)<<8))
 #define GPMF_SAMPLE_SIZE(a)		(((a)>>8)&0xff)
