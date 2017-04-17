@@ -1,6 +1,6 @@
 # GPMF Introduction
 
-General Purpose Metadata Format, originally GoPro Metadata Format.  The GPMF structured storage format was originally proposed to store high-frequency periodic sensor within a video file like an MP4.  Action cameras like that from GoPro have limited computing resources beyond that need to store video and audio, so any telemetry storage needed to be lightweight in computation, memory usage and storage bandwidth. While JSON and XML systems where initially considered, the burden of the embedded camera system was too great, so something simpler was needed. While the proposed GPMF structure could be used stand-alone, our intended implementation uses an additional time-indexed track with an MP4, and with an application marker within JPEG images. GPMF share a Key, Length, Value structure (KLV), similar to Quicktime atoms or Interchange File Format (IFF), but better for self-describing sensor data.  Problems solved:
+The GPMF structured storage format was originally proposed to store high-frequency periodic sensor data within a video file like an MP4. Action cameras, like that from GoPro, have limited computing resources beyond that needed to store video and audio, so any telemetry storage needed to be lightweight in computation, memory usage and storage bandwidth. While JSON and XML systems where initially considered, the burden on the embedded camera system was too great, so something simpler was needed. While the proposed GPMF structure could be used stand-alone, our intended implementation uses an additional time-indexed track with an MP4, and with an application marker within JPEG images. GPMF share a Key, Length, Value structure (KLV), similar to Quicktime atoms or Interchange File Format (IFF), but the new KLV system is better for describing sensor data. Problems solved:
 
 * The contents of new Keys can be parsed without prior knowledge.
 * Nested structures can be defined without &#39;Key&#39; dictionary.
@@ -9,7 +9,7 @@ General Purpose Metadata Format, originally GoPro Metadata Format.  The GPMF str
 * Somewhat human (engineer) readable (i.e. hex-editor friendly.)
 * Timing and index for metadata can be stored within the wrapping MP4 of similar container format.
 
-GoPro Metadata Format (GPMF) is a modified Key, Length, Value solution, with a 32-bit aligned payload, that is both compact, full extensible and somewhat human readable in a hex editor.  GPMF allows for dependent creation of new FourCC tags, without requiring central registration to define the contents and whether the data is in a nested structure. GPMF is a real-time storage format, for the capture of sensor data as it happens. 
+GPMF -- GoPro Metadata Format  or General Purpose Metadata Format --  is a modified Key, Length, Value solution, with a 32-bit aligned payload, that is both compact, full extensible and somewhat human readable in a hex editor.  GPMF allows for dependent creation of new FourCC tags, without requiring central registration to define the contents and whether the data is in a nested structure. GPMF is optimized as a time of capture storage format for the collection of sensor data as it happens. 
 
 ## GPMF-parser
 
