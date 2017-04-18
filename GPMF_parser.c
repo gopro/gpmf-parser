@@ -51,8 +51,9 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 		{
 			uint32_t key = ms->buffer[ms->pos];
 
-			if (ms->nest_level == 0 && key != GPMF_KEY_DEVICE && ms->device_count == 0)
+			if (ms->nest_level == 0 && key != GPMF_KEY_DEVICE && ms->device_count == 0 && ms->pos == 0)
 			{
+				DBG_MSG("ERROR: uninitized -- GPMF_ERROR_BAD_STRUCTURE\n");
 				return GPMF_ERROR_BAD_STRUCTURE;
 			}
 
@@ -73,7 +74,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 					return GPMF_ERROR_BAD_STRUCTURE;
 				}
 
-				if (type == GPMF_TYPE_NEST)
+				if (type == GPMF_TYPE_NEST && recurse == GPMF_RECURVSE_LEVELS)
 				{
 					uint32_t validnest;
 					ms->pos += 2;
@@ -105,11 +106,20 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 					ms->pos += 2 + size;
 					nestsize -= 2 + size;
 				}
+
+				if (ms->pos == ms->buffer_size_longs)
+				{
+					ms->pos = currpos;
+					return GPMF_OK;
+				}
 			}
 			else
 			{
 				if (ms->nest_level == 0 && ms->device_count > 0)
+				{
+					ms->pos = currpos;
 					return GPMF_OK;
+				}
 				else
 				{
 					DBG_MSG("ERROR: bad struct within %c%c%c%c -- GPMF_ERROR_BAD_STRUCTURE\n", PRINTF_4CC(key));
@@ -119,7 +129,6 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 		}
 
 		ms->pos = currpos;
-
 		return GPMF_OK;
 	}
 	else
@@ -498,10 +507,12 @@ GPMF_ERR GPMF_DeviceName(GPMF_stream *ms, char *devicenamebuf, uint32_t devicena
 {
 	if (ms && devicenamebuf)
 	{
-		if (strlen(ms->device_name) < devicename_buf_size)
+		int len = strlen(ms->device_name);
+		if (len >= devicename_buf_size)
 			return GPMF_ERROR_MEMORY;
 
-		memcpy(devicenamebuf, ms->device_name, strlen(ms->device_name));
+		memcpy(devicenamebuf, ms->device_name, len);
+		devicenamebuf[len] = 0;
 		return GPMF_OK;
 	}
 	return GPMF_ERROR_MEMORY;
@@ -929,7 +940,7 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 			{
 				switch (inputtype[i % inputtypeelements])
 				{
-				case GPMF_TYPE_FLOAT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, float, uint32_t) break;
+				case GPMF_TYPE_FLOAT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, float, uint32_t) break;
 				case GPMF_TYPE_SIGNED_BYTE:  MACRO_BSWAP_CAST_SCALE(NOSWAP8, int8_t, uint8_t) break;
 				case GPMF_TYPE_UNSIGNED_BYTE:  MACRO_BSWAP_CAST_SCALE(NOSWAP8, uint8_t, uint8_t) break;
 				case GPMF_TYPE_SIGNED_SHORT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, int16_t, uint16_t) break;
