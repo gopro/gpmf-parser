@@ -408,7 +408,11 @@ void PrintGPMF(GPMF_stream *ms)
 
 		if (key != GPMF_KEY_DEVICE) level++;
 
-		while (level > 0 && level < 10) DBG_MSG("  "), level--;
+		while (level > 0 && level < 10)
+		{
+			DBG_MSG("  ");
+			level--;
+		}
 		if (type == 0)
 			DBG_MSG("%c%c%c%c nest size %d ", (key >> 0) & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff, size);
 		else if (structsize == 1 || (repeat == 1 && type != '?'))
