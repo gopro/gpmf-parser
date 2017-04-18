@@ -112,15 +112,12 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 	
 	if (fp)
 	{
-		uint32_t tag, tsize, qttag, qtsize, len, skip, type = 0, num;
+		uint32_t tag, qttag, qtsize, len, skip, type = 0, num;
 		int32_t lastsize = 0, nest = 0;
 
 		len = fread(&tag, 1, 4, fp);
 		if (tag == GPMF_KEY_DEVICE) // RAW GPMF data, not in an MP4
 		{
-			int32_t num;
-			int32_t ssize;
-			int32_t bytes;
 			int filesize;
 
 			videolength += 1.0;
@@ -352,4 +349,82 @@ void CloseGPMFSource(void)
 	if (metasizes) free(metasizes), metasizes = 0;
 	if (metaoffsets) free(metaoffsets), metaoffsets = 0;
 	if (GPMFbuffer) free(GPMFbuffer), GPMFbuffer = NULL;
+}
+
+
+float GetGPMFSampleRate(uint32_t fourcc, uint32_t payloads)
+{
+	GPMF_stream metadata_stream, *ms = &metadata_stream;
+	uint32_t teststart = 0;
+	uint32_t testend = payloads-1;
+
+	if (payloads > 3) // samples after first and before last are statisticly the best, avoiding camera start up or shutdown anomollies. 
+	{
+		teststart++;
+		testend--;
+	}
+
+	uint32_t *payload = GetGPMFPayload(teststart); // second payload
+	uint32_t payloadsize = GetGPMFPayloadSize(teststart);
+	int32_t ret = GPMF_Init(ms, payload, payloadsize);
+
+	if (ret != GPMF_OK)
+		return 0.0;
+
+	{
+		uint32_t startsamples = 0;
+		uint32_t endsamples = 0;
+
+		if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURVSE_LEVELS))
+		{
+			uint32_t samples = GPMF_Repeat(ms);
+			GPMF_stream find_stream;
+			GPMF_CopyState(ms, &find_stream);
+
+			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES))
+			{
+				startsamples = BYTESWAP32(*(uint32_t *)GPMF_RawData(&find_stream)) - samples;
+
+				payload = GetGPMFPayload(testend); // second last payload
+				payloadsize = GetGPMFPayloadSize(testend);
+				ret = GPMF_Init(ms, payload, payloadsize);
+				if (ret != GPMF_OK)
+					return 0.0;
+
+				if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURVSE_LEVELS))
+				{
+					GPMF_stream find_stream;
+					GPMF_CopyState(ms, &find_stream);
+					if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES))
+					{
+						endsamples = BYTESWAP32(*(uint32_t *)GPMF_RawData(&find_stream));
+						return (float)(endsamples - startsamples) / (metadatalength * ((float)(testend - teststart + 1)) / (float)payloads);
+
+					}
+				}
+			}
+			else // older GPMF sometimes missing the total sample count 
+			{
+				int payloadcount = teststart+1;
+				while (payloadcount <= testend)
+				{
+					payload = GetGPMFPayload(payloadcount); // second last payload
+					payloadsize = GetGPMFPayloadSize(payloadcount);
+					ret = GPMF_Init(ms, payload, payloadsize);
+
+					if (ret != GPMF_OK)
+						return 0.0;
+
+					if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURVSE_LEVELS))
+						samples += GPMF_Repeat(ms);
+
+					payloadcount++;
+				}
+
+				return (float)(samples) / (metadatalength * ((float)(testend - teststart + 1)) / (float)payloads);
+			}
+		}
+	}
+
+	return 0.0;
 }

@@ -32,6 +32,7 @@ void CloseGPMFSource(void);
 uint32_t GetNumberGPMFPayloads(void);
 uint32_t *GetGPMFPayload(uint32_t index);
 uint32_t GetGPMFPayloadSize(uint32_t index);
+float GetGPMFSampleRate(uint32_t fourcc, uint32_t payloads);
 
 
 
