@@ -5,9 +5,9 @@ The GPMF structured storage format was originally proposed to store high-frequen
 * The contents of new Keys can be parsed without prior knowledge.
 * Nested structures can be defined without &#39;Key&#39; dictionary.
 * Structure prevents naming collisions between multiple sources.
-* Nested structures allow for the communication of metadata for telemetry, such as scale, units, and data ranges etc.
+* Nested structures allows for the communication of metadata for telemetry, such as scale, units, and data ranges etc.
 * Somewhat human (engineer) readable (i.e. hex-editor friendly.)
-* Timing and index for metadata can be stored within the wrapping MP4 of similar container format.
+* Timing and indexing for use existing methods stored within the wrapping MP4 of similar container format.
 
 GPMF -- GoPro Metadata Format  or General Purpose Metadata Format --  is a modified Key, Length, Value solution, with a 32-bit aligned payload, that is both compact, full extensible and somewhat human readable in a hex editor.  GPMF allows for dependent creation of new FourCC tags, without requiring central registration to define the contents and whether the data is in a nested structure. GPMF is optimized as a time of capture storage format for the collection of sensor data as it happens. 
 
@@ -89,7 +89,7 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 
 All data is Big Endian.
 
-![](http://miscdata.com/gpmf/KLVDesign.png)
+![](readmegfx/KLVDesign.png "KLV Design")
 
 ### FourCC
 
@@ -130,27 +130,26 @@ The final 8-bits, Type, is used to describe the data format within the sample.  
 
 Current types:
 
-| **Type Char** | **Definition** | **Comment** |
-| --- | --- | --- |
-| b | single byte signed number | -128 to 127 |
-| B | single byte unsigned number | 0 to 255 |
-| c | single byte &#39;c&#39; style ASCII character string | Does not need to be NULL terminated as the size/repeat set the length |
-| s | 16-bit signed number (int16\_t) | -32768 to 32768 |
-| S | 16-bit unsigned number (uint16\_t) | 0 to 65536 |
-| l | 32-bit signed unsigned number (int32\_t) |   |
-| L | 32-bit unsigned unsigned number (uint32\_t) |   |
-| d | 64-bit double precision float (IEEE 754) |   |
-| f | 32-bit single precision float (IEEE 754) |   |
-| F | 32-bit four character key -- FourCC |   |
-| G | 128-bit ID (like UUID) |   |
-| j | 64-bit signed unsigned number |   |
-| J | 64-bit unsigned unsigned number |   |
-| q | 32-bit Q Number Q15.16 | 16-bit signed integer (A) with 16-bit fixed point (B) for A.B value (range -32768.0 to 32767.99998) |
-| Q | 64-bit Q Number Q31.32 | 32-bit signed integer (A) with 32-bit fixed point (B) for A.B value. |
-| U | UTC Time 16-byte standard date and time string | Date + UTC Time format yymmddhhmmss.sss - (years 20xx covered) |
-| ? | data structure is complex | Structure is defined with a preceding TYPE |
-| null | Nested metadata | The data within is GPMF structured KLV data |
-|   |   |   |
+| **Type Char** | **Definition** | **typedef** | **Comment** |
+| --- | --- | --- | --- |
+| **b** | single byte signed integer | int8\_t | -128 to 127 |
+| **B** | single byte unsigned integer | uint8\_t | 0 to 255 |
+| **c** | single byte &#39;c&#39; style ASCII character string | char | Optionally NULL terminated - size/repeat sets the length |
+| **s** | 16-bit signed integer | int16\_t | -32768 to 32768 |
+| **S** | 16-bit unsigned integer | uint16\_t | 0 to 65536 |
+| **l** | 32-bit signed integer | int32\_t |   |
+| **L** | 32-bit unsigned integer | uint32\_t |   |
+| **f** | 32-bit float (IEEE 754) | float |   |
+| **d** | 64-bit double precision (IEEE 754) | double |   |
+| **F** | 32-bit four character key -- FourCC | char fourcc\[4\] |   |
+| **G** | 128-bit ID (like UUID) | uint8\_t guid\[4\] |   |
+| **j** | 64-bit signed unsigned number | int64\_t |   |
+| **J** | 64-bit unsigned unsigned number | uint64\_t |   |
+| **q** | 32-bit Q Number Q15.16 | uint32\_t | 16-bit integer (A) with 16-bit fixed point (B) for A.B value (range -32768.0 to 32767.99998) |
+| **Q** | 64-bit Q Number Q31.32 | uint32\_t | 32-bit integer (A) with 32-bit fixed point (B) for A.B value. |
+| **U** | UTC Date and Time string | char utcdate\[16\] | Date + UTC Time format yymmddhhmmss.sss - (years 20xx covered) |
+| **?** | data structure is complex | TYPE | Structure is defined with a preceding TYPE |
+| **null** | Nested metadata | uint32\_t | The data within is GPMF structured KLV data |
 
 ## Alignment and Storage
 
@@ -158,21 +157,21 @@ All GPMF data is 32-bit aligned and stored as big-endian.  For data types that a
 
 DEMO,  &#39;b&#39; 1  1,  &lt;byte value&gt; 0 0 0
 
-![](http://miscdata.com/gpmf/demo1.png)
+![](readmegfx/demo1.png)
 
 the same data type stored 15 times would have only a only byte pad at the end.
 
 DEMO,  &#39;b&#39; 1  15,  &lt;15 bytes data&gt; 0
 
 
-![](http://miscdata.com/gpmf/demo2.png)
+![](readmegfx/demo2.png)
 
 Packed data will all maintain a 32-bit alignment between GPMF KLV 3-tuples.
 
 DMO1, b  1 1, &lt;byte value&gt; 0 0 0 DMO2 b 1 15 &lt;values&gt; 0 DMO3 L 4 1 &lt;32-bit values&gt;
 
 
-![](http://miscdata.com/gpmf/demo3.png)
+![](readmegfx/demo3.png)
 
 While padding is shown as null values, any value can be used, as this data is simply ignored.
 
@@ -183,7 +182,7 @@ The packed data size with in a GPMF KLV is the structure size times the number o
 As sensor data like gyro and accelerometer commonly have three (or more) axes of the same data type, the combination of Type and Structure Size, will indicate the type of data within. Three axis GYRO data could have a Type of &#39;s&#39; (short 16-bit signed integer) with a Structure size of 6.  As the size of the Type is known, the number of axes in each sample is Structure size / sizeof (Type).  An examples of 6 samples of a 6 byte x,y,z structure GYRO data is shown here:
 
 
-![](http://miscdata.com/gpmf/demo4.png)
+![](readmegfx/demo4.png)
 
 ## GPMF Nesting
 
@@ -197,7 +196,7 @@ DEVC null 4 7
 
 This is a valid nested GPMF structure. DEVC describe 4\*7 = 28 bytes of data, which are packed and aligned GPMF KLV values describing a camera device with a Device ID and a Device Name.
 
-![](http://miscdata.com/gpmf/demo5.png)
+![](readmegfx/demo5.png)
 
 ### Property Hierarchy
 
