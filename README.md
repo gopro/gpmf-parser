@@ -49,7 +49,7 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 		default: // if you don’t know the Key you can skip to the next
 		  break;
 	}
-} while (GPMF_OK == GPMF_Next(&gs_stream, GPMF_RECURVSE_LEVELS)); // Scan through all GPMF data
+} while (GPMF_OK == GPMF_Next(&gs_stream, GPMF_RECURSE_LEVELS)); // Scan through all GPMF data
 ```
 
 If you only want particular a piece of data
