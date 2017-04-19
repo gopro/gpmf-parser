@@ -49,7 +49,7 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 		default: // if you don’t know the Key you can skip to the next
 		  break;
 	}
-} while (GPMF_OK == GPMF_Next(&gs_stream, GPMF_RECURVSE_LEVELS)); // Scan through all GPMF data
+} while (GPMF_OK == GPMF_Next(&gs_stream, GPMF_RECURSE_LEVELS)); // Scan through all GPMF data
 ```
 
 If you only want particular a piece of data
@@ -59,7 +59,7 @@ If you only want particular a piece of data
 GPMF_stream gs_stream;
 if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 {
-  if(GPMF_OK == GPMF_FindNext(&gs_stream, STR2FOURCC("ACCL"), GPMF_RECURVSE_LEVELS))) 
+  if(GPMF_OK == GPMF_FindNext(&gs_stream, STR2FOURCC("ACCL"), GPMF_RECURSE_LEVELS))) 
    {
    	uint32_t key = GPMF_Key(&gs_stream);
    	char type = GPMF_Type(&gs_stream);
