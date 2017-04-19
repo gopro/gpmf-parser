@@ -869,7 +869,7 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 		uint32_t *scaledata = NULL;
 		uint32_t tmpbuffer[64];
 		uint32_t tmpbuffersize = sizeof(tmpbuffer);
-		uint32_t elements;
+		uint32_t elements = 0;
 
 		inputtype[0] = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
 
@@ -899,6 +899,8 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 				else
 					return GPMF_ERROR_TYPE_NOT_SUPPORTED;
 			}
+			else
+				return GPMF_ERROR_SCALE_NOT_SUPPORTED;
 		}
 		else
 		{
