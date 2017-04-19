@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library include
  * 
- *  @version 1.0.1
+ *  @version 1.0.2
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *   
@@ -36,9 +36,9 @@ typedef struct GPMF_stream
 	uint32_t pos;
 	uint32_t last_level_pos[GPMF_NEST_LIMIT];
 	uint32_t nest_size[GPMF_NEST_LIMIT];
+	uint32_t last_seek[GPMF_NEST_LIMIT];
 	uint32_t nest_level;
 	uint32_t device_count;
-	uint32_t last_seek;
 	uint32_t device_id;
 	char device_name[32];
 } GPMF_stream;
@@ -59,7 +59,7 @@ typedef enum GPMF_ERROR
 typedef enum GPMF_LEVELS
 {
 	GPMF_CURRENT_LEVEL = 0,
-	GPMF_RECURVSE_LEVELS
+	GPMF_RECURSE_LEVELS
 } GPMF_LEVELS;
 
 #define GPMF_ERR	uint32_t
@@ -145,7 +145,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *gs, GPMF_LEVELS recurse);									//Is the n
 
 // Navigate through GPMF data 
 GPMF_ERR GPMF_Next(GPMF_stream *gs, GPMF_LEVELS recurse);										//Step to the next GPMF KLV entrance, optionally recurse up or down nesting levels.
-GPMF_ERR GPMF_FindPrev(GPMF_stream *gs, uint32_t fourCC);										//find a previous FourCC in the current nest level
+GPMF_ERR GPMF_FindPrev(GPMF_stream *gs, uint32_t fourCC, GPMF_LEVELS recurse);					//find a previous FourCC -- at the current level only if recurse is false
 GPMF_ERR GPMF_FindNext(GPMF_stream *gs, uint32_t fourCC, GPMF_LEVELS recurse);					//find a particular FourCC upcoming -- at the current level only if recurse is false
 GPMF_ERR GPMF_SeekToSamples(GPMF_stream *gs);													//find the last FourCC in the current level, this is raw data for any STRM
 
@@ -165,8 +165,8 @@ GPMF_ERR GPMF_DeviceName(GPMF_stream *gs, char *devicename_buf, uint32_t devicen
 
 // Utilities for data types
 uint32_t GPMF_SizeofType(GPMF_SampleType type);													// GPMF equivalent to sizeof(type)
-uint32_t GPMF_ExpandComplexTYPE(char *src, uint32_t srcsize, char *dst, uint32_t dstsize);		// GPMF using TYPE for cmple structure.  { float val[16],uin32_t flags; } has type "f[8]L", this tools expands to the simpler format "ffffffffL"
-uint32_t GPMF_SizeOfComplexTYPE(char *typearray);												// GPMF equivalent to sizeof(typedef) for complex types. 
+uint32_t GPMF_ExpandComplexTYPE(char *src, uint32_t srcsize, char *dst, uint32_t *dstsize);		// GPMF using TYPE for cmple structure.  { float val[16],uin32_t flags; } has type "f[8]L", this tools expands to the simpler format "ffffffffL"
+uint32_t GPMF_SizeOfComplexTYPE(char *typearray, uint32_t typestringlength);					// GPMF equivalent to sizeof(typedef) for complex types. 
 
 //Tools for extracting sensor data 
 GPMF_ERR GPMF_FormattedData(GPMF_stream *gs, void *buffer, uint32_t buffersize, uint32_t sample_offset, uint32_t read_samples);  // extract 'n' samples into local endian memory format.

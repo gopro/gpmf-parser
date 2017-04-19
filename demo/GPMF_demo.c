@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 				goto cleanup;
 
 			// Output (printf) all the contained GPMF data within this payload
-			ret = GPMF_Validate(ms, GPMF_RECURVSE_LEVELS); // optional
+			ret = GPMF_Validate(ms, GPMF_RECURSE_LEVELS); // optional
 			if (GPMF_OK != ret)
 			{
 				printf("Invalid Structure\n");
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 			do
 			{
 				PrintGPMF(ms);  // printf current GPMF KLV
-			} while (GPMF_OK == GPMF_Next(ms, GPMF_RECURVSE_LEVELS));
+			} while (GPMF_OK == GPMF_Next(ms, GPMF_RECURSE_LEVELS));
 			GPMF_ResetState(ms);
 			printf("\n");
 		}
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 				goto cleanup;
 
 #if 1		// Find all the available Streams and the data carrying FourCC
-			while (GPMF_OK == GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURVSE_LEVELS))
+			while (GPMF_OK == GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS))
 			{
 				if (GPMF_OK == GPMF_SeekToSamples(ms)) //find the last FOURCC within the stream
 				{
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 							GPMF_stream find_stream;
 							GPMF_CopyState(ms, &find_stream);
 
-							if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE))
+							if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
 							{
 								char tmp[64];
 								char *data = (char *)GPMF_RawData(&find_stream);
@@ -146,8 +146,8 @@ int main(int argc, char *argv[])
 
 
 #if 1		// Find GPS values and return scaled floats. 
-			if (GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("GPS5"), GPMF_RECURVSE_LEVELS) || //GoPro Hero5 GPS
-			    GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("GPRI"), GPMF_RECURVSE_LEVELS) )   //GoPro Karma GPS
+			if (GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("GPS5"), GPMF_RECURSE_LEVELS) || //GoPro Hero5 GPS
+			    GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("GPRI"), GPMF_RECURSE_LEVELS) )   //GoPro Karma GPS
 			{
 				uint32_t samples = GPMF_Repeat(ms);
 				uint32_t elements = GPMF_ElementsInStruct(ms);
@@ -163,7 +163,8 @@ int main(int argc, char *argv[])
 
 					//Search for any units to display
 					GPMF_CopyState(ms, &find_stream);
-					if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_SI_UNITS) || GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_UNITS))
+					if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_SI_UNITS, GPMF_CURRENT_LEVEL) ||
+						GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_UNITS, GPMF_CURRENT_LEVEL))
 					{
 						char *data = (char *)GPMF_RawData(&find_stream);
 						int ssize = GPMF_StructSize(&find_stream);

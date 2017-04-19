@@ -375,13 +375,13 @@ float GetGPMFSampleRate(uint32_t fourcc, uint32_t payloads)
 		uint32_t startsamples = 0;
 		uint32_t endsamples = 0;
 
-		if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURVSE_LEVELS))
+		if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS))
 		{
 			uint32_t samples = GPMF_Repeat(ms);
 			GPMF_stream find_stream;
 			GPMF_CopyState(ms, &find_stream);
 
-			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES))
+			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES, GPMF_CURRENT_LEVEL))
 			{
 				startsamples = BYTESWAP32(*(uint32_t *)GPMF_RawData(&find_stream)) - samples;
 
@@ -391,11 +391,11 @@ float GetGPMFSampleRate(uint32_t fourcc, uint32_t payloads)
 				if (ret != GPMF_OK)
 					return 0.0;
 
-				if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURVSE_LEVELS))
+				if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS))
 				{
 					GPMF_stream find_stream;
 					GPMF_CopyState(ms, &find_stream);
-					if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES))
+					if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES, GPMF_CURRENT_LEVEL))
 					{
 						endsamples = BYTESWAP32(*(uint32_t *)GPMF_RawData(&find_stream));
 						return (float)(endsamples - startsamples) / (metadatalength * ((float)(testend - teststart + 1)) / (float)payloads);
@@ -405,7 +405,7 @@ float GetGPMFSampleRate(uint32_t fourcc, uint32_t payloads)
 			}
 			else // older GPMF sometimes missing the total sample count 
 			{
-				int payloadcount = teststart+1;
+				uint32_t payloadcount = teststart+1;
 				while (payloadcount <= testend)
 				{
 					payload = GetGPMFPayload(payloadcount); // second last payload
@@ -415,7 +415,7 @@ float GetGPMFSampleRate(uint32_t fourcc, uint32_t payloads)
 					if (ret != GPMF_OK)
 						return 0.0;
 
-					if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURVSE_LEVELS))
+					if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS))
 						samples += GPMF_Repeat(ms);
 
 					payloadcount++;

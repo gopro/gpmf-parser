@@ -428,43 +428,45 @@ void PrintGPMF(GPMF_stream *ms)
 			{
 				GPMF_stream find_stream;
 				GPMF_CopyState(ms, &find_stream);
-				if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE))
+				if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
 				{
 					char *srctype = GPMF_RawData(&find_stream);
 					uint32_t typelen = GPMF_RawDataSize(&find_stream);
-					char typearray[64];
-					int dstsize = 64;
 					int struct_size_of_type;
 
-					GPMF_ExpandComplexTYPE(srctype, typelen, typearray, dstsize);
-					struct_size_of_type = GPMF_SizeOfComplexTYPE(typearray);
+					struct_size_of_type = GPMF_SizeOfComplexTYPE(srctype, typelen);
 					if (struct_size_of_type != (int32_t)structsize)
 					{
 						DBG_MSG("error: found structure of %d bytes reported as %d bytes", struct_size_of_type, structsize);
 					}
 					else
 					{
+						char typearray[64];
+						uint32_t elements = sizeof(typearray);
 						uint8_t *bdata = (uint8_t *)data;
-						int i;
-#if VERBOSE_OUTPUT
-						uint32_t j;
-						for (j = 0; j < repeat; j++)
+						uint32_t i;
+
+						if (GPMF_OK == GPMF_ExpandComplexTYPE(srctype, typelen, typearray, &elements))
 						{
-							if( repeat > 1) DBG_MSG("\n");
-#endif
-							dstsize = strlen(typearray);
-							for (i = 0; i < dstsize; i++)
-							{
-								int elementsize = GPMF_SizeofType(typearray[i]);
-								printfData(typearray[i], elementsize, 1, bdata);
-								bdata += elementsize;
-							}
 #if VERBOSE_OUTPUT
-						}
-#else
-							if (repeat > 1)
-								DBG_MSG("...");
+							uint32_t j;
+							for (j = 0; j < repeat; j++)
+							{
+								if( repeat > 1) DBG_MSG("\n");
 #endif
+								for (i = 0; i < elements; i++)
+								{
+									int elementsize = GPMF_SizeofType(typearray[i]);
+									printfData(typearray[i], elementsize, 1, bdata);
+									bdata += elementsize;
+								}
+#if VERBOSE_OUTPUT
+							}
+#else
+								if (repeat > 1)
+									DBG_MSG("...");
+#endif
+						}
 					}
 				}
 				else

@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.0.1
+ *  @version 1.0.2
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *   
@@ -74,7 +74,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 					return GPMF_ERROR_BAD_STRUCTURE;
 				}
 
-				if (type == GPMF_TYPE_NEST && recurse == GPMF_RECURVSE_LEVELS)
+				if (type == GPMF_TYPE_NEST && recurse == GPMF_RECURSE_LEVELS)
 				{
 					uint32_t validnest;
 					ms->pos += 2;
@@ -148,7 +148,7 @@ GPMF_ERR GPMF_ResetState(GPMF_stream *ms)
 		ms->device_count = 0;
 		ms->nest_size[ms->nest_level] = 0;
 		ms->last_level_pos[ms->nest_level] = 0;
-		ms->last_seek = 0;
+		ms->last_seek[ms->nest_level] = 0;
 		ms->device_id = 0;
 		ms->device_name[0] = 0;
 
@@ -326,7 +326,7 @@ GPMF_ERR GPMF_SeekToSamples(GPMF_stream *ms)
 			memcpy(&prevstate, ms, sizeof(GPMF_stream));
 
 			if (type == GPMF_TYPE_NEST)
-				GPMF_Next(ms, GPMF_RECURVSE_LEVELS); // open STRM and recurse in
+				GPMF_Next(ms, GPMF_RECURSE_LEVELS); // open STRM and recurse in
 
 			while (0 == GPMF_Next(ms, GPMF_CURRENT_LEVEL))
 			{
@@ -359,27 +359,35 @@ GPMF_ERR GPMF_SeekToSamples(GPMF_stream *ms)
 }
 
 
-GPMF_ERR GPMF_FindPrev(GPMF_stream *ms, uint32_t fourcc)
+GPMF_ERR GPMF_FindPrev(GPMF_stream *ms, uint32_t fourcc, GPMF_LEVELS recurse)
 {
 	GPMF_stream prevstate;
 
 	if (ms)
 	{
+		uint32_t curr_level = ms->nest_level;
+
 		memcpy(&prevstate, ms, sizeof(GPMF_stream));
 
-		if (ms->pos < ms->buffer_size_longs && ms->nest_level > 0)
+		if (ms->pos < ms->buffer_size_longs && curr_level > 0)
 		{
-			ms->last_seek = ms->pos;
-			ms->pos = ms->last_level_pos[ms->nest_level-1] + 2;
-			ms->nest_size[ms->nest_level] += ms->last_seek - ms->pos;
+
 			do
 			{
-				if (ms->last_seek > ms->pos && ms->buffer[ms->pos] == fourcc)
+				ms->last_seek[curr_level] = ms->pos;
+				ms->pos = ms->last_level_pos[curr_level - 1] + 2;
+				ms->nest_size[curr_level] += ms->last_seek[curr_level] - ms->pos;
+				do
 				{
+					if (ms->last_seek[curr_level] > ms->pos && ms->buffer[ms->pos] == fourcc)
+					{
 
-					return GPMF_OK; //found match
-				}
-			} while (ms->last_seek > ms->pos && 0 == GPMF_Next(ms, GPMF_CURRENT_LEVEL));
+						return GPMF_OK; //found match
+					}
+				} while (ms->last_seek[curr_level] > ms->pos && 0 == GPMF_Next(ms, GPMF_CURRENT_LEVEL));
+
+				curr_level--;
+			} while (recurse == GPMF_RECURSE_LEVELS && curr_level > 0);
 
 			// restore read position
 			memcpy(ms, &prevstate, sizeof(GPMF_stream));
@@ -449,14 +457,15 @@ uint32_t GPMF_ElementsInStruct(GPMF_stream *ms)
 			GPMF_stream find_stream;
 			GPMF_CopyState(ms, &find_stream);
 
-			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE))
+			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
 			{
 				char tmp[64] = "";
+				uint32_t tmpsize = sizeof(tmp);
 				char *data = (char *)GPMF_RawData(&find_stream);
 				int size = GPMF_RawDataSize(&find_stream);
 				
-				GPMF_ExpandComplexTYPE(data, size, tmp, sizeof(tmp));
-				return strlen(tmp);
+				if (GPMF_OK == GPMF_ExpandComplexTYPE(data, size, tmp, &tmpsize))
+					return tmpsize;
 			}
 		}
 	}
@@ -507,7 +516,7 @@ GPMF_ERR GPMF_DeviceName(GPMF_stream *ms, char *devicenamebuf, uint32_t devicena
 {
 	if (ms && devicenamebuf)
 	{
-		int len = strlen(ms->device_name);
+		uint32_t len = strlen(ms->device_name);
 		if (len >= devicename_buf_size)
 			return GPMF_ERROR_MEMORY;
 
@@ -562,11 +571,11 @@ uint32_t GPMF_SizeofType(GPMF_SampleType type)
 	return ssize;
 }
 
-uint32_t GPMF_ExpandComplexTYPE(char *src, uint32_t srcsize, char *dst, uint32_t dstsize)
+uint32_t GPMF_ExpandComplexTYPE(char *src, uint32_t srcsize, char *dst, uint32_t *dstsize)
 {
 	uint32_t i = 0, k = 0, count = 0;
 
-	while (i<srcsize && k<dstsize)
+	while (i<srcsize && k<*dstsize)
 	{
 		if (src[i] == '[' && i>0)
 		{
@@ -599,20 +608,43 @@ uint32_t GPMF_ExpandComplexTYPE(char *src, uint32_t srcsize, char *dst, uint32_t
 		}
 	}
 
-	if (k >= dstsize)
+	if (k >= *dstsize)
 		return GPMF_ERROR_MEMORY; // bad structure formed
 
 	dst[k] = 0;
+	*dstsize = k;
 
 	return GPMF_OK;
 }
 
 
 
-uint32_t GPMF_SizeOfComplexTYPE(char *typearray)
+uint32_t GPMF_SizeOfComplexTYPE(char *type, uint32_t typestringlength)
 {
-	uint32_t size = 0;
-	int i,len = strlen(typearray);
+	char *typearray = type;
+	uint32_t size = 0, expand = 0;
+	uint32_t i, len = typestringlength;
+
+
+	for (i = 0; i < len; i++)
+		if (typearray[i] == '[')
+			expand = 1;
+			
+	if (expand)
+	{
+		char exptypearray[64];
+		uint32_t dstsize = sizeof(exptypearray);
+
+		if (GPMF_OK == GPMF_ExpandComplexTYPE(typearray, len, exptypearray, &dstsize))
+		{
+			typearray = exptypearray;
+			len = dstsize;
+		}
+		else
+			return 0;
+	}
+
+
 	for (i = 0; i < len; i++)
 	{
 		uint32_t typesize = GPMF_SizeofType((GPMF_SampleType)typearray[i]);
@@ -636,6 +668,7 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 		uint8_t type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
 		uint32_t typesize = 1;
 		uint32_t elements = 0;
+		uint32_t typestringlength = 1;
 		char complextype[64] = "L";
 
 		if (type == GPMF_TYPE_NEST)
@@ -655,7 +688,7 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 			GPMF_stream find_stream;
 			GPMF_CopyState(ms, &find_stream);
 
-			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE))
+			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_RECURSE_LEVELS))
 			{
 				char *data1 = (char *)GPMF_RawData(&find_stream);
 				int size = GPMF_RawDataSize(&find_stream);
@@ -663,11 +696,12 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 				if (size < sizeof(complextype))
 				{
 					memcpy(complextype, data1, size);
+					typestringlength = size;
 					complextype[size] = 0;
 				}
 			}
 
-			if (GPMF_SizeOfComplexTYPE(complextype) != sample_size)
+			if (GPMF_SizeOfComplexTYPE(complextype, typestringlength) != sample_size)
 				return GPMF_ERROR_MEMORY;
 
 
@@ -852,7 +886,7 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 		{
 			GPMF_stream fs;
 			GPMF_CopyState(ms, &fs);
-			if (GPMF_OK == GPMF_FindPrev(&fs, GPMF_KEY_TYPE))
+			if (GPMF_OK == GPMF_FindPrev(&fs, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
 			{
 				char *data = (char *)GPMF_RawData(&fs);
 				int size = GPMF_RawDataSize(&fs);
@@ -892,7 +926,7 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 			GPMF_stream fs;
 			GPMF_CopyState(ms, &fs);
 
-			if (GPMF_OK == GPMF_FindPrev(&fs, GPMF_KEY_SCALE))
+			if (GPMF_OK == GPMF_FindPrev(&fs, GPMF_KEY_SCALE, GPMF_CURRENT_LEVEL))
 			{
 				scaledata = (uint32_t *)GPMF_RawData(&fs);
 				scaletype = GPMF_SAMPLE_TYPE(fs.buffer[fs.pos + 1]);
