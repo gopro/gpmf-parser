@@ -693,19 +693,19 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 				char *data1 = (char *)GPMF_RawData(&find_stream);
 				int size = GPMF_RawDataSize(&find_stream);
 
-				if (size < sizeof(complextype))
+				typestringlength = sizeof(complextype);
+				if (GPMF_OK == GPMF_ExpandComplexTYPE(data1, size, complextype, &typestringlength))
 				{
-					memcpy(complextype, data1, size);
-					typestringlength = size;
-					complextype[size] = 0;
+					elements = strlen(complextype);
+
+					if (sample_size != GPMF_SizeOfComplexTYPE(complextype, typestringlength))
+						return GPMF_ERROR_TYPE_NOT_SUPPORTED;
 				}
+				else
+					return GPMF_ERROR_TYPE_NOT_SUPPORTED;
 			}
-
-			if (GPMF_SizeOfComplexTYPE(complextype, typestringlength) != sample_size)
-				return GPMF_ERROR_MEMORY;
-
-
-			elements = strlen(complextype);
+			else
+				return GPMF_ERROR_TYPE_NOT_SUPPORTED;
 		}
 		else
 		{
@@ -860,7 +860,8 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 		uint32_t sample_size = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 1]);
 		uint32_t output_sample_size = GPMF_SizeofType(outputType);
 		uint32_t remaining_sample_size = GPMF_DATA_PACKEDSIZE(ms->buffer[ms->pos + 1]);
-		uint8_t inputtype[64] = { 0 };
+		uint8_t type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
+		char complextype[64] = "L";
 		uint32_t inputtypesize = 0;
 		uint32_t inputtypeelements = 0;
 		uint8_t scaletype = 0;
@@ -869,11 +870,11 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 		uint32_t *scaledata = NULL;
 		uint32_t tmpbuffer[64];
 		uint32_t tmpbuffersize = sizeof(tmpbuffer);
-		uint32_t elements = 0;
+		uint32_t elements = 1;
 
-		inputtype[0] = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
+		type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
 
-		if (inputtype[0] == GPMF_TYPE_NEST)
+		if (type == GPMF_TYPE_NEST)
 			return GPMF_ERROR_MEMORY;
 
 		remaining_sample_size -= sample_offset * sample_size; // skip samples
@@ -882,31 +883,35 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 		if (remaining_sample_size < sample_size * read_samples)
 			return GPMF_ERROR_MEMORY;
 
-		if (inputtype[0] == GPMF_TYPE_COMPLEX)
+		if (type == GPMF_TYPE_COMPLEX)
 		{
-			GPMF_stream fs;
-			GPMF_CopyState(ms, &fs);
-			if (GPMF_OK == GPMF_FindPrev(&fs, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
-			{
-				char *data = (char *)GPMF_RawData(&fs);
-				int size = GPMF_RawDataSize(&fs);
 
-				if (size < sizeof(inputtype))
+			GPMF_stream find_stream;
+			GPMF_CopyState(ms, &find_stream);
+
+			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_RECURSE_LEVELS))
+			{
+				char *data1 = (char *)GPMF_RawData(&find_stream);
+				int size = GPMF_RawDataSize(&find_stream);
+				uint32_t typestringlength = sizeof(complextype);
+				if (GPMF_OK == GPMF_ExpandComplexTYPE(data1, size, complextype, &typestringlength))
 				{
-					memcpy(inputtype, data, size);
-					inputtypeelements = elements = size;
+					inputtypeelements = elements = typestringlength;
+
+					if (sample_size != GPMF_SizeOfComplexTYPE(complextype, typestringlength))
+						return GPMF_ERROR_TYPE_NOT_SUPPORTED;
 				}
 				else
 					return GPMF_ERROR_TYPE_NOT_SUPPORTED;
 			}
 			else
-				return GPMF_ERROR_SCALE_NOT_SUPPORTED;
+				return GPMF_ERROR_TYPE_NOT_SUPPORTED;
 		}
 		else
 		{
-			inputtype[0] = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
+			complextype[0] = type;
+			inputtypesize = GPMF_SizeofType(type);
 			inputtypeelements = 1;
-			inputtypesize = GPMF_SizeofType(inputtype[0]);
 			elements = sample_size / inputtypesize;
 		}
 
@@ -974,7 +979,7 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 
 			for (i = 0; i < elements; i++)
 			{
-				switch (inputtype[i % inputtypeelements])
+				switch (complextype[i % inputtypeelements])
 				{
 				case GPMF_TYPE_FLOAT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, float, uint32_t) break;
 				case GPMF_TYPE_SIGNED_BYTE:  MACRO_BSWAP_CAST_SCALE(NOSWAP8, int8_t, uint8_t) break;
