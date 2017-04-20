@@ -430,13 +430,13 @@ As of April 2017, only GoPro HERO5 cameras have a GPMF track.  HERO4 Black will 
 
 | FourCC | Property | approximate frquency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| ACCL | 3-axis accelerometer | 200 | m/s² |  |
-| GYRO | 3-axis gyroscope | 400 | rad/s |  |
+| ACCL | 3-axis accelerometer | 200 | m/s² | All HERO5 cameras |
+| GYRO | 3-axis gyroscope | 400 | rad/s | All HERO5 cameras |
 | GPS5 | lattitude, longitute, altitude, 2D ground speed, and 3D speed | 18 | deg, deg, m, m/s, m/s | HERO5 Black with GPS enabled |  
-| GPSU | UTC time and data from GPS | 1 | n/a | Within the GPS5 stream |  
-| GPSF | GPS Fix | 1 | n/a | 0 - no lock, 2 - 2D Lock, 3 - 3D lock |  
-| GPSP | GPS precision | 1 | n/a | Within the GPS5 stream, under 300 is good |  
-| ISOG | Image sensor gain | 24, 25 or 30 (based video frame rate)| n/a | HERO5 v2.00 firmware |   
-| SHUT | Exposure time | 24, 25 or 30 (based video frame rate)| s | HERO5 v2.00 firmware |  
+| GPSU | UTC time and data from GPS | 1 | n/a | Within the GPS stream |  
+| GPSF | GPS Fix | 1 | n/a | Within the GPS stream: 0 - no lock, 2 or 3 - 2D or 3D Lock |  
+| GPSP | GPS precision (PDOP) | 1 | n/a | Within the GPS stream, under 300 is good |  
+| ISOG | Image sensor gain | 24, 25 or 30 (based video frame rate)| n/a | HERO5 v2 or greater firmware |   
+| SHUT | Exposure time | 24, 25 or 30 (based video frame rate)| s | HERO5 v2 or greater firmware |  
 
 
