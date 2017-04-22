@@ -424,7 +424,27 @@ File structure:
     ‘trak’ subtype ‘meta’, name “GoPro MET”, GPMF telemetry
  ```
  
- ### Where to find GPMF data
+## GPMF Timing and Clocks
+
+Timing and sample rates are not directly expressed within GPMF and for good reasons.  When you set a device up with a sample frequency of say 200Hz, or 48kHz for audio, you would think that number should be presented in the header.  Adding timing to the header is good if the different channels of data share a single reference clock. A video file can accurately state it is 25.0Hz with 48kHz audio, if the video and audio are clocked together from the same crystal or timing source.  However, two separate cameras will have slightly different timing, differing up to the tolerances of the clock source.  A crystal may have timing with stated accuracy of 50 ppm (parts per million), which would have audio of one camera between 47,997 to 48,003Hz when compared with the other.  This potential ±0.005% error is minor compared with the accuracy for the average independently clocked sensor.  Camera internal sensors or data via a connected Bluetooth device, will have timing errors in the range ±1%.  There is no value to storing timing metadata that will be significantly wrong in most cases.  The timing and the clock extraction for GPMF is determined after capture. The amount of data stored in GPMF is compared with tracks that do have timing, like the master clock with an MP4. 
+
+An example video clip has these measured sample rates:
+
+Four | Data | Set Frequency | Measured Frequency
+----- | ------ | ------ | --------
+SHUT | shutter exposure times | 23.976 Hz | 23.976 Hz
+ACCL | IMU data accelerometer | 200 Hz | 201.923 Hz
+GYRO | IMU data gyroscope | 400 Hz |  403.846 Hz 
+GPS5 | GPS Location | 18Hz | 18.169 Hz
+
+To speed the measurement of any stream of data, the more recent bitstreams have a Key of TSMP (Total Samples) the counts the ongoing number of samples for each stream – so you don’t have to count them manually.  If you compare the TSMP of the first payload with the last, you can easily determine the number of samples, then compare with the time of the video track (or MP4 clock timing), establishing the average sample rate for the GPMF data. This is not including compensation for thermal clock drifts, which do occur, although for most applications they are small enough to be safely ignored.  Some streams include device temperature (GPMF Key is TMPC) for thermal clock drift or temperature sensitive calibrations.
+
+### Sample Jitter
+As clocks can’t be trusted, what else can go wrong? The storage of GPMF data is typically a software system, like the embedded RTOS (Real-time OS) of a GoPro camera, it will have its own timing issues.  Any OS is another source of an unreliable clock, as it introduces timing jitter due to process switching time, and interrupt response times inherent in all OSes.  A device driver for a sensor may send a group of samples, to a thread that formats and stores GPMF, that is combined with other GPMF sensors, at any time the accumulated sample data can be flushed and time-stamped within the MP4.   A 200Hz device, flushed at one second intervals, could have payload sample counts of 199, 202, 201, 198, 199, etc.  Again the TSMP in every GPMF payload simplifies extraction timing for every sample stored, even with clock drift and sampling jitter. Sample code demos this.
+
+
+ 
+## Where to find GPMF data
  
 As of April 2017, only GoPro HERO5 cameras have a GPMF track.  HERO4 Black will have GPMF flight telemetry when attach to the GoPro Karma drone. Both HERO4 and HERO5 can have third party BlueTooth sensor adding GPMF data.
 
