@@ -23,6 +23,8 @@
 #ifndef _GPMF_MP4READER_H
 #define _GPMF_MP4READER_H
 
+#include "../GPMF_parser.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,11 +32,12 @@ extern "C" {
 float OpenGPMFSource(char *filename);
 void CloseGPMFSource(void);
 uint32_t GetNumberGPMFPayloads(void);
-uint32_t *GetGPMFPayload(uint32_t index);
+uint32_t *GetGPMFPayload(uint32_t *lastpayload, uint32_t index);
+void FreeGPMFPayload(uint32_t *lastpayload);
 uint32_t GetGPMFPayloadSize(uint32_t index);
-float GetGPMFSampleRate(uint32_t fourcc, uint32_t payloads);
-
-
+uint32_t GetGPMFPayloadTime(uint32_t index, float *in, float *out); //MP4 timestamps for the payload
+float GetGPMFSampleRate(uint32_t fourcc);
+float GetGPMFSampleRateAndTimes(GPMF_stream *gs, float lastrate, uint32_t index, float *in, float *out); //Jitter corrected sample(s) time, if lastrate send 0.0 is unknown it will be computed
 
 #ifdef __cplusplus
 }

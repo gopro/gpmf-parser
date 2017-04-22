@@ -48,7 +48,6 @@ uint32_t meta_clockdemon, meta_clockcount;
 uint32_t basemetadataduration = 0;
 uint32_t basemetadataoffset = 0;
 FILE *fp = NULL;
-uint32_t *GPMFbuffer = NULL;
 
 
 
@@ -76,11 +75,12 @@ uint32_t GetNumberGPMFPayloads(void)
 }
 
 
-uint32_t *GetGPMFPayload(uint32_t index)
+uint32_t *GetGPMFPayload(uint32_t *lastpayload, uint32_t index)
 {
+	uint32_t *GPMFbuffer = NULL;
 	if (index < indexcount && fp)
 	{
-		GPMFbuffer = realloc(GPMFbuffer, metasizes[index]);
+		GPMFbuffer = realloc(lastpayload, metasizes[index]);
 
 		if (GPMFbuffer)
 		{
@@ -91,6 +91,14 @@ uint32_t *GetGPMFPayload(uint32_t index)
 	}
 	return NULL;
 }
+
+
+
+void FreeGPMFPayload(uint32_t *lastpayload)
+{
+	free(lastpayload);
+}
+
 
 uint32_t GetGPMFPayloadSize(uint32_t index)
 {
@@ -348,28 +356,42 @@ void CloseGPMFSource(void)
 	if (fp) fclose(fp), fp = NULL;
 	if (metasizes) free(metasizes), metasizes = 0;
 	if (metaoffsets) free(metaoffsets), metaoffsets = 0;
-	if (GPMFbuffer) free(GPMFbuffer), GPMFbuffer = NULL;
 }
 
 
-float GetGPMFSampleRate(uint32_t fourcc, uint32_t payloads)
+uint32_t GetGPMFPayloadTime(uint32_t index, float *in, float *out)
+{
+	if (metaoffsets == 0 || basemetadataduration == 0 || meta_clockdemon == 0 || in == NULL || out == NULL) return 1;
+
+	*in = (float)((double)index * (double)basemetadataduration / (double)meta_clockdemon);
+	*out = (float)((double)(index+1) * (double)basemetadataduration / (double)meta_clockdemon);
+	return 0;
+}
+
+
+
+float GetGPMFSampleRate(uint32_t fourcc)
 {
 	GPMF_stream metadata_stream, *ms = &metadata_stream;
 	uint32_t teststart = 0;
-	uint32_t testend = payloads-1;
+	uint32_t testend = indexcount-1;
+	float rate = 0.0;
 
-	if (payloads > 3) // samples after first and before last are statisticly the best, avoiding camera start up or shutdown anomollies. 
+	if (indexcount < 1)
+		return 0.0;
+
+	if (indexcount > 3) // samples after first and before last are statisticly the best, avoiding camera start up or shutdown anomollies. 
 	{
 		teststart++;
 		testend--;
 	}
 
-	uint32_t *payload = GetGPMFPayload(teststart); // second payload
+	uint32_t *payload = GetGPMFPayload(NULL, teststart); // second payload
 	uint32_t payloadsize = GetGPMFPayloadSize(teststart);
 	int32_t ret = GPMF_Init(ms, payload, payloadsize);
 
 	if (ret != GPMF_OK)
-		return 0.0;
+		goto cleanup;
 
 	{
 		uint32_t startsamples = 0;
@@ -385,21 +407,20 @@ float GetGPMFSampleRate(uint32_t fourcc, uint32_t payloads)
 			{
 				startsamples = BYTESWAP32(*(uint32_t *)GPMF_RawData(&find_stream)) - samples;
 
-				payload = GetGPMFPayload(testend); // second last payload
+				payload = GetGPMFPayload(payload, testend); // second last payload
 				payloadsize = GetGPMFPayloadSize(testend);
 				ret = GPMF_Init(ms, payload, payloadsize);
 				if (ret != GPMF_OK)
-					return 0.0;
+					goto cleanup;
 
 				if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS))
 				{
-					GPMF_stream find_stream;
 					GPMF_CopyState(ms, &find_stream);
 					if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES, GPMF_CURRENT_LEVEL))
 					{
 						endsamples = BYTESWAP32(*(uint32_t *)GPMF_RawData(&find_stream));
-						return (float)(endsamples - startsamples) / (metadatalength * ((float)(testend - teststart + 1)) / (float)payloads);
-
+						rate = (float)(endsamples - startsamples) / (metadatalength * ((float)(testend - teststart + 1)) / (float)indexcount);
+						goto cleanup;
 					}
 				}
 			}
@@ -408,12 +429,12 @@ float GetGPMFSampleRate(uint32_t fourcc, uint32_t payloads)
 				uint32_t payloadcount = teststart+1;
 				while (payloadcount <= testend)
 				{
-					payload = GetGPMFPayload(payloadcount); // second last payload
+					payload = GetGPMFPayload(payload, payloadcount); // second last payload
 					payloadsize = GetGPMFPayloadSize(payloadcount);
 					ret = GPMF_Init(ms, payload, payloadsize);
 
 					if (ret != GPMF_OK)
-						return 0.0;
+						goto cleanup;
 
 					if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS))
 						samples += GPMF_Repeat(ms);
@@ -421,10 +442,52 @@ float GetGPMFSampleRate(uint32_t fourcc, uint32_t payloads)
 					payloadcount++;
 				}
 
-				return (float)(samples) / (metadatalength * ((float)(testend - teststart + 1)) / (float)payloads);
+				rate = (float)(samples) / (metadatalength * ((float)(testend - teststart + 1)) / (float)indexcount);
+				goto cleanup;
 			}
 		}
 	}
 
-	return 0.0;
+cleanup:
+	if(payload) if (payload) FreeGPMFPayload(payload); payload = NULL;
+
+	return rate;
+}
+
+
+float GetGPMFSampleRateAndTimes(GPMF_stream *gs, float rate, uint32_t index, float *in, float *out)
+{
+	uint32_t key, insamples;
+	uint32_t repeat, outsamples;
+	GPMF_stream find_stream;
+
+	if (gs == NULL && metaoffsets == 0 || indexcount == 0 || basemetadataduration == 0 || meta_clockdemon == 0 || in == NULL || out == NULL) return 1;
+
+	key = GPMF_Key(gs);
+	repeat = GPMF_Repeat(gs);
+	if (rate == 0.0)
+		rate = GetGPMFSampleRate(key);
+
+	if (rate == 0.0)
+	{
+		*in = *out = 0.0;
+		return 0.0;
+	}
+
+	GPMF_CopyState(gs, &find_stream);
+	if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES, GPMF_CURRENT_LEVEL))
+	{
+		outsamples = BYTESWAP32(*(uint32_t *)GPMF_RawData(&find_stream));
+		insamples = outsamples - repeat;
+
+		*in = (float)((double)insamples / (double)rate);
+		*out = (float)((double)outsamples / (double)rate);
+	}
+	else
+	{
+		// might too costly in some applications read all the samples to determine the clock jitter, here I return the estimate from the MP4 track.
+		*in = (float)((double)index * (double)basemetadataduration / (double)meta_clockdemon);
+		*out = (float)((double)(index + 1) * (double)basemetadataduration / (double)meta_clockdemon);
+	}
+	return rate;
 }

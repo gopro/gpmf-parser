@@ -36,6 +36,8 @@ int main(int argc, char *argv[])
 	int32_t ret = GPMF_OK;
 	GPMF_stream metadata_stream, *ms = &metadata_stream;
 	float metadatalength;
+	uint32_t *payload = NULL; //buffer to store GPMF samples from the MP4.
+
 
 	// get file return data
 	if (argc != 2)
@@ -54,8 +56,10 @@ int main(int argc, char *argv[])
 #if 1
 		if (payloads == 1) // Printf the contents of the single payload
 		{
-			uint32_t *payload = GetGPMFPayload(0);
 			uint32_t payloadsize = GetGPMFPayloadSize(0);
+			payload = GetGPMFPayload(payload, 0);
+			if(payload == NULL)
+				goto cleanup;
 
 			ret = GPMF_Init(ms, payload, payloadsize);
 			if (ret != GPMF_OK)
@@ -76,14 +80,25 @@ int main(int argc, char *argv[])
 			} while (GPMF_OK == GPMF_Next(ms, GPMF_RECURSE_LEVELS));
 			GPMF_ResetState(ms);
 			printf("\n");
+
 		}
 #endif
 
 
 		for (index = 0; index < payloads; index++)
 		{
-			uint32_t *payload = GetGPMFPayload(index);
 			uint32_t payloadsize = GetGPMFPayloadSize(index);
+			float in = 0.0, out = 0.0; //times
+			payload = GetGPMFPayload(payload, index);
+			if (payload == NULL)
+				goto cleanup;
+
+			ret = GetGPMFPayloadTime(index, &in, &out);
+			if (ret != GPMF_OK)
+				goto cleanup;
+
+
+			printf("MP4 Payload time %.3f to %.3f seconds\n", in, out);
 
 			ret = GPMF_Init(ms, payload, payloadsize);
 			if (ret != GPMF_OK)
@@ -101,8 +116,9 @@ int main(int argc, char *argv[])
 
 					if (samples)
 					{
+						float rate = GetGPMFSampleRateAndTimes(ms, 0.0, index, &in, &out);
 
-						printf("STRM of %c%c%c%c ", PRINTF_4CC(key));
+						printf("  STRM of %c%c%c%c %.3f-%.3fs %.3fHz ", PRINTF_4CC(key), in, out, rate);
 
 						if (type == GPMF_TYPE_COMPLEX)
 						{
@@ -202,26 +218,27 @@ int main(int argc, char *argv[])
 
 			{
 				uint32_t fourcc = STR2FOURCC("SHUT");
-				float rate = GetGPMFSampleRate(fourcc, payloads);
+				float rate = GetGPMFSampleRate(fourcc);
 				printf("%c%c%c%c sampling rate = %.3f Hz\n", PRINTF_4CC(fourcc), rate);
 
 				fourcc = STR2FOURCC("ACCL");
-				rate = GetGPMFSampleRate(fourcc, payloads);
+				rate = GetGPMFSampleRate(fourcc);
 				printf("%c%c%c%c sampling rate = %.3f Hz\n", PRINTF_4CC(fourcc), rate);
 
 				fourcc = STR2FOURCC("GYRO");
-				rate = GetGPMFSampleRate(fourcc, payloads);
+				rate = GetGPMFSampleRate(fourcc);
 				printf("%c%c%c%c sampling rate = %.3f Hz\n", PRINTF_4CC(fourcc), rate);
 
 				fourcc = STR2FOURCC("GPS5");
-				rate = GetGPMFSampleRate(fourcc, payloads);
+				rate = GetGPMFSampleRate(fourcc);
 				printf("%c%c%c%c sampling rate = %.3f Hz\n", PRINTF_4CC(fourcc), rate);
 			}
 #endif
 
 		}
 
-cleanup:
+	cleanup:
+		if (payload) FreeGPMFPayload(payload); payload = NULL;
 		CloseGPMFSource();
 	}
 
