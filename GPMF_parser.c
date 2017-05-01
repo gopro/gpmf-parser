@@ -200,7 +200,10 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 			{
 				ms->last_level_pos[ms->nest_level] = ms->pos;
 				ms->nest_size[ms->nest_level] = size;
-				ms->pos += 2;
+				if (recurse)
+					ms->pos += 2;
+				else
+					ms->pos += 2 + size;
 			}
 			else
 			{
