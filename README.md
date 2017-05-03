@@ -425,6 +425,9 @@ File structure:
  ```
  
 #### Inside the 'meta' Track
+
+Just as video and audio tracks can have different formats within, the 'meta' track is not exclusive for GPMF.  While the use of 'meta' in MP4 files is very likely GPMF data, you should confirm by scaning for the sample description which uses 'gpmd' for GPMF data.  The entire MP4 metadata track is typically structured like this:
+
 ```
   'trak'
      'tkhd' < track header data >
@@ -434,7 +437,7 @@ File structure:
 	'minf' 
 	   'gmhd' 
 	      'gmin' < media info data >
-	      'gpmd' < also a marker for gpmf data >
+	      'gpmd' < the type for GPMF data >
 	   'dinf' < data information >
 	   'stbl' < sample table within >
 	      'stsd' < sample description with data format 'gpmd', the type used for GPMF >
