@@ -426,7 +426,7 @@ File structure:
  
 #### Inside the 'meta' Track
 
-Just as video and audio tracks can have different formats within, the 'meta' track is not exclusive for GPMF.  While the use of 'meta' in MP4 files is very likely GPMF data, you should confirm by scaning for the sample description which uses 'gpmd' for GPMF data.  The entire MP4 metadata track is typically structured like this:
+Just as video and audio tracks can have different formats within, the 'meta' track is not exclusive for GPMF.  While the use of 'meta' in MP4 files is very likely a GoPro camera, it is not always GPMF data.  For a number of years GoPro cameras had a 'meta' track used for a file repair containing 'fdsc' data, this is also called the SOS track. To confirm you have a GPMF style track, scan for the sample description atom which uses the type '**gpmd**' for GPMF data.  The entire MP4 metadata track is typically structured like this:
 
 ```
   'trak'
