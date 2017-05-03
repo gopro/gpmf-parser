@@ -424,6 +424,27 @@ File structure:
     ‘trak’ subtype ‘meta’, name “GoPro MET”, GPMF telemetry
  ```
  
+#### Inside the 'meta' Track
+```
+  'trak'
+     'tkhd' < track header data >
+     'mdia' 
+        'mdhd' < media header data >
+        'hdlr' < ... Component type = 'mhlr', Component subtype = 'meta', ... Component name = “GoPro MET” ... >
+	'minf' 
+	   'gmhd' 
+	      'gmin' < media info data >
+	      'gpmd' < also a marker for gpmf data >
+	   'dinf' < data information >
+	   'stbl' < sample table within >
+	      'stsd' < sample description with data format 'gpmd', the type used for GPMF >
+	      'stts' < GPMF sample duration for each payload >
+	      'stsz' < GPMF byte size for each payload >
+	      'stco' < GPMF byte offset with the MP4 for each payload >
+```
+
+for more details on MP4 structure 'stts', 'stsz' and 'stco' see  https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-61112
+
 ## GPMF Timing and Clocks
 
 Timing and sample rates are not directly expressed within GPMF and for good reasons.  When you set a device up with a sample frequency of say 200Hz, or 48kHz for audio, you would think that number should be presented in the header.  Adding timing to the header is good if the different channels of data share a single reference clock. A video file can accurately state it is 25.0Hz with 48kHz audio, if the video and audio are clocked together from the same crystal or timing source.  However, two separate cameras will have slightly different timing, differing up to the tolerances of the clock source.  A crystal may have timing with stated accuracy of 50 ppm (parts per million), which would have audio of one camera between 47,997 to 48,003Hz when compared with the other.  This potential ±0.005% error is minor compared with the accuracy for the average independently clocked sensor.  Camera internal sensors or data via a connected Bluetooth device, will have timing errors in the range ±1%.  There is no value to storing timing metadata that will be significantly wrong in most cases.  The timing and the clock extraction for GPMF is determined after capture. The amount of data stored in GPMF is compared with tracks that do have timing, like the master clock with an MP4. 
