@@ -106,6 +106,9 @@ uint32_t GetGPMFPayloadSize(uint32_t index)
 }
 
 
+#define TRAK_TYPE		MAKEID('m', 'e', 't', 'a')		// track is the type for metadata
+#define TRAK_SUBTYPE	MAKEID('g', 'p', 'm', 'd')		// subtype is GPMF
+
 float OpenGPMFSource(char *filename)  //RAW or within MP4
 {
 	fp = fopen(filename, "rb");
@@ -174,7 +177,6 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 					qttag != MAKEID('m', 'd', 'h', 'd') &&
 					qttag != MAKEID('m', 'i', 'n', 'f') &&
 					qttag != MAKEID('g', 'm', 'i', 'n') &&
-					qttag != MAKEID('g', 'p', 'm', 'd') &&
 					qttag != MAKEID('d', 'i', 'n', 'f') &&
 					qttag != MAKEID('a', 'l', 'i', 's') &&
 					qttag != MAKEID('s', 't', 's', 'd') &&
@@ -225,32 +227,20 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 				}
 				else if (qttag == MAKEID('h', 'd', 'l', 'r')) //hldr
 				{
+					uint32_t temp;
 					len = fread(&skip, 1, 4, fp);
 					len += fread(&skip, 1, 4, fp);
-					len += fread(&type, 1, 4, fp);  // type will be 'meta' for the correct trak.
-					if (len == 12)
-					{
-						if (type == MAKEID('m', 'e', 't', 'a')) // meta 
-						{
-							int32_t namelen = 0;
-							LONGSEEK(fp, 12, SEEK_CUR), len += 12; // skip to "GoPro MET"
-							fread(&namelen, 1, 1, fp), len++;
-							if (namelen >= 9)
-							{
-								char name[10];
-								fread(&name, 1, 9, fp), len += 9;
+					len += fread(&temp, 1, 4, fp);  // type will be 'meta' for the correct trak.
 
-								if (0 != strncmp("GoPro MET", name, 9))
-									type = 0; // not GoPro Metadata
-							}
-						}
-					}
+					if (temp != MAKEID('a', 'l', 'i', 's'))
+						type = temp;
+
 					LONGSEEK(fp, qtsize - 8 - len, SEEK_CUR); // skip over hldr
 					nest--;
 				}
 				else if (qttag == MAKEID('s', 't', 's', 'd')) //read the sample decription to determine the type of metadata
 				{
-					if (type == MAKEID('m', 'e', 't', 'a')) // meta 
+					if (type == TRAK_TYPE) // meta 
 					{
 						len = fread(&skip, 1, 4, fp);
 						len += fread(&skip, 1, 4, fp);
@@ -258,7 +248,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 						len += fread(&subtype, 1, 4, fp);  // type will be 'meta' for the correct trak.
 						if (len == 16)
 						{
-							if (subtype != MAKEID('g', 'p', 'm', 'd')) // GPMF metadata 
+							if (subtype != TRAK_SUBTYPE) // GPMF metadata 
 							{
 								type = 0; // GPMF
 							}
@@ -272,7 +262,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 				}
 				else if (qttag == MAKEID('s', 't', 's', 'z')) // metadata stsz - sizes
 				{
-					if (type == MAKEID('m', 'e', 't', 'a')) // meta
+					if (type == TRAK_TYPE) // meta
 					{
 						len = fread(&skip, 1, 4, fp);
 						len += fread(&skip, 1, 4, fp);
@@ -298,7 +288,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 				}
 				else if (qttag == MAKEID('s', 't', 'c', 'o')) // metadata stco - offsets
 				{
-					if (type == MAKEID('m', 'e', 't', 'a')) // meta
+					if (type == TRAK_TYPE) // meta
 					{
 						len = fread(&skip, 1, 4, fp);
 						len += fread(&num, 1, 4, fp);
@@ -324,7 +314,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 				}
 				else if (qttag == MAKEID('s', 't', 't', 's')) // time to samples
 				{
-					if (type == MAKEID('m', 'e', 't', 'a')) // meta 
+					if (type == TRAK_TYPE) // meta 
 					{
 						uint32_t totaldur = 0;
 						int32_t entries = 0;
