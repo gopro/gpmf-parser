@@ -38,7 +38,7 @@
 
 
 uint32_t *metasizes = NULL;
-uint32_t *metaoffsets = NULL;
+uint64_t *metaoffsets = NULL;
 uint32_t indexcount = 0;
 float videolength = 0.0;
 float metadatalength = 0.0;
@@ -123,8 +123,9 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 	
 	if (fp)
 	{
-		uint32_t tag, qttag, qtsize, len, skip, type = 0, subtype = 0, num;
-		int32_t lastsize = 0, nest = 0;
+		uint32_t tag, qttag, qtsize32, len, skip, type = 0, subtype = 0, num;
+		int32_t nest = 0;
+		uint64_t lastsize = 0, qtsize;
 
 		len = fread(&tag, 1, 4, fp);
 		if (tag == GPMF_KEY_DEVICE) // RAW GPMF data, not in an MP4
@@ -142,7 +143,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 			LONGSEEK(fp, 0, SEEK_SET); // back to start
 
 			metasizes = (uint32_t *)malloc(indexcount * 4 + 4);  memset(metasizes, 0, indexcount * 4 + 4);
-			metaoffsets = (uint32_t *)malloc(indexcount * 4 + 4);  memset(metaoffsets, 0, indexcount * 4 + 4);
+			metaoffsets = (uint64_t *)malloc(indexcount * 8 + 8);  memset(metaoffsets, 0, indexcount * 8 + 8);
 
 			metasizes[0] = (filesize)&~3;
 			metaoffsets[0] = 0;
@@ -153,11 +154,19 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 
 		do
 		{
-			len = fread(&qtsize, 1, 4, fp);
+			len = fread(&qtsize32, 1, 4, fp);
 			len += fread(&qttag, 1, 4, fp);
 			if (len == 8)
 			{
-				qtsize = BYTESWAP32(qtsize);
+				qtsize32 = BYTESWAP32(qtsize32);
+
+				if (qtsize32 == 1) // 64-bit Atom
+				{
+					fread(&qtsize, 1, 8, fp);
+					qtsize = BYTESWAP64(qtsize) - 8;
+				}
+				else
+					qtsize = qtsize32;
 
 				if (!GPMF_VALID_FOURCC(qttag))
 				{
@@ -181,13 +190,13 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 					qttag != MAKEID('a', 'l', 'i', 's') &&
 					qttag != MAKEID('s', 't', 's', 'd') &&
 					qttag != MAKEID('s', 't', 's', 's') &&
-					qttag != MAKEID('s', 't', 's', 'c') &&
 					qttag != MAKEID('a', 'l', 'i', 's') &&
 					qttag != MAKEID('a', 'l', 'i', 's') &&
 					qttag != MAKEID('s', 't', 'b', 'l') &&
 					qttag != MAKEID('s', 't', 't', 's') &&
 					qttag != MAKEID('s', 't', 's', 'z') &&
 					qttag != MAKEID('s', 't', 'c', 'o') &&
+					qttag != MAKEID('c', 'o', '6', '4') &&
 					qttag != MAKEID('h', 'd', 'l', 'r'))
 				{
 					LONGSEEK(fp, qtsize - 8, SEEK_CUR);
@@ -295,14 +304,48 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 						num = BYTESWAP32(num);
 						indexcount = num;
 						if (metaoffsets) free(metaoffsets);
-						metaoffsets = (uint32_t *)malloc(num * 4);
+						metaoffsets = (uint64_t *)malloc(num * 8);
 						if (metaoffsets)
 						{
-							len += fread(metaoffsets, 1, num * 4, fp);
+							uint32_t *metaoffsets32 = NULL;
+							metaoffsets32 = (uint32_t *)malloc(num * 4);
+							if (metaoffsets32)
+							{
+								len += fread(metaoffsets32, 1, num * 4, fp);
+								do
+								{
+									num--;
+									metaoffsets[num] = BYTESWAP32(metaoffsets32[num]);
+								} while (num > 0);
+								
+								free(metaoffsets32);
+							}
+						}
+						LONGSEEK(fp, qtsize - 8 - len, SEEK_CUR); // skip over stco
+					}
+					else
+						LONGSEEK(fp, qtsize - 8, SEEK_CUR);
+
+					nest--;
+				}
+
+				else if (qttag == MAKEID('c', 'o', '6', '4')) // metadata stco - offsets
+				{
+					if (type == TRAK_TYPE) // meta
+					{
+						len = fread(&skip, 1, 4, fp);
+						len += fread(&num, 1, 4, fp);
+						num = BYTESWAP32(num);
+						indexcount = num;
+						if (metaoffsets) free(metaoffsets);
+						metaoffsets = (uint64_t *)malloc(num * 8);
+						if (metaoffsets)
+						{
+							len += fread(metaoffsets, 1, num * 8, fp);
 							do
 							{
 								num--;
-								metaoffsets[num] = BYTESWAP32(metaoffsets[num]);
+								metaoffsets[num] = BYTESWAP64(metaoffsets[num]);
 							} while (num > 0);
 						}
 						LONGSEEK(fp, qtsize - 8 - len, SEEK_CUR); // skip over stco
