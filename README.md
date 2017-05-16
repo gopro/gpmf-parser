@@ -331,7 +331,7 @@ As the CV processing in this example can take time, it will be common for the pr
 | Compass readings | milli Tesla or micro Tesla | mT or µT |
 | distance | kilometers, millimeter, etc. | km or mm or ... |
 | memory used/free | MegaByte, GigaByte, etc. | kB, MB, GB ... |
-| frequency | kiloHertz, GigaHertz, etc. | kHz, GHz, ... |
+| frequency | KiloHertz, GigaHertz, etc. | kHz, GHz, ... |
 
 ##### Special ASCII Characters
 
