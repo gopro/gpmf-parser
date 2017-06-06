@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.0.2
+ *  @version 1.0.3
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *   
@@ -100,6 +100,12 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 
 					ms->pos += size;
 					nestsize -= 2 + size;
+
+					while (nestsize > 0 && ms->buffer[ms->pos] == GPMF_KEY_END)
+					{
+						ms->pos++;
+						nestsize--;
+					}
 				}
 				else
 				{
@@ -115,7 +121,15 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 			}
 			else
 			{
-				if (ms->nest_level == 0 && ms->device_count > 0)
+				if (key == GPMF_KEY_END)
+				{
+					do
+					{
+						ms->pos++;
+						nestsize--;
+					} while (ms->buffer[ms->pos] == 0 && nestsize > 0);
+				}
+				else if (ms->nest_level == 0 && ms->device_count > 0)
 				{
 					ms->pos = currpos;
 					return GPMF_OK;
@@ -242,6 +256,12 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 						}
 					}
 				}
+			} 
+
+			while (ms->buffer[ms->pos] == GPMF_KEY_END && ms->nest_size[ms->nest_level] > 0)
+			{
+				ms->pos++;
+				ms->nest_size[ms->nest_level]--;
 			}
 
 			while (ms->nest_size[ms->nest_level] == 0 && ms->nest_level > 0)
@@ -255,6 +275,12 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 
 			if (ms->pos < ms->buffer_size_longs)
 			{
+				while (ms->buffer[ms->pos] == GPMF_KEY_END && ms->nest_size[ms->nest_level] > 0)
+				{
+					ms->pos++;
+					ms->nest_size[ms->nest_level]--;
+				}
+
 				key = ms->buffer[ms->pos];
 				if (!GPMF_VALID_FOURCC(key))
 					return GPMF_ERROR_BAD_STRUCTURE;
