@@ -30,6 +30,8 @@
 
 #include "../GPMF_parser.h"
 
+#define PRINT_MP4_STRUCTURE		0
+
 #ifdef WIN32
 #define LONGSEEK  _fseeki64
 #else
@@ -109,6 +111,8 @@ uint32_t GetGPMFPayloadSize(uint32_t index)
 #define TRAK_TYPE		MAKEID('m', 'e', 't', 'a')		// track is the type for metadata
 #define TRAK_SUBTYPE	MAKEID('g', 'p', 'm', 'd')		// subtype is GPMF
 
+#define NESTSIZE(x) { int i = nest; while (i > 0 && nestsize[i] > 0) { nestsize[i] -= x; if(nestsize[i]>=0 && nestsize[i] <= 8) { nestsize[i]==0; nest--; } i--; } }
+
 float OpenGPMFSource(char *filename)  //RAW or within MP4
 {
 	fp = fopen(filename, "rb");
@@ -125,6 +129,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 	{
 		uint32_t tag, qttag, qtsize32, len, skip, type = 0, subtype = 0, num;
 		int32_t nest = 0;
+		uint32_t nestsize[64] = { 0 };
 		uint64_t lastsize = 0, qtsize;
 
 		len = fread(&tag, 1, 4, fp);
@@ -171,14 +176,34 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 				if (!GPMF_VALID_FOURCC(qttag))
 				{
 					LONGSEEK(fp, lastsize - 8 - 8, SEEK_CUR);
-					nest--;
+					
+					NESTSIZE(lastsize - 8);
 					continue;
 				}
 				else
+				{
 					nest++;
+				}
 
+				nestsize[nest] = qtsize;
 				lastsize = qtsize;
 
+#if PRINT_MP4_STRUCTURE	
+
+				for (int i = 1; i < nest; i++) printf("    ");
+				printf("%c%c%c%c (%d)\n", (qttag & 0xff), ((qttag >> 8) & 0xff), ((qttag >> 16) & 0xff), ((qttag >> 24) & 0xff), qtsize);
+
+				if (qttag == MAKEID('m', 'd', 'a', 't') ||
+					qttag == MAKEID('f', 't', 'y', 'p') ||
+					qttag == MAKEID('u', 'd', 't', 'a'))
+				{
+					LONGSEEK(fp, qtsize - 8, SEEK_CUR);
+
+					NESTSIZE(qtsize);
+
+					continue;
+				}
+#else
 				if (qttag != MAKEID('m', 'o', 'o', 'v') && //skip over all but these atoms
 					qttag != MAKEID('m', 'v', 'h', 'd') &&
 					qttag != MAKEID('t', 'r', 'a', 'k') &&
@@ -189,7 +214,6 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 					qttag != MAKEID('d', 'i', 'n', 'f') &&
 					qttag != MAKEID('a', 'l', 'i', 's') &&
 					qttag != MAKEID('s', 't', 's', 'd') &&
-					qttag != MAKEID('s', 't', 's', 's') &&
 					qttag != MAKEID('a', 'l', 'i', 's') &&
 					qttag != MAKEID('a', 'l', 'i', 's') &&
 					qttag != MAKEID('s', 't', 'b', 'l') &&
@@ -200,9 +224,12 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 					qttag != MAKEID('h', 'd', 'l', 'r'))
 				{
 					LONGSEEK(fp, qtsize - 8, SEEK_CUR);
-					nest--;
+
+					NESTSIZE(qtsize);
 				}
-				else if (qttag == MAKEID('m', 'v', 'h', 'd')) //mvhd  movie header
+				else 
+#endif
+				if (qttag == MAKEID('m', 'v', 'h', 'd')) //mvhd  movie header
 				{
 					len = fread(&skip, 1, 4, fp);
 					len += fread(&skip, 1, 4, fp);
@@ -210,7 +237,8 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 					len += fread(&clockdemon, 1, 4, fp); clockdemon = BYTESWAP32(clockdemon);
 					len += fread(&clockcount, 1, 4, fp); clockcount = BYTESWAP32(clockcount);
 					LONGSEEK(fp, qtsize - 8 - len, SEEK_CUR); // skip over mvhd
-					nest--;
+
+					NESTSIZE(qtsize);
 				}
 				else if (qttag == MAKEID('m', 'd', 'h', 'd')) //mdhd  media header
 				{
@@ -232,7 +260,8 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 						}
 					}
 					LONGSEEK(fp, qtsize - 8 - len, SEEK_CUR); // skip over mvhd
-					nest--;
+
+					NESTSIZE(qtsize);
 				}
 				else if (qttag == MAKEID('h', 'd', 'l', 'r')) //hldr
 				{
@@ -245,7 +274,9 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 						type = temp;
 
 					LONGSEEK(fp, qtsize - 8 - len, SEEK_CUR); // skip over hldr
-					nest--;
+
+					NESTSIZE(qtsize);
+
 				}
 				else if (qttag == MAKEID('s', 't', 's', 'd')) //read the sample decription to determine the type of metadata
 				{
@@ -266,8 +297,8 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 					}
 					else
 						LONGSEEK(fp, qtsize - 8, SEEK_CUR);
-					
-					nest--;
+
+					NESTSIZE(qtsize);
 				}
 				else if (qttag == MAKEID('s', 't', 's', 'z')) // metadata stsz - sizes
 				{
@@ -293,7 +324,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 					else
 						LONGSEEK(fp, qtsize - 8, SEEK_CUR);
 
-					nest--;
+					NESTSIZE(qtsize);
 				}
 				else if (qttag == MAKEID('s', 't', 'c', 'o')) // metadata stco - offsets
 				{
@@ -317,7 +348,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 									num--;
 									metaoffsets[num] = BYTESWAP32(metaoffsets32[num]);
 								} while (num > 0);
-								
+
 								free(metaoffsets32);
 							}
 						}
@@ -326,7 +357,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 					else
 						LONGSEEK(fp, qtsize - 8, SEEK_CUR);
 
-					nest--;
+					NESTSIZE(qtsize);
 				}
 
 				else if (qttag == MAKEID('c', 'o', '6', '4')) // metadata stco - offsets
@@ -353,7 +384,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 					else
 						LONGSEEK(fp, qtsize - 8, SEEK_CUR);
 
-					nest--;
+					NESTSIZE(qtsize);
 				}
 				else if (qttag == MAKEID('s', 't', 't', 's')) // time to samples
 				{
@@ -393,12 +424,17 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 					else
 						LONGSEEK(fp, qtsize - 8, SEEK_CUR);
 
-					nest--;
+					NESTSIZE(qtsize);
+				}
+				else
+				{
+					NESTSIZE(8);
 				}
 			}
 			else
+			{
 				break;
-
+			}
 		} while (len > 0);
 	}
 
