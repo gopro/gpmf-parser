@@ -157,19 +157,19 @@ All GPMF data is 32-bit aligned and stored as big-endian. For data types that ar
 
 DEMO,  &#39;b&#39; 1  1,  &lt;byte value&gt; 0 0 0
 
-![](readmegfx/demo1.png)
+![](/readmegfx/demo1.png)
 
 The same data type stored 15 times would have only a only byte pad at the end.
 
 DEMO,  &#39;b&#39; 1  15,  &lt;15 bytes data&gt; 0
 
-![](readmegfx/demo2.png)
+![](/readmegfx/demo2.png)
 
 Packed data will all maintain a 32-bit alignment between GPMF KLV 3-tuples.
 
 DMO1, b  1 1, &lt;byte value&gt; 0 0 0 DMO2 b 1 15 &lt;values&gt; 0 DMO3 L 4 1 &lt;32-bit values&gt;
 
-![](readmegfx/demo3.png)
+![](/readmegfx/demo3.png)
 
 While padding is shown as null values, any value can be used, as this data is simply ignored.
 
@@ -179,7 +179,7 @@ The packed data size with in a GPMF KLV is the structure size times the number o
 
 As sensor data like gyro and accelerometer commonly have three (or more) axes of the same data type, the combination of Type and Structure Size, will indicate the type of data within. Three axis GYRO data could have a Type of &#39;s&#39; (short 16-bit signed integer) with a Structure size of 6. As the size of the Type is known, the number of axes in each sample is Structure size / sizeof (Type). An examples of 6 samples of a 6 byte x,y,z structure GYRO data is shown here:
 
-![](readmegfx/demo4.png)
+![](/readmegfx/demo4.png)
 
 ## GPMF Nesting
 
@@ -193,7 +193,7 @@ DEVC null 4 7
 
 This is a valid nested GPMF structure. DEVC describe 4\*7 = 28 bytes of data, which are packed and aligned GPMF KLV values describing a camera device with a Device ID and a Device Name.
 
-![](readmegfx/demo5.png)
+![](/readmegfx/demo5.png)
 
 ### Property Hierarchy
 
