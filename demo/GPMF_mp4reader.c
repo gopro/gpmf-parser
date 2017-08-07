@@ -111,11 +111,15 @@ uint32_t GetGPMFPayloadSize(uint32_t index)
 #define TRAK_TYPE		MAKEID('m', 'e', 't', 'a')		// track is the type for metadata
 #define TRAK_SUBTYPE	MAKEID('g', 'p', 'm', 'd')		// subtype is GPMF
 
-#define NESTSIZE(x) { int i = nest; while (i > 0 && nestsize[i] > 0) { nestsize[i] -= x; if(nestsize[i]>=0 && nestsize[i] <= 8) { nestsize[i]==0; nest--; } i--; } }
+#define NESTSIZE(x) { int i = nest; while (i > 0 && nestsize[i] > 0) { nestsize[i] -= x; if(nestsize[i]>=0 && nestsize[i] <= 8) { nestsize[i]=0; nest--; } i--; } }
 
 float OpenGPMFSource(char *filename)  //RAW or within MP4
 {
+#ifdef _WINDOWS
+	fopen_s(&fp, filename, "rb");
+#else
 	fp = fopen(filename, "rb");
+#endif
 
 	metasizes = NULL;
 	metaoffsets = NULL;
@@ -129,7 +133,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 	{
 		uint32_t tag, qttag, qtsize32, len, skip, type = 0, subtype = 0, num;
 		int32_t nest = 0;
-		uint32_t nestsize[64] = { 0 };
+		uint64_t nestsize[64] = { 0 };
 		uint64_t lastsize = 0, qtsize;
 
 		len = fread(&tag, 1, 4, fp);
@@ -163,6 +167,14 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 			len += fread(&qttag, 1, 4, fp);
 			if (len == 8)
 			{
+				if (!GPMF_VALID_FOURCC(qttag))
+				{
+					LONGSEEK(fp, lastsize - 8 - 8, SEEK_CUR);
+
+					NESTSIZE(lastsize - 8);
+					continue;
+				}
+
 				qtsize32 = BYTESWAP32(qtsize32);
 
 				if (qtsize32 == 1) // 64-bit Atom
@@ -173,17 +185,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 				else
 					qtsize = qtsize32;
 
-				if (!GPMF_VALID_FOURCC(qttag))
-				{
-					LONGSEEK(fp, lastsize - 8 - 8, SEEK_CUR);
-					
-					NESTSIZE(lastsize - 8);
-					continue;
-				}
-				else
-				{
-					nest++;
-				}
+				nest++;
 
 				nestsize[nest] = qtsize;
 				lastsize = qtsize;
@@ -191,7 +193,7 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 #if PRINT_MP4_STRUCTURE	
 
 				for (int i = 1; i < nest; i++) printf("    ");
-				printf("%c%c%c%c (%d)\n", (qttag & 0xff), ((qttag >> 8) & 0xff), ((qttag >> 16) & 0xff), ((qttag >> 24) & 0xff), qtsize);
+				printf("%c%c%c%c (%lld)\n", (qttag & 0xff), ((qttag >> 8) & 0xff), ((qttag >> 16) & 0xff), ((qttag >> 24) & 0xff), qtsize);
 
 				if (qttag == MAKEID('m', 'd', 'a', 't') ||
 					qttag == MAKEID('f', 't', 'y', 'p') ||
