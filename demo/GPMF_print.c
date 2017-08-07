@@ -341,7 +341,11 @@ void printfData(uint32_t type, uint32_t structsize, uint32_t repeat, void *data)
 
 				while (arraysize--)
 				{
+#ifdef _WINDOWS
+					strncpy_s(t, 17, U, 16);
+#else
 					strncpy(t, U, 16);
+#endif
 					DBG_MSG("\"%s\",", t);
 					U += 16;
 				}
