@@ -472,7 +472,7 @@ As of April 2017, only GoPro HERO5 cameras have a GPMF track. HERO4 Black will h
 | --- | --- | --- | --- | --- |
 | ACCL | 3-axis accelerometer | 200 | m/s² | All HERO5 cameras |
 | GYRO | 3-axis gyroscope | 400 | rad/s | All HERO5 cameras |
-| GPS5 | latitude, longitude, altitude, 2D ground speed, and 3D speed | 18 | deg, deg, m, m/s, m/s | HERO5 Black with GPS enabled |  
+| GPS5 | latitude, longitude, altitude (WGS 84), 2D ground speed, and 3D speed | 18 | deg, deg, m, m/s, m/s | HERO5 Black with GPS enabled |  
 | GPSU | UTC time and data from GPS | 1 | n/a | Within the GPS stream |  
 | GPSF | GPS Fix | 1 | n/a | Within the GPS stream: 0 - no lock, 2 or 3 - 2D or 3D Lock |  
 | GPSP | GPS Precision - Dilution of Precision (DOP x100) | 1 | n/a | Within the GPS stream, under 500 is good |  
