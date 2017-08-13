@@ -131,7 +131,8 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 	
 	if (fp)
 	{
-		uint32_t tag, qttag, qtsize32, len, skip, type = 0, subtype = 0, num;
+		uint32_t tag, qttag, qtsize32, skip, type = 0, subtype = 0, num;
+		size_t len;
 		int32_t nest = 0;
 		uint64_t nestsize[64] = { 0 };
 		uint64_t lastsize = 0, qtsize;
