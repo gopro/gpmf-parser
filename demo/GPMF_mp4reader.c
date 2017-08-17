@@ -91,6 +91,10 @@ uint32_t *GetGPMFPayload(uint32_t *lastpayload, uint32_t index)
 			return GPMFbuffer;
 		}
 	}
+	else if(lastpayload)
+	{
+		free(lastpayload);
+	}
 	return NULL;
 }
 
@@ -151,8 +155,20 @@ float OpenGPMFSource(char *filename)  //RAW or within MP4
 			indexcount = (int)metadatalength;
 			LONGSEEK(fp, 0, SEEK_SET); // back to start
 
-			metasizes = (uint32_t *)malloc(indexcount * 4 + 4);  memset(metasizes, 0, indexcount * 4 + 4);
-			metaoffsets = (uint64_t *)malloc(indexcount * 8 + 8);  memset(metaoffsets, 0, indexcount * 8 + 8);
+			metasizes = (uint32_t *)malloc(indexcount * 4 + 4);  
+			if (metasizes == NULL)
+				return 0;
+
+			metaoffsets = (uint64_t *)malloc(indexcount * 8 + 8);  
+			if (metaoffsets == NULL)
+			{
+				free(metasizes);
+				metasizes = 0;
+				return 0;
+			}
+
+			memset(metasizes, 0, indexcount * 4 + 4); 
+			memset(metaoffsets, 0, indexcount * 8 + 8);
 
 			metasizes[0] = (filesize)&~3;
 			metaoffsets[0] = 0;
