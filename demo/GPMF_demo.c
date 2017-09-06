@@ -2,7 +2,7 @@
 *
 *  @brief Demo to extract GPMF from an MP4
 *
-*  @version 1.0.0
+*  @version 1.0.1
 *
 *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
 *
@@ -167,9 +167,9 @@ int main(int argc, char *argv[])
 			{
 				uint32_t samples = GPMF_Repeat(ms);
 				uint32_t elements = GPMF_ElementsInStruct(ms);
-				uint32_t buffersize = samples * elements * sizeof(float);
+				uint32_t buffersize = samples * elements * sizeof(double);
 				GPMF_stream find_stream;
-				float *ptr, *tmpbuffer = malloc(buffersize);
+				double *ptr, *tmpbuffer = malloc(buffersize);
 				char units[10][6] = { "" };
 				uint32_t unit_samples = 1;
 
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
 					}
 
 					//GPMF_FormattedData(ms, tmpbuffer, buffersize, 0, samples); // Output data in LittleEnd, but no scale
-					GPMF_ScaledData(ms, tmpbuffer, buffersize, 0, samples, GPMF_TYPE_FLOAT);  //Output scaled data as floats
+					GPMF_ScaledData(ms, tmpbuffer, buffersize, 0, samples, GPMF_TYPE_DOUBLE);  //Output scaled data as floats
 
 					ptr = tmpbuffer;
 					for (i = 0; i < samples; i++)
