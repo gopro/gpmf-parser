@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.0.3
+ *  @version 1.1.0
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *   
@@ -341,6 +341,80 @@ GPMF_ERR GPMF_FindNext(GPMF_stream *ms, uint32_t fourcc, GPMF_LEVELS recurse)
 	return GPMF_ERROR_FIND;
 }
 
+GPMF_ERR GPMF_Reserved(uint32_t key)
+{
+	if(key == GPMF_KEY_DEVICE)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_DEVICE_ID)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_DEVICE_NAME)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_STREAM)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_STREAM_NAME)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_SI_UNITS)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_UNITS)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_SCALE)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_TYPE)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_TOTAL_SAMPLES)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_TICK)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_TOCK)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_EMPTY_PAYLOADS)
+		return GPMF_ERROR_RESERVED;
+
+	if(key == GPMF_KEY_REMARK)
+		return GPMF_ERROR_RESERVED;
+
+	return GPMF_OK;
+}
+
+uint32_t GPMF_PayloadSampleCount(GPMF_stream *ms)
+{
+	uint32_t count = 0;
+	if (ms)
+	{
+		uint32_t fourcc = GPMF_Key(ms);
+
+		GPMF_stream find_stream;
+		GPMF_CopyState(ms, &find_stream);
+
+		if (GPMF_OK == GPMF_FindNext(&find_stream, fourcc, GPMF_CURRENT_LEVEL)) // Count the instances, not the repeats
+		{
+			count=2;
+			while (GPMF_OK == GPMF_FindNext(&find_stream, fourcc, GPMF_CURRENT_LEVEL))
+			{
+				count++;
+			} 
+		}
+		else
+		{
+			count = GPMF_Repeat(ms);
+		}
+	}
+	return count;
+}
+
+
 GPMF_ERR GPMF_SeekToSamples(GPMF_stream *ms)
 {
 	GPMF_stream prevstate;
@@ -370,6 +444,11 @@ GPMF_ERR GPMF_SeekToSamples(GPMF_stream *ms)
 
 				if (size + 2 == ms->nest_size[ms->nest_level])
 				{
+					uint32_t key = GPMF_Key(ms);
+
+					if (GPMF_ERROR_RESERVED == GPMF_Reserved(key))
+						return GPMF_ERROR_FIND;
+					
 					return GPMF_OK; //found match
 				}
 

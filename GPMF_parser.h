@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library include
  * 
- *  @version 1.0.2
+ *  @version 1.1.0
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *   
@@ -53,7 +53,8 @@ typedef enum GPMF_ERROR
 	GPMF_ERROR_LAST,
 	GPMF_ERROR_TYPE_NOT_SUPPORTED,
 	GPMF_ERROR_SCALE_NOT_SUPPORTED,
-	GPMF_ERROR_SCALE_COUNT
+	GPMF_ERROR_SCALE_COUNT,
+	GPMF_ERROR_RESERVED
 } GPMF_ERROR;
 
 typedef enum GPMF_LEVELS
@@ -154,6 +155,7 @@ uint32_t GPMF_Key(GPMF_stream *gs);																//return the current Key (Fou
 uint32_t GPMF_Type(GPMF_stream *gs);															//return the current Type (GPMF_Type)
 uint32_t GPMF_StructSize(GPMF_stream *gs);														//return the current sample structure size
 uint32_t GPMF_Repeat(GPMF_stream *gs);															//return the current repeat or the number of samples of this structure
+uint32_t GPMF_PayloadSampleCount(GPMF_stream *gs);														//return the current number of samples of this structure, supporting multisample entries.
 uint32_t GPMF_ElementsInStruct(GPMF_stream *gs);												//return the current number elements within the structure (e.g. 3-axis gyro)
 uint32_t GPMF_RawDataSize(GPMF_stream *gs);														//return the data size for the current GPMF KLV 
 void *   GPMF_RawData(GPMF_stream *gs);															//return a pointer the KLV data (which is Bigendian if the type is known.)
@@ -167,6 +169,7 @@ GPMF_ERR GPMF_DeviceName(GPMF_stream *gs, char *devicename_buf, uint32_t devicen
 uint32_t GPMF_SizeofType(GPMF_SampleType type);													// GPMF equivalent to sizeof(type)
 uint32_t GPMF_ExpandComplexTYPE(char *src, uint32_t srcsize, char *dst, uint32_t *dstsize);		// GPMF using TYPE for cmple structure.  { float val[16],uin32_t flags; } has type "f[8]L", this tools expands to the simpler format "ffffffffL"
 uint32_t GPMF_SizeOfComplexTYPE(char *typearray, uint32_t typestringlength);					// GPMF equivalent to sizeof(typedef) for complex types. 
+GPMF_ERR GPMF_Reserved(uint32_t key);															// Test for a reverse GPMF Key, returns GPMF_OK is not reversed.
 
 //Tools for extracting sensor data 
 GPMF_ERR GPMF_FormattedData(GPMF_stream *gs, void *buffer, uint32_t buffersize, uint32_t sample_offset, uint32_t read_samples);  // extract 'n' samples into local endian memory format.
