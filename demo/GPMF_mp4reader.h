@@ -29,15 +29,20 @@
 extern "C" {
 #endif
 
-float OpenGPMFSource(char *filename);
+double OpenGPMFSource(char *filename);
+double OpenGPMFSourceUDTA(char *filename);
 void CloseGPMFSource(void);
 uint32_t GetNumberGPMFPayloads(void);
 uint32_t *GetGPMFPayload(uint32_t *lastpayload, uint32_t index);
 void FreeGPMFPayload(uint32_t *lastpayload);
 uint32_t GetGPMFPayloadSize(uint32_t index);
-uint32_t GetGPMFPayloadTime(uint32_t index, float *in, float *out); //MP4 timestamps for the payload
-float GetGPMFSampleRate(uint32_t fourcc);
-float GetGPMFSampleRateAndTimes(GPMF_stream *gs, float lastrate, uint32_t index, float *in, float *out); //Jitter corrected sample(s) time, if lastrate send 0.0 is unknown it will be computed
+uint32_t GetGPMFPayloadTime(uint32_t index, double *in, double *out); //MP4 timestamps for the payload
+
+#define GPMF_SAMPLE_RATE_FAST		0
+#define GPMF_SAMPLE_RATE_PRECISE	1
+
+double GetGPMFSampleRate(uint32_t fourcc, uint32_t flags);
+double GetGPMFSampleRateAndTimes(GPMF_stream *gs, double lastrate, uint32_t index, double *in, double *out); //Jitter corrected sample(s) time, if lastrate is unknown, send 0.0 and it will be computed
 
 #ifdef __cplusplus
 }
