@@ -466,17 +466,43 @@ As clocks can’t be trusted, what else can go wrong? The storage of GPMF data i
 
 ## Where to find GPMF data
  
-As of April 2017, only GoPro HERO5 cameras have a GPMF track. HERO4 Black will have GPMF flight telemetry when attach to the GoPro Karma drone. Both HERO4 and HERO5 can have third party BlueTooth sensor adding GPMF data.
+GoPro HERO5, HERO6 and Fusion cameras have a GPMF track. HERO4 Black will have GPMF flight telemetry when attach to the GoPro Karma drone. All GoPro HERO4 onwards can have third party BlueTooth sensor adding GPMF data.
+
+### HERO5 Black and Session 
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| ACCL | 3-axis accelerometer | 200 | m/s² | All HERO5 cameras |
-| GYRO | 3-axis gyroscope | 400 | rad/s | All HERO5 cameras |
-| GPS5 | latitude, longitude, altitude (WGS 84), 2D ground speed, and 3D speed | 18 | deg, deg, m, m/s, m/s | HERO5 Black with GPS enabled |  
-| GPSU | UTC time and data from GPS | 1 | n/a | Within the GPS stream |  
-| GPSF | GPS Fix | 1 | n/a | Within the GPS stream: 0 - no lock, 2 or 3 - 2D or 3D Lock |  
-| GPSP | GPS Precision - Dilution of Precision (DOP x100) | 1 | n/a | Within the GPS stream, under 500 is good |  
+| ACCL | 3-axis accelerometer | 200 | m/s² |   |
+| GYRO | 3-axis gyroscope | 400 | rad/s |   |
 | ISOG | Image sensor gain | 24, 25 or 30 (based video frame rate) | n/a | HERO5 v2 or greater firmware |   
 | SHUT | Exposure time | 24, 25 or 30 (based video frame rate) | s | HERO5 v2 or greater firmware |  
 
+### Hero5 Black with GPS Enabled Adds
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| GPS5 | latitude, longitude, altitude (WGS 84), 2D ground speed, and 3D speed | 18 | deg, deg, m, m/s, m/s |  |  
+| GPSU | UTC time and data from GPS | 1 | n/a | Within the GPS stream |  
+| GPSF | GPS Fix | 1 | n/a | Within the GPS stream: 0 - no lock, 2 or 3 - 2D or 3D Lock |  
+| GPSP | GPS Precision - Dilution of Precision (DOP x100) | 1 | n/a | Within the GPS stream, under 500 is good |  
+
 For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution_of_precision_(navigation)
+
+### Fusion Adds and Changes, More Coming Soon
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| GYRO | 3-axis gyroscope | - | rad/s | Increased precision for post stablization |
+
+
+### Hero6 Black Adds and Changes, Otherwise Supports All HERO5 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| GYRO | 3-axis gyroscope | 200 | rad/s | Reduce speed gyroscope from HERO5 |
+| FACE | Face detection boundaring boxes | 12, 12.5 or 15 (based video frame rate) | n/a | struct ID,x,y,w,h -- not supported in HEVC modes |
+| FCNM | Faces counted per frame| 12, 12.5 or 15 (based video frame rate) | n/a | Not supported in HEVC modes |
+| ISOE | Sensor ISO | 24, 25 or 30 (based video frame rate) | n/a | replaces ISOG, has the same function |   
+| ALLD | Auto Low Light frame Duration | 24, 25 or 30 (based video frame rate) | n/a | ALL extended exposure time |
+| WBAL | White Balance in Kelvin |  24, 25 or 30 (based video frame rate) | n/a | Classic white balance info |
+| WRGB | White Balance RGB gains |  24, 25 or 30 (based video frame rate) | n/a | Geeky white balance info |
