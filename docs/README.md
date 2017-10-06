@@ -142,11 +142,11 @@ Current types:
 | **f** | 32-bit float (IEEE 754) | float |   |
 | **d** | 64-bit double precision (IEEE 754) | double |   |
 | **F** | 32-bit four character key -- FourCC | char fourcc\[4\] |   |
-| **G** | 128-bit ID (like UUID) | uint8\_t guid\[4\] |   |
+| **G** | 128-bit ID (like UUID) | uint8\_t guid\[16\] |   |
 | **j** | 64-bit signed unsigned number | int64\_t |   |
 | **J** | 64-bit unsigned unsigned number | uint64\_t |   |
 | **q** | 32-bit Q Number Q15.16 | uint32\_t | 16-bit integer (A) with 16-bit fixed point (B) for A.B value (range -32768.0 to 32767.99998) |
-| **Q** | 64-bit Q Number Q31.32 | uint32\_t | 32-bit integer (A) with 32-bit fixed point (B) for A.B value. |
+| **Q** | 64-bit Q Number Q31.32 | uint64\_t | 32-bit integer (A) with 32-bit fixed point (B) for A.B value. |
 | **U** | UTC Date and Time string | char utcdate\[16\] | Date + UTC Time format yymmddhhmmss.sss - (years 20xx covered) |
 | **?** | data structure is complex | TYPE | Structure is defined with a preceding TYPE |
 | **null** | Nested metadata | uint32\_t | The data within is GPMF structured KLV data |
