@@ -40,7 +40,8 @@
 #endif
 
 
-uint32_t *metasizes = NULL;
+uint32_t *metasizes = NULL; 
+uint32_t metasize_count = 0;
 uint64_t *metaoffsets = NULL;
 uint32_t indexcount = 0;
 double videolength = 0.0;
@@ -51,7 +52,8 @@ uint32_t meta_clockdemon, meta_clockcount;
 uint32_t basemetadataduration = 0;
 uint32_t basemetadataoffset = 0;
 FILE *fp = NULL;
-
+SampleToChunk *metastsc = NULL;
+uint32_t metastsc_count = 0;
 
 
 typedef struct media_header
@@ -333,6 +335,7 @@ double OpenGPMFSource(char *filename)  //RAW or within MP4
 					qttag != MAKEID('a', 'l', 'i', 's') &&
 					qttag != MAKEID('s', 't', 'b', 'l') &&
 					qttag != MAKEID('s', 't', 't', 's') &&
+					qttag != MAKEID('s', 't', 's', 'c') &&
 					qttag != MAKEID('s', 't', 's', 'z') &&
 					qttag != MAKEID('s', 't', 'c', 'o') &&
 					qttag != MAKEID('c', 'o', '6', '4') &&
@@ -415,6 +418,40 @@ double OpenGPMFSource(char *filename)  //RAW or within MP4
 
 					NESTSIZE(qtsize);
 				}
+				else if (qttag == MAKEID('s', 't', 's', 'c')) // metadata stsc - offset chunks
+				{
+					if (type == TRAK_TYPE) // meta
+					{
+						len = fread(&skip, 1, 4, fp);
+						len += fread(&num, 1, 4, fp);
+						metastsc_count = num = BYTESWAP32(num);
+						if (metastsc) free(metastsc);
+						metastsc = (SampleToChunk *)malloc(num * 12);
+						if (metastsc)
+						{
+							len += fread(metastsc, 1, num * sizeof(SampleToChunk), fp);
+
+							do
+							{
+								num--;
+								metastsc[num].chunk_num = BYTESWAP32(metastsc[num].chunk_num);
+								metastsc[num].samples = BYTESWAP32(metastsc[num].samples);
+								metastsc[num].id = BYTESWAP32(metastsc[num].id);
+							} while (num > 0);
+						}
+
+						if (metastsc_count == 1 && metastsc[0].samples == 1) // Simplify if the stsc is not reporting any grouped chunks.
+						{
+							if (metastsc) free(metastsc);
+							metastsc_count = 0;
+						}
+						LONGSEEK(fp, qtsize - 8 - len, SEEK_CUR); // skip over stsz
+					}
+					else
+						LONGSEEK(fp, qtsize - 8, SEEK_CUR);
+
+					NESTSIZE(qtsize);
+				}
 				else if (qttag == MAKEID('s', 't', 's', 'z')) // metadata stsz - sizes
 				{
 					if (type == TRAK_TYPE) // meta
@@ -422,7 +459,7 @@ double OpenGPMFSource(char *filename)  //RAW or within MP4
 						len = fread(&skip, 1, 4, fp);
 						len += fread(&skip, 1, 4, fp);
 						len += fread(&num, 1, 4, fp);
-						num = BYTESWAP32(num);
+						metasize_count = num = BYTESWAP32(num);
 						if (metasizes) free(metasizes);
 						metasizes = (uint32_t *)malloc(num * 4);
 						if (metasizes)
@@ -448,23 +485,74 @@ double OpenGPMFSource(char *filename)  //RAW or within MP4
 						len = fread(&skip, 1, 4, fp);
 						len += fread(&num, 1, 4, fp);
 						num = BYTESWAP32(num);
-						indexcount = num;
-						if (metaoffsets) free(metaoffsets);
-						metaoffsets = (uint64_t *)malloc(num * 8);
-						if (metaoffsets)
+						if (metastsc_count > 0 && num != metasize_count)
 						{
-							uint32_t *metaoffsets32 = NULL;
-							metaoffsets32 = (uint32_t *)malloc(num * 4);
-							if (metaoffsets32)
+							indexcount = metasize_count;
+							if (metaoffsets) free(metaoffsets);
+							metaoffsets = (uint64_t *)malloc(metasize_count * 8);
+							if (metaoffsets)
 							{
-								len += fread(metaoffsets32, 1, num * 4, fp);
-								do
+								uint32_t *metaoffsets32 = NULL;
+								metaoffsets32 = (uint32_t *)malloc(num * 4);
+								if (metaoffsets32)
 								{
-									num--;
-									metaoffsets[num] = BYTESWAP32(metaoffsets32[num]);
-								} while (num > 0);
+									uint64_t fileoffset = 0;
+									int stsc_pos = 0;
+									int stco_pos = 0;
+									len += fread(metaoffsets32, 1, num * 4, fp);
+									do
+									{
+										num--;
+										metaoffsets32[num] = BYTESWAP32(metaoffsets32[num]);
+									} while (num > 0);
 
-								free(metaoffsets32);
+									fileoffset = metaoffsets32[0];
+									metaoffsets[0] = fileoffset;
+
+									num = 1;
+									while (num < metasize_count)
+									{
+										if (num != metastsc[stsc_pos].chunk_num - 1 && 0 == (num - (metastsc[stsc_pos].chunk_num - 1)) % metastsc[stsc_pos].samples)
+										{
+											stco_pos++;
+											fileoffset = (uint64_t)metaoffsets32[stco_pos];
+										}
+										else
+										{
+											fileoffset += (uint64_t)metasizes[num - 1];
+										}
+
+										metaoffsets[num] = fileoffset;
+										num++;
+									}
+
+									if (metastsc) free(metastsc);
+									metastsc_count = 0;
+
+									free(metaoffsets32);
+								}
+							}
+						}
+						else
+						{
+							indexcount = num;
+							if (metaoffsets) free(metaoffsets);
+							metaoffsets = (uint64_t *)malloc(num * 8);
+							if (metaoffsets)
+							{
+								uint32_t *metaoffsets32 = NULL;
+								metaoffsets32 = (uint32_t *)malloc(num * 4);
+								if (metaoffsets32)
+								{
+									len += fread(metaoffsets32, 1, num * 4, fp);
+									do
+									{
+										num--;
+										metaoffsets[num] = BYTESWAP32(metaoffsets32[num]);
+									} while (num > 0);
+
+									free(metaoffsets32);
+								}
 							}
 						}
 						LONGSEEK(fp, qtsize - 8 - len, SEEK_CUR); // skip over stco

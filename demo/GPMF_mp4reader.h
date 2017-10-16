@@ -29,6 +29,13 @@
 extern "C" {
 #endif
 
+typedef struct SampleToChunk
+{
+	uint32_t chunk_num;
+	uint32_t samples;
+	uint32_t id;
+} SampleToChunk;
+
 double OpenGPMFSource(char *filename);
 double OpenGPMFSourceUDTA(char *filename);
 void CloseGPMFSource(void);
