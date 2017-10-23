@@ -876,14 +876,15 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 				break;
 				case 8:
 				{
-					uint64_t *data64 = (uint64_t *)data;
-					uint64_t *output64 = (uint64_t *)output;
-					*output64 = BYTESWAP64(*data64);
-					output64++;
-					data64++;
+					uint32_t *data32 = (uint32_t *)data;
+					uint32_t *output32 = (uint32_t *)output;
+					*(output32+1) = BYTESWAP32(*data32);
+					*(output32) = BYTESWAP32(*(data32+1));
+					data32 += 2;
+					output32 += 2;
 
-					data = (uint8_t *)data64;
-					output = (uint8_t *)output64;
+					data = (uint8_t *)data32;
+					output = (uint8_t *)output32;
 				}
 				break;
 				default: //1, 16 or more not byteswapped
