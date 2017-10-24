@@ -35,11 +35,7 @@
 #include "../GPMF_parser.h"
 
 
-#if _WINDOWS
 #define DBG_MSG printf
-#else
-#define DBG_MSG(...)
-#endif
 
 
 #define VERBOSE_OUTPUT		0
