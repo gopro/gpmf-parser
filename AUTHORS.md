@@ -5,4 +5,5 @@
 
 # Authors
 * @dnewman-gpsw - [GoPro, Inc.](https://github.com/GoPro/gpmf-parser)
+* @tcheema-gpsw - [GoPro, Inc.](https://github.com/GoPro/gpmf-parser)
 
