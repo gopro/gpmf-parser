@@ -506,3 +506,9 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | ALLD | Auto Low Light frame Duration | 24, 25 or 30 (based video frame rate) | n/a | ALL extended exposure time |
 | WBAL | White Balance in Kelvin |  24, 25 or 30 (based video frame rate) | n/a | Classic white balance info |
 | WRGB | White Balance RGB gains |  24, 25 or 30 (based video frame rate) | n/a | Geeky white balance info |
+
+
+```
+GoPro is trademark of GoPro, Inc.
+```
+
