@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4 reader
 *
-*  @version 1.1.0
+*  @version 1.1.1
 *
 *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
 *
@@ -456,20 +456,34 @@ double OpenGPMFSource(char *filename)  //RAW or within MP4
 				{
 					if (type == TRAK_TYPE) // meta
 					{
+						uint32_t equalsamplesize;
+						
 						len = fread(&skip, 1, 4, fp);
-						len += fread(&skip, 1, 4, fp);
+						len += fread(&equalsamplesize, 1, 4, fp);
 						len += fread(&num, 1, 4, fp);
 						metasize_count = num = BYTESWAP32(num);
 						if (metasizes) free(metasizes);
 						metasizes = (uint32_t *)malloc(num * 4);
 						if (metasizes)
 						{
-							len += fread(metasizes, 1, num * 4, fp);
-							do
+							if (equalsamplesize == 0)
 							{
-								num--;
-								metasizes[num] = BYTESWAP32(metasizes[num]);
-							} while (num > 0);
+								len += fread(metasizes, 1, num * 4, fp);
+								do
+								{
+									num--;
+									metasizes[num] = BYTESWAP32(metasizes[num]);
+								} while (num > 0);
+							}
+							else
+							{
+								equalsamplesize = BYTESWAP32(equalsamplesize);
+								do
+								{
+									num--;
+									metasizes[num] = equalsamplesize;
+								} while (num > 0);
+							}
 						}
 						LONGSEEK(fp, qtsize - 8 - len, SEEK_CUR); // skip over stsz
 					}
