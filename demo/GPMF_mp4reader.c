@@ -570,17 +570,72 @@ double OpenGPMFSource(char *filename)  //RAW or within MP4
 						len = fread(&skip, 1, 4, fp);
 						len += fread(&num, 1, 4, fp);
 						num = BYTESWAP32(num);
-						indexcount = num;
-						if (metaoffsets) free(metaoffsets);
-						metaoffsets = (uint64_t *)malloc(num * 8);
-						if (metaoffsets)
+						if (metastsc_count > 0 && num != metasize_count)
 						{
-							len += fread(metaoffsets, 1, num * 8, fp);
-							do
+							indexcount = metasize_count;
+							if (metaoffsets) free(metaoffsets);
+							metaoffsets = (uint64_t *)malloc(metasize_count * 8);
+							if (metaoffsets)
 							{
-								num--;
-								metaoffsets[num] = BYTESWAP64(metaoffsets[num]);
-							} while (num > 0);
+								uint64_t *metaoffsets64 = NULL;
+								metaoffsets64 = (uint64_t *)malloc(num * 8);
+								if (metaoffsets64)
+								{
+									uint64_t fileoffset = 0;
+									int stsc_pos = 0;
+									int stco_pos = 0;
+									len += fread(metaoffsets64, 1, num * 8, fp);
+									do
+									{
+										num--;
+										metaoffsets64[num] = BYTESWAP64(metaoffsets64[num]);
+									} while (num > 0);
+
+									fileoffset = metaoffsets64[0];
+									metaoffsets[0] = fileoffset;
+									//printf("%3d:%08x, delta = %08x\n", 0, (int)fileoffset, 0);
+
+									num = 1;
+									while (num < metasize_count)
+									{
+										if (num != metastsc[stsc_pos].chunk_num - 1 && 0 == (num - (metastsc[stsc_pos].chunk_num - 1)) % metastsc[stsc_pos].samples)
+										{
+											stco_pos++;
+											fileoffset = (uint64_t)metaoffsets64[stco_pos];
+										}
+										else
+										{
+											fileoffset += (uint64_t)metasizes[num - 1];
+										}
+
+										metaoffsets[num] = fileoffset;
+										//int delta = metaoffsets[num] - metaoffsets[num - 1];
+										//printf("%3d:%08x, delta = %08x\n", num, (int)fileoffset, delta);
+
+										num++;
+									}
+
+									if (metastsc) free(metastsc);
+									metastsc_count = 0;
+
+									free(metaoffsets64);
+								}
+							}
+						}
+						else
+						{
+							indexcount = num;
+							if (metaoffsets) free(metaoffsets);
+							metaoffsets = (uint64_t *)malloc(num * 8);
+							if (metaoffsets)
+							{
+								len += fread(metaoffsets, 1, num * 8, fp);
+								do
+								{
+									num--;
+									metaoffsets[num] = BYTESWAP64(metaoffsets[num]);
+								} while (num > 0);
+							}
 						}
 						LONGSEEK(fp, qtsize - 8 - len, SEEK_CUR); // skip over stco
 					}
