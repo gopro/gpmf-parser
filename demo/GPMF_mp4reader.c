@@ -140,7 +140,7 @@ double OpenGPMFSourceUDTA(char *filename)
 
 	if (fp)
 	{
-		uint32_t qttag, qtsize32, len, type = 0, subtype = 0;
+		uint32_t qttag, qtsize32, len;
 		int32_t nest = 0;
 		uint64_t nestsize[64] = { 0 };
 		uint64_t lastsize = 0, qtsize;
@@ -902,7 +902,7 @@ double GetGPMFSampleRateAndTimes(GPMF_stream *gs, double rate, uint32_t index, d
 	uint32_t repeat, outsamples;
 	GPMF_stream find_stream;
 
-	if (gs == NULL && metaoffsets == 0 || indexcount == 0 || basemetadataduration == 0 || meta_clockdemon == 0 || in == NULL || out == NULL) return 1;
+	if (gs == NULL && (metaoffsets == 0 || indexcount == 0 || basemetadataduration == 0 || meta_clockdemon == 0 || in == NULL || out == NULL)) return 1;
 
 	key = GPMF_Key(gs);
 	repeat = GPMF_Repeat(gs);
