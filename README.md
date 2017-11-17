@@ -11,9 +11,9 @@ The GPMF structured storage format was originally proposed to store high-frequen
 
 GPMF -- GoPro Metadata Format or General Purpose Metadata Format -- is a modified Key, Length, Value solution, with a 32-bit aligned payload, that is both compact, full extensible and somewhat human readable in a hex editor. GPMF allows for dependent creation of new FourCC tags, without requiring central registration to define the contents and whether the data is in a nested structure. GPMF is optimized as a time of capture storage format for the collection of sensor data as it happens. 
 
-## GPMF-parser
+# GPMF-parser
 
-# Included Within This Repository
+## Included Within This Repository
 
 * The complete source to an GPMF parser library
 * Demo code for using the GPMF parser with extraction of GPMF from MP4 or MOV files.
@@ -23,7 +23,7 @@ GPMF -- GoPro Metadata Format or General Purpose Metadata Format -- is a modifie
   - Windows 10 with Visual Studio 2015 & 2017
   - Ubuntu 16.04 with gcc v5.4
 
-# License Terms
+## License Terms
 
 GPMF-parser is licensed under either:
 
