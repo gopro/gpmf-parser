@@ -11,15 +11,38 @@ The GPMF structured storage format was originally proposed to store high-frequen
 
 GPMF -- GoPro Metadata Format or General Purpose Metadata Format -- is a modified Key, Length, Value solution, with a 32-bit aligned payload, that is both compact, full extensible and somewhat human readable in a hex editor. GPMF allows for dependent creation of new FourCC tags, without requiring central registration to define the contents and whether the data is in a nested structure. GPMF is optimized as a time of capture storage format for the collection of sensor data as it happens. 
 
-## GPMF-parser
+# GPMF-parser
 
-### Quick Start for Developers
+## Included Within This Repository
 
-#### Setup
+* The complete source to an GPMF parser library
+* Demo code for using the GPMF parser with extraction of GPMF from MP4 or MOV files.
+* CMake support for building the demo project.
+* Tested on:
+  - macOS High Sierra with XCode v8 & v9
+  - Windows 10 with Visual Studio 2015 & 2017
+  - Ubuntu 16.04 with gcc v5.4
+
+## License Terms
+
+GPMF-parser is licensed under either:
+
+* Apache License, Version 2.0, (LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0)
+* MIT license (LICENSE-MIT or http://opensource.org/licenses/MIT)
+
+at your option.
+
+## Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
+
+## Quick Start for Developers
+
+### Setup
 
 Clone the project from Github (git clone https://github.com/gopro/gpmf-parser).
 
-#### Sample Code
+### Sample Code
 
 GPMF-parser.c and .h provide a payload decoder for any raw stream stored in compliant GPMF. Extraction of the RAW GPMF from a video or image file is not covered by this tool.
 
@@ -71,7 +94,7 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 }
 ```
 
-## GMFP Deeper Dive
+# GMFP Deeper Dive
 
 ## Definitions
 
