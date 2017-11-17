@@ -1,32 +1,24 @@
-/*
-*  Unpublished Copyright (c) 2013-17 GoPro, Inc., All Rights Reserved.
+/*! @file GPMF_print.c
 *
-*  GoPro, Inc. ("GoPro") CONFIDENTIAL
+*  @brief Demo to output GPMF for debugging
 *
-*  NOTICE: All information contained herein is, and remains the property of
-*  GoPro. The intellectual and technical concepts contained herein are
-*  proprietary to GoPro and may be covered by U.S. and Foreign Patents, patents
-*  in process, and are protected by trade secret or copyright law.
-*  Dissemination of this information or reproduction of this material is
-*  strictly forbidden unless prior written permission is obtained from GoPro.
-*  Access to the source code contained herein is hereby forbidden to anyone
-*  except current GoPro employees, managers or contractors who have executed
-*  Confidentiality and Non-disclosure agreements explicitly covering such
-*  access.
+*  @version 1.0.2
 *
-*  The copyright notice above does not evidence any actual or intended
-*  publication or disclosure of this source code, which includes information
-*  that is confidential and/or proprietary, and is a trade secret, of GoPro.
-*  ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC PERFORMANCE, OR PUBLIC
-*  DISPLAY OF OR THROUGH USE OF THIS SOURCE CODE WITHOUT THE EXPRESS WRITTEN
-*  CONSENT OF GOPRO IS STRICTLY PROHIBITED, AND IN VIOLATION OF APPLICABLE LAWS
-*  AND INTERNATIONAL TREATIES.  THE RECEIPT OR POSSESSION OF THIS SOURCE CODE
-*  AND/OR RELATED INFORMATION DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE,
-*  DISCLOSE OR DISTRIBUTE ITS CONTENTS, OR TO MANUFACTURE, USE, OR SELL ANYTHING
-*  THAT IT MAY DESCRIBE, IN WHOLE OR IN PART.
+*  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
 *
 */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -403,22 +395,23 @@ void PrintGPMF(GPMF_stream *ms)
 		uint32_t structsize = GPMF_StructSize(ms);
 		uint32_t repeat = GPMF_Repeat(ms);
 		uint32_t size = GPMF_RawDataSize(ms);
-		uint32_t level = GPMF_NestLevel(ms);
+		uint32_t indent, level = GPMF_NestLevel(ms);
 		void *data = GPMF_RawData(ms);
 
 		if (key != GPMF_KEY_DEVICE) level++;
 
-		while (level > 0 && level < 10)
+		indent = level;
+		while (indent > 0 && indent < 10)
 		{
 			DBG_MSG("  ");
-			level--;
+			indent--;
 		}
 		if (type == 0)
 			DBG_MSG("%c%c%c%c nest size %d ", (key >> 0) & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff, size);
 		else if (structsize == 1 || (repeat == 1 && type != '?'))
 			DBG_MSG("%c%c%c%c type '%c' size %d ", (key >> 0) & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff, type == 0 ? '0' : type, size);
 		else
-			DBG_MSG("%c%c%c%c type '%c' struct %d repeat %d ", (key >> 0) & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff, type == 0 ? '0' : type, structsize, repeat);
+			DBG_MSG("%c%c%c%c type '%c' samplesize %d repeat %d ", (key >> 0) & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff, type == 0 ? '0' : type, structsize, repeat);
 
 		if (type && repeat > 0)
 		{
@@ -448,24 +441,32 @@ void PrintGPMF(GPMF_stream *ms)
 
 						if (GPMF_OK == GPMF_ExpandComplexTYPE(srctype, typelen, typearray, &elements))
 						{
-#if VERBOSE_OUTPUT
 							uint32_t j;
+#if !VERBOSE_OUTPUT
+							if (repeat > 3) repeat = 3;
+#endif
 							for (j = 0; j < repeat; j++)
 							{
-								if( repeat > 1) DBG_MSG("\n");
-#endif
+								if (repeat > 1) {
+									DBG_MSG("\n  "); 
+
+									indent = level;
+									while (indent > 0 && indent < 10)
+									{
+										DBG_MSG("  ");
+										indent--;
+									}
+								}
 								for (i = 0; i < elements; i++)
 								{
 									int elementsize = GPMF_SizeofType(typearray[i]);
 									printfData(typearray[i], elementsize, 1, bdata);
 									bdata += elementsize;
 								}
-#if VERBOSE_OUTPUT
+
 							}
-#else
-								if (repeat > 1)
-									DBG_MSG("...");
-#endif
+							if (repeat > 1)
+								DBG_MSG("...");
 						}
 					}
 				}
