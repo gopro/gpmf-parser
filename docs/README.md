@@ -36,6 +36,10 @@ at your option.
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
 
+## GPMF Writing
+
+A new open source repository has been created for the purpose (GPMF-Write https://github.com/gopro/gpmf-write)
+
 ## Quick Start for Developers
 
 ### Setup
@@ -511,12 +515,15 @@ GoPro HERO5, HERO6 and Fusion cameras have a GPMF track. HERO4 Black will have G
 
 For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution_of_precision_(navigation)
 
-### Fusion Adds and Changes, More Coming Soon
+### Fusion Adds and Changes
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| GYRO | 3-axis gyroscope | - | rad/s | Increased precision for post stablization |
-
+| GYRO | 3-axis gyroscope | 3200 | rad/s | Increased precision for post stablization |
+| STMP | microsecond timestampes | 1 | µs | Increased precision for post stablization |
+| MAGN | magnetometer  | 24 | µT | Camera pointing direction |
+| ISOG | Image sensor gain | increased to 60 | n/a | per frame exposure metadata |   
+| SHUT | Exposure time | increased to 60 | s | per frame exposure metadata | 
 
 ### Hero6 Black Adds and Changes, Otherwise Supports All HERO5 metadata
 
