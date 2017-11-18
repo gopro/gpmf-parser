@@ -515,7 +515,9 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| GYRO | 3-axis gyroscope | - | rad/s | Increased precision for post stablization |
+| GYRO | 3-axis gyroscope | 3200 | rad/s | Increased precision for post stablization |
+| STMP | microsecond timestampes | 1 | µs | Increased precision for post stablization |
+| MAGN | magnetometer  | 24 | µT | Camera pointing direction |
 
 
 ### Hero6 Black Adds and Changes, Otherwise Supports All HERO5 metadata
