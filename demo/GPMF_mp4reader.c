@@ -741,7 +741,7 @@ double GetGPMFSampleRate(uint32_t fourcc, uint32_t flags)
 	if (indexcount < 1)
 		return 0.0;
 
-	if (indexcount > 3) // samples after first and before last are statisticly the best, avoiding camera start up or shutdown anomollies. 
+	if (indexcount > 3) // samples after first and before last are statistically the best, avoiding camera start up or shutdown anomollies. 
 	{
 		teststart++;
 		testend--;
@@ -757,8 +757,26 @@ double GetGPMFSampleRate(uint32_t fourcc, uint32_t flags)
 	{
 		uint32_t startsamples = 0;
 		uint32_t endsamples = 0;
+		uint32_t missing_samples = 0;
 
-		if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS))
+		while (ret == GPMF_OK && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS))
+		{
+			missing_samples = 1;
+			teststart++;
+			payload = GetGPMFPayload(payload, teststart); // second last payload
+			payloadsize = GetGPMFPayloadSize(teststart);
+			ret = GPMF_Init(ms, payload, payloadsize);
+		}
+
+		if (missing_samples)
+		{
+			teststart++;   //samples after sensor start are statistically the best
+			payload = GetGPMFPayload(payload, teststart); 
+			payloadsize = GetGPMFPayloadSize(teststart);
+			ret = GPMF_Init(ms, payload, payloadsize);
+		}
+
+		if (ret == GPMF_OK)
 		{
 			uint32_t samples = GPMF_Repeat(ms);
 			GPMF_stream find_stream;
@@ -791,7 +809,8 @@ double GetGPMFSampleRate(uint32_t fourcc, uint32_t flags)
 			{
 				uint32_t payloadpos = 0, payloadcount = 0;
 				double slope, top = 0.0, bot = 0.0, meanX = 0, meanY = 0;
-				uint32_t *repeatarray = malloc(indexcount * 4);
+				uint32_t *repeatarray = malloc(indexcount * 4 + 4);
+				memset(repeatarray, 0, indexcount * 4 + 4);
 
 				samples = 0;
 
@@ -806,10 +825,10 @@ double GetGPMFSampleRate(uint32_t fourcc, uint32_t flags)
 
 					if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS))
 					{
-						GPMF_stream find_stream;
-						GPMF_CopyState(ms, &find_stream);
+						GPMF_stream find_stream2;
+						GPMF_CopyState(ms, &find_stream2);
 
-						if (GPMF_OK == GPMF_FindNext(&find_stream, fourcc, GPMF_CURRENT_LEVEL)) // Count the instances, not the repeats
+						if (GPMF_OK == GPMF_FindNext(&find_stream2, fourcc, GPMF_CURRENT_LEVEL)) // Count the instances, not the repeats
 						{
 							if (repeatarray)
 							{
@@ -900,7 +919,7 @@ double GetGPMFSampleRateAndTimes(GPMF_stream *gs, double rate, uint32_t index, d
 	uint32_t repeat, outsamples;
 	GPMF_stream find_stream;
 
-	if (gs == NULL && (metaoffsets == 0 || indexcount == 0 || basemetadataduration == 0 || meta_clockdemon == 0 || in == NULL || out == NULL)) return 1;
+	if (gs == NULL || metaoffsets == 0 || indexcount == 0 || basemetadataduration == 0 || meta_clockdemon == 0 || in == NULL || out == NULL) return 1;
 
 	key = GPMF_Key(gs);
 	repeat = GPMF_Repeat(gs);
