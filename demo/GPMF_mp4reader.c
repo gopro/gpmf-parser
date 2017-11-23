@@ -441,6 +441,7 @@ double OpenGPMFSource(char *filename)  //RAW or within MP4
 						if (metastsc_count == 1 && metastsc[0].samples == 1) // Simplify if the stsc is not reporting any grouped chunks.
 						{
 							if (metastsc) free(metastsc);
+							metastsc = NULL;
 							metastsc_count = 0;
 						}
 						LONGSEEK(fp, qtsize - 8 - len, SEEK_CUR); // skip over stsz
