@@ -120,7 +120,7 @@ uint32_t GetGPMFPayloadSize(uint32_t index)
 
 
 
-double OpenGPMFSourceUDTA(char *filename)
+double OpenGPMFSourceUDTA(const char *filename)
 {
 #ifdef _WINDOWS
 	fopen_s(&fp, filename, "rb");
@@ -213,7 +213,7 @@ double OpenGPMFSourceUDTA(char *filename)
 }
 
 
-double OpenGPMFSource(char *filename)  //RAW or within MP4
+double OpenGPMFSource(const char *filename)  //RAW or within MP4
 {
 #ifdef _WINDOWS
 	fopen_s(&fp, filename, "rb");
