@@ -35,8 +35,8 @@ typedef struct SampleToChunk
 	uint32_t id;
 } SampleToChunk;
 
-double OpenGPMFSource(char *filename);
-double OpenGPMFSourceUDTA(char *filename);
+double OpenGPMFSource(const char *filename);
+double OpenGPMFSourceUDTA(const char *filename);
 void CloseGPMFSource(void);
 uint32_t GetNumberGPMFPayloads(void);
 uint32_t *GetGPMFPayload(uint32_t *lastpayload, uint32_t index);
