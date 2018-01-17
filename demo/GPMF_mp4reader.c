@@ -739,6 +739,10 @@ double GetGPMFSampleRate(uint32_t fourcc, uint32_t flags)
 	uint32_t testend = indexcount;
 	double rate = 0.0;
 
+	uint32_t *payload;
+	uint32_t payloadsize;
+	int32_t ret;
+
 	if (indexcount < 1)
 		return 0.0;
 
@@ -748,9 +752,9 @@ double GetGPMFSampleRate(uint32_t fourcc, uint32_t flags)
 		testend--;
 	}
 
-	uint32_t *payload = GetGPMFPayload(NULL, teststart); // second payload
-	uint32_t payloadsize = GetGPMFPayloadSize(teststart);
-	int32_t ret = GPMF_Init(ms, payload, payloadsize);
+	payload = GetGPMFPayload(NULL, teststart); // second payload
+	payloadsize = GetGPMFPayloadSize(teststart);
+	ret = GPMF_Init(ms, payload, payloadsize);
 
 	if (ret != GPMF_OK)
 		goto cleanup;
