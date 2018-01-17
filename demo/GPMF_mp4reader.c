@@ -386,7 +386,7 @@ double OpenGPMFSource(const char *filename)  //RAW or within MP4
 					len += fread(&skip, 1, 4, fp);
 					len += fread(&temp, 1, 4, fp);  // type will be 'meta' for the correct trak.
 
-					if (temp != MAKEID('a', 'l', 'i', 's'))
+					if (temp != MAKEID('a', 'l', 'i', 's') && temp != MAKEID('u', 'r', 'l', ' '))
 						type = temp;
 
 					LONGSEEK(fp, qtsize - 8 - len, SEEK_CUR); // skip over hldr
