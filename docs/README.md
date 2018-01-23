@@ -495,12 +495,16 @@ As clocks can’t be trusted, what else can go wrong? The storage of GPMF data i
  
 GoPro HERO5, HERO6 and Fusion cameras have a GPMF track. HERO4 Black will have GPMF flight telemetry when attach to the GoPro Karma drone. All GoPro HERO4 onwards can have third party BlueTooth sensor adding GPMF data.
 
+### IMU Orientation Uses These Axis Labels
+
+![](readmegfx/CameraIMUOrientationSM.png "IMU Orientation")
+
 ### HERO5 Black and Session 
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| ACCL | 3-axis accelerometer | 200 | m/s² |   |
-| GYRO | 3-axis gyroscope | 400 | rad/s |   |
+| ACCL | 3-axis accelerometer | 200 | m/s² | Data order Z,X,Y  |
+| GYRO | 3-axis gyroscope | 400 | rad/s | Data order Z,X,Y |
 | ISOG | Image sensor gain | 24, 25 or 30 (based video frame rate) | n/a | HERO5 v2 or greater firmware |   
 | SHUT | Exposure time | 24, 25 or 30 (based video frame rate) | s | HERO5 v2 or greater firmware |  
 
@@ -519,8 +523,9 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| GYRO | 3-axis gyroscope | 3200 | rad/s | Increased precision for post stablization |
-| STMP | microsecond timestampes | 1 | µs | Increased precision for post stablization |
+| ACCL | 3-axis accelerometer | 200 | m/s² | Data order -Y,X,Z |
+| GYRO | 3-axis gyroscope | 3200 | rad/s | Data order -Y,X,Z |
+| STMP | microsecond timestampes | 1 | µs | Increased precision for post stablization | |
 | MAGN | magnetometer  | 24 | µT | Camera pointing direction |
 | ISOG | Image sensor gain | increased to 60 | n/a | per frame exposure metadata |   
 | SHUT | Exposure time | increased to 60 | s | per frame exposure metadata | 
@@ -529,7 +534,8 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| GYRO | 3-axis gyroscope | 200 | rad/s | Reduce speed gyroscope from HERO5 |
+| ACCL | 3-axis accelerometer | 200 | m/s² | Data order Y,-X,Z |
+| GYRO | 3-axis gyroscope | 200 | rad/s | Data order Y,-X,Z |
 | FACE | Face detection boundaring boxes | 12, 12.5 or 15 (based video frame rate) | n/a | struct ID,x,y,w,h -- not supported in HEVC modes |
 | FCNM | Faces counted per frame| 12, 12.5 or 15 (based video frame rate) | n/a | Not supported in HEVC modes |
 | ISOE | Sensor ISO | 24, 25 or 30 (based video frame rate) | n/a | replaces ISOG, has the same function |   
