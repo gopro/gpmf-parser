@@ -116,7 +116,7 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 
 All data is Big Endian.
 
-![](readmegfx/KLVDesign.png "KLV Design")
+![](docs/readmegfx/KLVDesign.png "KLV Design")
 
 ### FourCC
 
@@ -184,19 +184,19 @@ All GPMF data is 32-bit aligned and stored as big-endian. For data types that ar
 
 DEMO,  &#39;b&#39; 1  1,  &lt;byte value&gt; 0 0 0
 
-![](readmegfx/demo1.png)
+![](docs/readmegfx/demo1.png)
 
 The same data type stored 15 times would have only a only byte pad at the end.
 
 DEMO,  &#39;b&#39; 1  15,  &lt;15 bytes data&gt; 0
 
-![](readmegfx/demo2.png)
+![](docs/readmegfx/demo2.png)
 
 Packed data will all maintain a 32-bit alignment between GPMF KLV 3-tuples.
 
 DMO1, b  1 1, &lt;byte value&gt; 0 0 0 DMO2 b 1 15 &lt;values&gt; 0 DMO3 L 4 1 &lt;32-bit values&gt;
 
-![](readmegfx/demo3.png)
+![](docs/readmegfx/demo3.png)
 
 While padding is shown as null values, any value can be used, as this data is simply ignored.
 
@@ -206,7 +206,7 @@ The packed data size with in a GPMF KLV is the structure size times the number o
 
 As sensor data like gyro and accelerometer commonly have three (or more) axes of the same data type, the combination of Type and Structure Size, will indicate the type of data within. Three axis GYRO data could have a Type of &#39;s&#39; (short 16-bit signed integer) with a Structure size of 6. As the size of the Type is known, the number of axes in each sample is Structure size / sizeof (Type). An examples of 6 samples of a 6 byte x,y,z structure GYRO data is shown here:
 
-![](readmegfx/demo4.png)
+![](docs/readmegfx/demo4.png)
 
 ## GPMF Nesting
 
@@ -220,7 +220,7 @@ DEVC null 4 7
 
 This is a valid nested GPMF structure. DEVC describe 4\*7 = 28 bytes of data, which are packed and aligned GPMF KLV values describing a camera device with a Device ID and a Device Name.
 
-![](readmegfx/demo5.png)
+![](docs/readmegfx/demo5.png)
 
 ### Property Hierarchy
 
@@ -495,12 +495,16 @@ As clocks can’t be trusted, what else can go wrong? The storage of GPMF data i
  
 GoPro HERO5, HERO6 and Fusion cameras have a GPMF track. HERO4 Black will have GPMF flight telemetry when attach to the GoPro Karma drone. All GoPro HERO4 onwards can have third party BlueTooth sensor adding GPMF data.
 
+### IMU Orientation Uses These Axis Labels
+
+![](docs/readmegfx/CameraIMUOrientationSM.png "IMU Orientation")
+
 ### HERO5 Black and Session 
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| ACCL | 3-axis accelerometer | 200 | m/s² |   |
-| GYRO | 3-axis gyroscope | 400 | rad/s |   |
+| ACCL | 3-axis accelerometer | 200 | m/s² | Data order Z,X,Y  |
+| GYRO | 3-axis gyroscope | 400 | rad/s | Data order Z,X,Y |
 | ISOG | Image sensor gain | 24, 25 or 30 (based video frame rate) | n/a | HERO5 v2 or greater firmware |   
 | SHUT | Exposure time | 24, 25 or 30 (based video frame rate) | s | HERO5 v2 or greater firmware |  
 
@@ -519,17 +523,19 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| GYRO | 3-axis gyroscope | 3200 | rad/s | Increased precision for post stablization |
-| STMP | microsecond timestampes | 1 | µs | Increased precision for post stablization |
+| ACCL | 3-axis accelerometer | 200 | m/s² | Data order -Y,X,Z |
+| GYRO | 3-axis gyroscope | 3200 | rad/s | Data order -Y,X,Z |
+| STMP | microsecond timestampes | 1 | µs | Increased precision for post stablization | |
 | MAGN | magnetometer  | 24 | µT | Camera pointing direction |
 | ISOG | Image sensor gain | increased to 60 | n/a | per frame exposure metadata |   
-| SHUT | Exposure time | increased to 60 | s | per frame exposure metadata |  
+| SHUT | Exposure time | increased to 60 | s | per frame exposure metadata | 
 
 ### Hero6 Black Adds and Changes, Otherwise Supports All HERO5 metadata
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| GYRO | 3-axis gyroscope | 200 | rad/s | Reduce speed gyroscope from HERO5 |
+| ACCL | 3-axis accelerometer | 200 | m/s² | Data order Y,-X,Z |
+| GYRO | 3-axis gyroscope | 200 | rad/s | Data order Y,-X,Z |
 | FACE | Face detection boundaring boxes | 12, 12.5 or 15 (based video frame rate) | n/a | struct ID,x,y,w,h -- not supported in HEVC modes |
 | FCNM | Faces counted per frame| 12, 12.5 or 15 (based video frame rate) | n/a | Not supported in HEVC modes |
 | ISOE | Sensor ISO | 24, 25 or 30 (based video frame rate) | n/a | replaces ISOG, has the same function |   
