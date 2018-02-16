@@ -98,7 +98,7 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 }
 ```
 
-# GMFP Deeper Dive
+# GPMF Deeper Dive
 
 ## Definitions
 
