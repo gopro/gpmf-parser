@@ -2,7 +2,7 @@
  *
  *  @brief Way Too Crude MP4 reader
  *
- *  @version 1.1.1
+ *  @version 1.1.2
  *
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
@@ -297,6 +297,8 @@ double OpenGPMFSource(const char *filename)  //RAW or within MP4
 				}
 				else
 					qtsize = qtsize32;
+
+				if (qtsize < 8) break;
 
 				nest++;
 
