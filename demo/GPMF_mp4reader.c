@@ -167,6 +167,8 @@ double OpenGPMFSourceUDTA(const char *filename)
 				else
 					qtsize = qtsize32;
 
+				if (qtsize < 8) break;
+
 				nest++;
 
 				nestsize[nest] = qtsize;
