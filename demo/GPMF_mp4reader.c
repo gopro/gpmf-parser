@@ -116,6 +116,7 @@ uint32_t GetGPMFPayloadSize(uint32_t index)
 #define TRAK_TYPE		MAKEID('m', 'e', 't', 'a')		// track is the type for metadata
 #define TRAK_SUBTYPE	MAKEID('g', 'p', 'm', 'd')		// subtype is GPMF
 
+#define MAX_NEST_LEVEL	20
 #define NESTSIZE(x) { int i = nest; while (i > 0 && nestsize[i] > 0) { nestsize[i] -= x; if(nestsize[i]>=0 && nestsize[i] <= 8) { nestsize[i]=0; nest--; } i--; } }
 
 
@@ -140,7 +141,7 @@ double OpenGPMFSourceUDTA(const char *filename)
 	{
 		uint32_t qttag, qtsize32, len;
 		int32_t nest = 0;
-		uint64_t nestsize[64] = { 0 };
+		uint64_t nestsize[MAX_NEST_LEVEL] = { 0 };
 		uint64_t lastsize = 0, qtsize;
 
 		do
@@ -167,9 +168,10 @@ double OpenGPMFSourceUDTA(const char *filename)
 				else
 					qtsize = qtsize32;
 
-				if (qtsize < 8) break;
-
 				nest++;
+
+				if (qtsize < 8) break;
+				if (nest >= MAX_NEST_LEVEL) break;
 
 				nestsize[nest] = qtsize;
 				lastsize = qtsize;
@@ -236,7 +238,7 @@ double OpenGPMFSource(const char *filename)  //RAW or within MP4
 		uint32_t tag, qttag, qtsize32, skip, type = 0, subtype = 0, num;
 		size_t len;
 		int32_t nest = 0;
-		uint64_t nestsize[64] = { 0 };
+		uint64_t nestsize[MAX_NEST_LEVEL] = { 0 };
 		uint64_t lastsize = 0, qtsize;
 
 		len = fread(&tag, 1, 4, fp);
@@ -300,9 +302,10 @@ double OpenGPMFSource(const char *filename)  //RAW or within MP4
 				else
 					qtsize = qtsize32;
 
-				if (qtsize < 8) break;
-
 				nest++;
+
+				if (qtsize < 8) break;
+				if (nest >= MAX_NEST_LEVEL) break;
 
 				nestsize[nest] = qtsize;
 				lastsize = qtsize;
