@@ -45,21 +45,21 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+	size_t mp4 = OpenMP4Source(argv[1], MOV_GPMF_TRAK_TYPE, MOV_GPMF_TRAK_SUBTYPE);
+//	size_t mp4 = OpenMP4SourceUDTA(argv[1]);  //Search for GPMF payload with MP4's udta 
 
-	metadatalength = OpenGPMFSource(argv[1]);
-
-	//metadatalength = OpenGPMFSourceUDTA(argv[1]);
+	metadatalength = GetDuration(mp4);
 
 	if (metadatalength > 0.0)
 	{
-		uint32_t index, payloads = GetNumberGPMFPayloads();
+		uint32_t index, payloads = GetNumberPayloads(mp4);
 //		printf("found %.2fs of metadata, from %d payloads, within %s\n", metadatalength, payloads, argv[1]);
 
 #if 1
 		if (payloads == 1) // Printf the contents of the single payload
 		{
-			uint32_t payloadsize = GetGPMFPayloadSize(0);
-			payload = GetGPMFPayload(payload, 0);
+			uint32_t payloadsize = GetPayloadSize(mp4,0);
+			payload = GetPayload(mp4, payload, 0);
 			if(payload == NULL)
 				goto cleanup;
 
@@ -89,13 +89,13 @@ int main(int argc, char *argv[])
 
 		for (index = 0; index < payloads; index++)
 		{
-			uint32_t payloadsize = GetGPMFPayloadSize(index);
-			double in = 0.0, out = 0.0; //times
-			payload = GetGPMFPayload(payload, index);
+			uint32_t payloadsize = GetPayloadSize(mp4, index);
+			float in = 0.0, out = 0.0; //times
+			payload = GetPayload(mp4, payload, index);
 			if (payload == NULL)
 				goto cleanup;
 
-			ret = GetGPMFPayloadTime(index, &in, &out);
+			ret = GetPayloadTime(mp4, index, &in, &out);
 			if (ret != GPMF_OK)
 				goto cleanup;
 
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
 			if (GPMF_OK == GPMF_SeekToSamples(ms)) //find the last FOURCC within the stream
 			{
 				uint32_t fourcc = GPMF_Key(ms);
-				double rate = GetGPMFSampleRate(fourcc, GPMF_SAMPLE_RATE_PRECISE);// GPMF_SAMPLE_RATE_FAST);
+				double rate = GetGPMFSampleRate(mp4, fourcc, GPMF_SAMPLE_RATE_PRECISE);// GPMF_SAMPLE_RATE_FAST);
 				printf("%c%c%c%c sampling rate = %f Hz\n", PRINTF_4CC(fourcc), rate);
 			}
 		}
@@ -236,8 +236,8 @@ int main(int argc, char *argv[])
 
 
 	cleanup:
-		if (payload) FreeGPMFPayload(payload); payload = NULL;
-		CloseGPMFSource();
+		if (payload) FreePayload(payload); payload = NULL;
+		CloseSource(mp4);
 	}
 
 	return ret;
