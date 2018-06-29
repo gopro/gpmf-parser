@@ -46,7 +46,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 		if (nestsize == 0 && ms->nest_level == 0)
 			nestsize = ms->buffer_size_longs;
 		
-		while (nestsize > 0)
+		while (ms->pos+1 < ms->buffer_size_longs && nestsize > 0)
 		{
 			uint32_t key = ms->buffer[ms->pos];
 
@@ -100,7 +100,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 					ms->pos += size;
 					nestsize -= 2 + size;
 
-					while (nestsize > 0 && ms->buffer[ms->pos] == GPMF_KEY_END)
+					while (ms->pos < ms->buffer_size_longs && nestsize > 0 && ms->buffer[ms->pos] == GPMF_KEY_END)
 					{
 						ms->pos++;
 						nestsize--;
@@ -126,7 +126,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 					{
 						ms->pos++;
 						nestsize--;
-					} while (ms->buffer[ms->pos] == 0 && nestsize > 0);
+					} while (ms->pos < ms->buffer_size_longs && nestsize > 0 && ms->buffer[ms->pos] == 0);
 				}
 				else if (ms->nest_level == 0 && ms->device_count > 0)
 				{
@@ -257,24 +257,24 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 				}
 			} 
 
-			while (ms->buffer[ms->pos] == GPMF_KEY_END && ms->nest_size[ms->nest_level] > 0)
+			while (ms->pos < ms->buffer_size_longs && ms->nest_size[ms->nest_level] > 0 && ms->buffer[ms->pos] == GPMF_KEY_END)
 			{
 				ms->pos++;
 				ms->nest_size[ms->nest_level]--;
 			}
 
-			while (ms->nest_size[ms->nest_level] == 0 && ms->nest_level > 0)
+			while (ms->nest_level > 0 && ms->nest_size[ms->nest_level] == 0)
 			{
 				ms->nest_level--;
-				if (ms->nest_level == 0)
-				{
-					//ms->device_count++;
-				}
+				//if (ms->nest_level == 0)
+				//{
+				//	ms->device_count++;
+				//}
 			}
 
 			if (ms->pos < ms->buffer_size_longs)
 			{
-				while (ms->buffer[ms->pos] == GPMF_KEY_END && ms->nest_size[ms->nest_level] > 0)
+				while (ms->pos < ms->buffer_size_longs && ms->nest_size[ms->nest_level] > 0 && ms->buffer[ms->pos] == GPMF_KEY_END)
 				{
 					ms->pos++;
 					ms->nest_size[ms->nest_level]--;
