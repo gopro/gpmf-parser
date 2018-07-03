@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.1.0
+ *  @version 1.2.0
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
@@ -46,7 +46,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 		if (nestsize == 0 && ms->nest_level == 0)
 			nestsize = ms->buffer_size_longs;
 		
-		while (nestsize > 0)
+		while (ms->pos+1 < ms->buffer_size_longs && nestsize > 0)
 		{
 			uint32_t key = ms->buffer[ms->pos];
 
@@ -100,7 +100,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 					ms->pos += size;
 					nestsize -= 2 + size;
 
-					while (nestsize > 0 && ms->buffer[ms->pos] == GPMF_KEY_END)
+					while (ms->pos < ms->buffer_size_longs && nestsize > 0 && ms->buffer[ms->pos] == GPMF_KEY_END)
 					{
 						ms->pos++;
 						nestsize--;
@@ -126,7 +126,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 					{
 						ms->pos++;
 						nestsize--;
-					} while (ms->buffer[ms->pos] == 0 && nestsize > 0);
+					} while (ms->pos < ms->buffer_size_longs && nestsize > 0 && ms->buffer[ms->pos] == 0);
 				}
 				else if (ms->nest_level == 0 && ms->device_count > 0)
 				{
@@ -203,7 +203,7 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 {
 	if (ms)
 	{
-		if (ms->pos < ms->buffer_size_longs)
+		if (ms->pos+1 < ms->buffer_size_longs)
 		{
 
 			uint32_t key, type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
@@ -257,24 +257,24 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 				}
 			} 
 
-			while (ms->buffer[ms->pos] == GPMF_KEY_END && ms->nest_size[ms->nest_level] > 0)
+			while (ms->pos < ms->buffer_size_longs && ms->nest_size[ms->nest_level] > 0 && ms->buffer[ms->pos] == GPMF_KEY_END)
 			{
 				ms->pos++;
 				ms->nest_size[ms->nest_level]--;
 			}
 
-			while (ms->nest_size[ms->nest_level] == 0 && ms->nest_level > 0)
+			while (ms->nest_level > 0 && ms->nest_size[ms->nest_level] == 0)
 			{
 				ms->nest_level--;
-				if (ms->nest_level == 0)
-				{
-					//ms->device_count++;
-				}
+				//if (ms->nest_level == 0)
+				//{
+				//	ms->device_count++;
+				//}
 			}
 
 			if (ms->pos < ms->buffer_size_longs)
 			{
-				while (ms->buffer[ms->pos] == GPMF_KEY_END && ms->nest_size[ms->nest_level] > 0)
+				while (ms->pos < ms->buffer_size_longs && ms->nest_size[ms->nest_level] > 0 && ms->buffer[ms->pos] == GPMF_KEY_END)
 				{
 					ms->pos++;
 					ms->nest_size[ms->nest_level]--;
@@ -421,7 +421,7 @@ GPMF_ERR GPMF_SeekToSamples(GPMF_stream *ms)
 	if (ms)
 	{
 
-		if (ms->pos < ms->buffer_size_longs)
+		if (ms->pos+1 < ms->buffer_size_longs)
 		{
 			uint32_t type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
 
@@ -523,7 +523,7 @@ uint32_t GPMF_Key(GPMF_stream *ms)
 
 uint32_t GPMF_Type(GPMF_stream *ms)
 {
-	if (ms && ms->pos < ms->buffer_size_longs)
+	if (ms && ms->pos+1 < ms->buffer_size_longs)
 	{
 		uint32_t type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos+1]);
 		return type;
@@ -534,7 +534,7 @@ uint32_t GPMF_Type(GPMF_stream *ms)
 
 uint32_t GPMF_StructSize(GPMF_stream *ms)
 {
-	if (ms && ms->pos < ms->buffer_size_longs)
+	if (ms && ms->pos+1 < ms->buffer_size_longs)
 	{
 		uint32_t ssize = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 1]);
 		return ssize;
@@ -545,7 +545,7 @@ uint32_t GPMF_StructSize(GPMF_stream *ms)
 
 uint32_t GPMF_ElementsInStruct(GPMF_stream *ms)
 {
-	if (ms && ms->pos < ms->buffer_size_longs)
+	if (ms && ms->pos+1 < ms->buffer_size_longs)
 	{
 		uint32_t ssize = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 1]);
 		GPMF_SampleType type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
@@ -582,7 +582,7 @@ uint32_t GPMF_ElementsInStruct(GPMF_stream *ms)
 
 uint32_t GPMF_Repeat(GPMF_stream *ms)
 {
-	if (ms && ms->pos < ms->buffer_size_longs)
+	if (ms && ms->pos+1 < ms->buffer_size_longs)
 	{
 		uint32_t repeat = GPMF_SAMPLES(ms->buffer[ms->pos + 1]);
 		return repeat;
@@ -592,7 +592,7 @@ uint32_t GPMF_Repeat(GPMF_stream *ms)
 
 uint32_t GPMF_RawDataSize(GPMF_stream *ms)
 {
-	if (ms && ms->pos < ms->buffer_size_longs)
+	if (ms && ms->pos+1 < ms->buffer_size_longs)
 	{
 		uint32_t size = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 1])*GPMF_SAMPLES(ms->buffer[ms->pos + 1]);
 		return size;
@@ -623,7 +623,7 @@ GPMF_ERR GPMF_DeviceName(GPMF_stream *ms, char *devicenamebuf, uint32_t devicena
 {
 	if (ms && devicenamebuf)
 	{
-		uint32_t len = strlen(ms->device_name);
+		uint32_t len = (uint32_t)strlen(ms->device_name);
 		if (len >= devicename_buf_size)
 			return GPMF_ERROR_MEMORY;
 
@@ -803,7 +803,7 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 				typestringlength = sizeof(complextype);
 				if (GPMF_OK == GPMF_ExpandComplexTYPE(data1, size, complextype, &typestringlength))
 				{
-					elements = strlen(complextype);
+					elements = (uint32_t)strlen(complextype);
 
 					if (sample_size != GPMF_SizeOfComplexTYPE(complextype, typestringlength))
 						return GPMF_ERROR_TYPE_NOT_SUPPORTED;
