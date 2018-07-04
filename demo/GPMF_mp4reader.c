@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.2.0
+*  @version 1.2.1
 *
 *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
 *
@@ -285,6 +285,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							mp4->metastsc = (SampleToChunk *)malloc(num * 12);
 							if (mp4->metastsc)
 							{
+								uint32_t total_stsc = num;
 								len += fread(mp4->metastsc, 1, num * sizeof(SampleToChunk), mp4->mediafp);
 
 								do
@@ -294,6 +295,13 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 									mp4->metastsc[num].samples = BYTESWAP32(mp4->metastsc[num].samples);
 									mp4->metastsc[num].id = BYTESWAP32(mp4->metastsc[num].id);
 								} while (num > 0);
+
+								//turn id in the frame number
+								mp4->metastsc[0].id = 0;
+								for (uint32_t i = 1; i < total_stsc; i++)
+								{	
+									mp4->metastsc[i].id = mp4->metastsc[i-1].id + mp4->metastsc[i-1].samples;
+								}
 							}
 
 							if (mp4->metastsc_count == 1 && mp4->metastsc[0].samples == 1) // Simplify if the stsc is not reporting any grouped chunks.
@@ -376,14 +384,11 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 											metaoffsets32[num] = BYTESWAP32(metaoffsets32[num]);
 										} while (num > 0);
 
-										fileoffset = metaoffsets32[0];
-										mp4->metaoffsets[0] = fileoffset;
-										//printf("%3d:%08x, delta = %08x\n", 0, (int)fileoffset, 0);
-
+										mp4->metaoffsets[0] = fileoffset = metaoffsets32[stco_pos];
 										num = 1;
 										while (num < mp4->metasize_count)
 										{
-											if (num != mp4->metastsc[stsc_pos].chunk_num - 1 && 0 == (num - (mp4->metastsc[stsc_pos].chunk_num - 1)) % mp4->metastsc[stsc_pos].samples)
+											if(num == mp4->metastsc[stco_pos+1].id)
 											{
 												stco_pos++;
 												fileoffset = (uint64_t)metaoffsets32[stco_pos];
