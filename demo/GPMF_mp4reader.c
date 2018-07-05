@@ -307,6 +307,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							if (mp4->metastsc_count == 1 && mp4->metastsc[0].samples == 1) // Simplify if the stsc is not reporting any grouped chunks.
 							{
 								if (mp4->metastsc) free(mp4->metastsc);
+								mp4->metastsc = NULL;
 								mp4->metastsc_count = 0;
 							}
 							LONGSEEK(mp4->mediafp, qtsize - 8 - len, SEEK_CUR); // skip over stsz
@@ -406,6 +407,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 										}
 
 										if (mp4->metastsc) free(mp4->metastsc);
+										mp4->metastsc = NULL;
 										mp4->metastsc_count = 0;
 
 										free(metaoffsets32);
@@ -496,6 +498,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 										}
 
 										if (mp4->metastsc) free(mp4->metastsc);
+										mp4->metastsc = NULL;
 										mp4->metastsc_count = 0;
 
 										free(metaoffsets64);
