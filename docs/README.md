@@ -136,7 +136,8 @@ A few Keys reserved for communicating structure, although only DEVC is required 
 | SIUN | Standard Units (like SI) | If the data can be formatted in GPMF&#39;s standard units, this is best. E.g. acceleration as &quot;m/s²&quot;.  SIUN allows for simple format conversions. |
 | UNIT | Display units | While SIUN is preferred, not everything communicates well via standard units. E.g. engine speed as &quot;RPM&quot; is more user friendly than &quot;rad/s&quot;. |
 | TYPE | Typedefs for complex structures | Not everything has a simple repeating type. For complex structure TYPE is used to describe the data packed within each sample. |
-| TSMP | Total Samples delivered | Internal field that counts all the sample delivered since record start, and is automatically computed. |
+| TSMP | Total Samples delivered | Internal field that counts all the sample delivered since record start, and is automatically computed. 
+| TIMO | Time Offset | Rare. An internal field that indicates the data is delayed by 'x' seconds. |
 | EMPT | Empty payload count | Internal field that reports the number of payloads that contain no new data. TSMP and EMPT simplify the extraction of clock. |
 
 ### Length (type-size-repeat structure)
