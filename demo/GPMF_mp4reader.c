@@ -533,7 +533,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					{
 						if (type == traktype) // meta 
 						{
-							uint32_t totaldur = 0;
+							uint32_t totaldur = 0, samples = 0;
 							int32_t entries = 0;
 							len = fread(&skip, 1, 4, mp4->mediafp);
 							len += fread(&num, 1, 4, mp4->mediafp);
@@ -552,16 +552,13 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								len += fread(&duration, 1, 4, mp4->mediafp);
 								duration = BYTESWAP32(duration);
 
-								if (samplecount > 1)
-								{
-									mp4->basemetadataoffset = totaldur;
-									mp4->basemetadataduration = duration;
-								}
+								samples += samplecount;
 								entries--;
 
 								totaldur += duration;
-								mp4->metadatalength += (float)((double)samplecount * (double)duration / (double)mp4->meta_clockdemon);
+								mp4->metadatalength += (double)((double)samplecount * (double)duration / (double)mp4->meta_clockdemon);
 							}
+							mp4->basemetadataduration = mp4->metadatalength * (double)mp4->meta_clockdemon / (double)samples;
 							LONGSEEK(mp4->mediafp, qtsize - 8 - len, SEEK_CUR); // skip over stco
 						}
 						else
@@ -598,7 +595,7 @@ float GetDuration(size_t handle)
 	mp4object *mp4 = (mp4object *)handle;
 	if (mp4 == NULL) return 0.0;
 
-	return mp4->metadatalength;
+	return (float)mp4->metadatalength;
 }
 
 
