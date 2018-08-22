@@ -295,13 +295,6 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 									mp4->metastsc[num].samples = BYTESWAP32(mp4->metastsc[num].samples);
 									mp4->metastsc[num].id = BYTESWAP32(mp4->metastsc[num].id);
 								} while (num > 0);
-
-								//turn id in the frame number
-								mp4->metastsc[0].id = 0;
-								for (uint32_t i = 1; i < total_stsc; i++)
-								{	
-									mp4->metastsc[i].id = mp4->metastsc[i-1].id + mp4->metastsc[i-1].samples;
-								}
 							}
 
 							if (mp4->metastsc_count == 1 && mp4->metastsc[0].samples == 1) // Simplify if the stsc is not reporting any grouped chunks.
@@ -378,6 +371,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 										uint64_t fileoffset = 0;
 										int stsc_pos = 0;
 										int stco_pos = 0;
+										int repeat = 1;
 										len += fread(metaoffsets32, 1, num * 4, mp4->mediafp);
 										do
 										{
@@ -389,14 +383,22 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 										num = 1;
 										while (num < mp4->metasize_count)
 										{
-											if(num == mp4->metastsc[stco_pos+1].id)
+											if (stsc_pos + 1 < (int)mp4->metastsc_count && num == stsc_pos)
+											{
+												stco_pos++; stsc_pos++;
+												fileoffset = (uint64_t)metaoffsets32[stco_pos];
+												repeat = 1;
+											}
+											else if (repeat == mp4->metastsc[stsc_pos].samples)
 											{
 												stco_pos++;
 												fileoffset = (uint64_t)metaoffsets32[stco_pos];
+												repeat = 1;
 											}
 											else
 											{
 												fileoffset += (uint64_t)mp4->metasizes[num - 1];
+												repeat++;
 											}
 
 											mp4->metaoffsets[num] = fileoffset;
