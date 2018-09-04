@@ -56,7 +56,7 @@ def setup(cythonize=True, **kwargs):
         "c" or "c++"; the default is "c"
 
     pkg_config_packages
-        ``pkg-config`` package names to link with the module.
+        A list of ``pkg-config`` package names to link with the module.
 
     pkg_config_dirs
         A list of directories to add to the pkg-config search paths (extends
@@ -115,7 +115,7 @@ def setup(cythonize=True, **kwargs):
             from Cython.Distutils import build_ext
         else:
             from setuptools.command.build_ext import build_ext
-        cmd_class = kwargs.setdefault('cmd_class', {})
+        cmd_class = kwargs.setdefault('cmdclass', {})
         cmd_class.setdefault('build_ext', build_ext)
 
     setuptools.setup(**kwargs)

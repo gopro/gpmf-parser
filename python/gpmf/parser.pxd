@@ -2,17 +2,33 @@ from libc.stdint cimport uint32_t
 
 
 cdef extern from "GPMF_parser.h":
+
     struct GPMF_stream:
         pass
 
-    enum GPMF_ERR:
-        pass
+    ctypedef uint32_t GPMF_ERR
+
+    enum GPMF_ERROR:
+        GPMF_OK
 
     enum GPMF_SampleType:
         pass
 
     enum GPMF_LEVELS:
         pass
+
+    enum GPMFKey:
+        GPMF_KEY_STREAM
+        GPMF_KEY_UNITS
+        GPMF_KEY_SI_UNITS
+        GPMF_KEY_STREAM_NAME
+
+    enum GPMF_LEVELS:
+        GPMF_CURRENT_LEVEL
+        GPMF_RECURSE_LEVELS
+
+    enum GPMF_SampleType:
+        GPMF_TYPE_DOUBLE
 
     GPMF_ERR GPMF_Init(GPMF_stream *gs, uint32_t *buffer, int datasize)
     GPMF_ERR GPMF_ResetState(GPMF_stream *gs)
