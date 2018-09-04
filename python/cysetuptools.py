@@ -112,7 +112,12 @@ def setup(cythonize=True, **kwargs):
 
         # Use Cython's build ext if we're cythonizing
         if cythonize:
-            from Cython.Distutils import build_ext
+            try:
+                from Cython.Distutils import build_ext
+            except ImportError:
+                # Dummy wrapper to avoir Cython import errors during setup
+                def build_ext(*args, **kwargs):
+                    pass
         else:
             from setuptools.command.build_ext import build_ext
         cmd_class = kwargs.setdefault('cmdclass', {})
