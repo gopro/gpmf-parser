@@ -12,7 +12,8 @@ else:
     import ConfigParser as configparser
 
 
-CYTHON_MODULE_PREFIX = 'cython-module:'
+DEFAULTS_SECTION = 'cython-modules'
+MODULE_SECTION_PREFIX = 'cython-module:'
 CYTHON_EXT = '.pyx'
 C_EXT = '.c'
 CPP_EXT = '.cpp'
@@ -141,7 +142,7 @@ def create_cython_ext_modules(cython_modules, profile_cython=False):
     ret = []
     for name, mod_data in cython_modules.items():
         kwargs = {'name': name}
-        kwargs.update(mod_data['extension'])
+        kwargs.update(mod_data)
         if profile_cython:
             kwargs['cython_directives'] = {'profile': True}
         ext = Extension(**kwargs)
@@ -149,8 +150,7 @@ def create_cython_ext_modules(cython_modules, profile_cython=False):
     return ret
 
 
-def parse_setup_cfg(fp, cythonize=False, pkg_config=None, exclude_tags=(),
-                    base_dir=''):
+def parse_setup_cfg(fp, cythonize=False, pkg_config=None, base_dir=''):
     """
     Parse the cython specific bits in a setup.cfg file.
 
@@ -161,9 +161,6 @@ def parse_setup_cfg(fp, cythonize=False, pkg_config=None, exclude_tags=(),
     to use an internal function that actually runs ``pkg-config`` (normally
     used for testing).
 
-    *exclude_tags* can be used to filter matching elements (for example getting
-    Cython modules that don't have a ``desktop-only`` tag for a mobile build).
-
     *base_dir* can be used to make relative paths absolute.
     """
     if pkg_config is None:
@@ -172,49 +169,53 @@ def parse_setup_cfg(fp, cythonize=False, pkg_config=None, exclude_tags=(),
     config.readfp(fp)
     ret = {}
     ret['cython_modules'] = _expand_cython_modules(config, cythonize,
-                                                   pkg_config, exclude_tags,
-                                                   base_dir)
+                                                   pkg_config, base_dir)
     return ret
 
 
-def _expand_cython_modules(config, cythonize, pkg_config, exclude_tags,
-                           base_dir):
+def _expand_cython_modules(config, cythonize, pkg_config, base_dir):
     ret = {}
+
+    # Search for defaults
     for section in config.sections():
-        if section.startswith(CYTHON_MODULE_PREFIX):
-            module_name = section[len(CYTHON_MODULE_PREFIX):].strip()
-            ret[module_name] = _expand_one_cython_module(config, section,
-                                                         cythonize, pkg_config,
-                                                         exclude_tags,
-                                                         base_dir)
+        if section == DEFAULTS_SECTION:
+            default_opts = dict(config.items(section))
+
+    # Expand modules
+    for section in config.sections():
+        if section.startswith(MODULE_SECTION_PREFIX):
+            module_name = section[len(MODULE_SECTION_PREFIX):].strip()
+            module_dict = _expand_one_cython_module(config, section, cythonize,
+                                                    pkg_config, base_dir,
+                                                    default_opts)
+            ret[module_name] = module_dict
+
     return ret
 
 
 def _expand_one_cython_module(config, section, cythonize, pkg_config,
-                              exclude_tags, base_dir):
-    meta = {}
-    extension = {}
-    meta['tags'] = _get_config_list(config, section, 'tags')
-    if not set(exclude_tags).intersection(meta['tags']):
-        extension['language'] = _get_config_opt(config, section, 'language',
-                                                None)
-        extension['extra_compile_args'] = \
-            _get_config_list(config, section, 'extra_compile_args')
-        extension['sources'] = _expand_sources(config, section,
-                                               extension['language'],
-                                               cythonize)
-        pc_include_dirs, pc_library_dirs, pc_libraries = \
-            _expand_pkg_config_pkgs(config, section, pkg_config)
-        include_dirs = _get_config_list(config, section, 'include_dirs')
-        include_dirs = _eval_strings(include_dirs)
-        include_dirs = _make_paths_absolute(include_dirs, base_dir)
-        library_dirs = _get_config_list(config, section, 'library_dirs')
-        library_dirs = _make_paths_absolute(library_dirs, base_dir)
-        libraries = _get_config_list(config, section, 'libraries')
-        extension['include_dirs'] = include_dirs + pc_include_dirs
-        extension['library_dirs'] = library_dirs + pc_library_dirs
-        extension['libraries'] = libraries + pc_libraries
-    return {'meta': meta, 'extension': extension}
+                              base_dir, default_opts):
+    module = {}
+    module['language'] = _get_config_opt(config, section, 'language',
+                                         default_opts, None)
+    module['extra_compile_args'] = \
+        _get_config_list(config, section, 'extra_compile_args', default_opts)
+    module['sources'] = _expand_sources(config, section, module['language'],
+                                        cythonize, default_opts)
+    pc_include_dirs, pc_library_dirs, pc_libraries = \
+        _expand_pkg_config_pkgs(config, section, pkg_config, default_opts)
+    include_dirs = _get_config_list(config, section, 'include_dirs',
+                                    default_opts)
+    include_dirs = _eval_strings(include_dirs)
+    include_dirs = _make_paths_absolute(include_dirs, base_dir)
+    library_dirs = _get_config_list(config, section, 'library_dirs',
+                                    default_opts)
+    library_dirs = _make_paths_absolute(library_dirs, base_dir)
+    libraries = _get_config_list(config, section, 'libraries', default_opts)
+    module['include_dirs'] = include_dirs + pc_include_dirs
+    module['library_dirs'] = library_dirs + pc_library_dirs
+    module['libraries'] = libraries + pc_libraries
+    return module
 
 
 def _make_paths_absolute(paths, base_dir):
@@ -232,8 +233,9 @@ def _eval_strings(values):
     return ret
 
 
-def _expand_pkg_config_pkgs(config, section, pkg_config):
-    pkg_names = _get_config_list(config, section, 'pkg_config_packages')
+def _expand_pkg_config_pkgs(config, section, pkg_config, default_opts):
+    pkg_names = _get_config_list(config, section, 'pkg_config_packages',
+                                 default_opts)
     if not pkg_names:
         return [], [], []
 
@@ -241,7 +243,7 @@ def _expand_pkg_config_pkgs(config, section, pkg_config):
     original_pkg_config_path = os.environ.get('PKG_CONFIG_PATH', '')
     pkg_config_path = original_pkg_config_path.split(":")
     pkg_config_path.extend(_get_config_list(config, section,
-                                            'pkg_config_dirs'))
+                                            'pkg_config_dirs', default_opts))
     os.environ['PKG_CONFIG_PATH'] = ":".join(pkg_config_path)
 
     pkg_config_output = pkg_config(pkg_names)
@@ -261,14 +263,14 @@ def _run_pkg_config(pkg_names):
                                     '--cflags'] + pkg_names)
 
 
-def _expand_sources(config, section, language, cythonize):
+def _expand_sources(config, section, language, cythonize, default_opts):
     if cythonize:
         ext = CYTHON_EXT
     elif language == 'c':
         ext = C_EXT
     else:
         ext = CPP_EXT
-    sources = _get_config_list(config, section, 'sources')
+    sources = _get_config_list(config, section, 'sources', default_opts)
     return [_replace_cython_ext(s, ext) for s in sources]
 
 
@@ -279,15 +281,18 @@ def _replace_cython_ext(filename, target_ext):
     return filename
 
 
-def _get_config_opt(config, section, option, default):
+def _get_config_opt(config, section, option, default_opts, default):
     try:
         return config.get(section, option)
     except configparser.NoOptionError:
-        return default
+        try:
+            return default_opts[option]
+        except KeyError:
+            return default
 
 
-def _get_config_list(config, section, option):
-    value = _get_config_opt(config, section, option, '')
+def _get_config_list(config, section, option, default_opts):
+    value = _get_config_opt(config, section, option, default_opts, '')
     return value.split()
 
 
