@@ -106,6 +106,7 @@ cdef _find_stream_name(GPMF_stream *gp_stream):
 cdef object _key_to_str(uint32_t key):
     cdef char ret[4]
     cdef int i
+
     for i in range(4):
         ret[i] = (key >> (i * 8)) & 0xff
     return PyString_FromStringAndSize(ret, 4)
