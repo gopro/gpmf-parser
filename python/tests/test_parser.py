@@ -13,6 +13,12 @@ def test_gpmf_reader(samples_dir):
     assert len(streams['ISOG']['values']) == 816
     assert len(streams['GYRO']['values']) == 13741
 
+    assert len(streams['ACCL']['timestamps']) == 6870
+    assert len(streams['SHUT']['timestamps']) == 816
+    assert len(streams['GPS5']['timestamps']) == 618
+    assert len(streams['ISOG']['timestamps']) == 816
+    assert len(streams['GYRO']['timestamps']) == 13741
+
     assert len(streams['ACCL']['values'][0]) == 3
     assert len(streams['SHUT']['values'][0]) == 1
     assert len(streams['GPS5']['values'][0]) == 5

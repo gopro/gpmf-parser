@@ -29,18 +29,15 @@ def parse_gpmf(filename):
             )
         while GPMF_FindNext(&gp_stream, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS) == GPMF_OK:
             if GPMF_SeekToSamples(&gp_stream) == GPMF_OK:
-                _read_stream_chunk(&gp_stream, streams)
+                _read_stream_chunk(&gp_stream, payload, streams)
 
     return streams
 
 
-cdef _read_stream_chunk(GPMF_stream *gp_stream, streams):
+cdef _read_stream_chunk(GPMF_stream *gp_stream, mp4reader.MP4Payload payload, streams):
     cdef uint32_t key
     cdef uint32_t num_elements
     cdef uint32_t num_samples
-    cdef uint32_t i
-    cdef uint32_t j
-    cdef uint32_t value_index
     cdef size_t buf_size
     cdef double *buf
 
@@ -54,22 +51,45 @@ cdef _read_stream_chunk(GPMF_stream *gp_stream, streams):
         if not buf:
             raise MemoryError()
         try:
-            GPMF_ScaledData(gp_stream, buf, buf_size, 0, num_samples, GPMF_TYPE_DOUBLE)
             stream = streams.setdefault(key_name, {})
-            values = stream.setdefault('values', [])
-            value_index = 0
-            for j in range(num_samples):
-                sample = []
-                for i in range(num_elements):
-                    sample.append(buf[value_index])
-                    value_index += 1
-                values.append(sample)
+            _read_values(gp_stream, buf, buf_size, num_samples, num_elements, stream)
+            _build_timestamps(payload, num_samples, stream)
             if 'units' not in stream:
                 stream['units'] = _find_stream_units(gp_stream)
             if 'name' not in stream:
                 stream['name'] = _find_stream_name(gp_stream)
         finally:
             PyMem_Free(buf)
+
+
+cdef _read_values(GPMF_stream *gp_stream, double *buf, size_t buf_size,
+                  uint32_t num_samples, uint32_t num_elements, stream):
+    cdef uint32_t i
+    cdef uint32_t j
+    cdef uint32_t value_index
+
+    GPMF_ScaledData(gp_stream, buf, buf_size, 0, num_samples,
+                    GPMF_TYPE_DOUBLE)
+    values = stream.setdefault('values', [])
+    value_index = 0
+    for j in range(num_samples):
+        sample = []
+        for i in range(num_elements):
+            sample.append(buf[value_index])
+            value_index += 1
+        values.append(sample)
+
+
+cdef _build_timestamps(mp4reader.MP4Payload payload, uint32_t num_samples, stream):
+    cdef uint32_t i
+    cdef double payload_duration
+    cdef double time
+
+    timestamps = stream.setdefault('timestamps', [])
+    payload_duration = payload.end_time - payload.start_time
+    for i in range(num_samples):
+        time = payload.start_time + (<double>i / num_samples) * payload_duration
+        timestamps.append(time)
 
 
 cdef _find_stream_units(GPMF_stream *gp_stream):
