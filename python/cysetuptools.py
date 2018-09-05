@@ -116,7 +116,7 @@ def setup(cythonize=True, **kwargs):
             try:
                 from Cython.Distutils import build_ext
             except ImportError:
-                # Dummy wrapper to avoir Cython import errors during setup
+                # Dummy wrapper to avoid Cython import errors during setup
                 def build_ext(*args, **kwargs):
                     pass
         else:

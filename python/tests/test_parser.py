@@ -7,11 +7,17 @@ def test_gpmf_reader(samples_dir):
 
     assert streams.keys() == ['ACCL', 'SHUT', 'GPS5', 'ISOG', 'GYRO']
 
-    assert len(streams['ACCL']['values']) == 164880
-    assert len(streams['SHUT']['values']) == 6528
-    assert len(streams['GPS5']['values']) == 24720
-    assert len(streams['ISOG']['values']) == 6528
-    assert len(streams['GYRO']['values']) == 329784
+    assert len(streams['ACCL']['values']) == 6870
+    assert len(streams['SHUT']['values']) == 816
+    assert len(streams['GPS5']['values']) == 618
+    assert len(streams['ISOG']['values']) == 816
+    assert len(streams['GYRO']['values']) == 13741
+
+    assert len(streams['ACCL']['values'][0]) == 3
+    assert len(streams['SHUT']['values'][0]) == 1
+    assert len(streams['GPS5']['values'][0]) == 5
+    assert len(streams['ISOG']['values'][0]) == 1
+    assert len(streams['GYRO']['values'][0]) == 3
 
     assert streams['ACCL']['units'] == [u'm/s²']
     assert streams['SHUT']['units'] == ['s']

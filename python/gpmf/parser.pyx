@@ -38,9 +38,11 @@ cdef _read_stream_chunk(GPMF_stream *gp_stream, streams):
     cdef uint32_t key
     cdef uint32_t num_elements
     cdef uint32_t num_samples
+    cdef uint32_t i
+    cdef uint32_t j
+    cdef uint32_t value_index
     cdef size_t buf_size
     cdef double *buf
-    cdef size_t value_index
 
     key = GPMF_Key(gp_stream)
     key_name = _key_to_str(key)
@@ -55,8 +57,13 @@ cdef _read_stream_chunk(GPMF_stream *gp_stream, streams):
             GPMF_ScaledData(gp_stream, buf, buf_size, 0, num_samples, GPMF_TYPE_DOUBLE)
             stream = streams.setdefault(key_name, {})
             values = stream.setdefault('values', [])
-            for value_index in range(buf_size):
-                values.append(buf[value_index])
+            value_index = 0
+            for j in range(num_samples):
+                sample = []
+                for i in range(num_elements):
+                    sample.append(buf[value_index])
+                    value_index += 1
+                values.append(sample)
             if 'units' not in stream:
                 stream['units'] = _find_stream_units(gp_stream)
             if 'name' not in stream:
