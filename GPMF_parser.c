@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.2.0
+ *  @version 1.2.1
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
@@ -1019,6 +1019,8 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 		{
 			complextype[0] = type;
 			inputtypesize = GPMF_SizeofType(type);
+			if (inputtypesize == 0)
+				return GPMF_ERROR_MEMORY;
 			inputtypeelements = 1;
 			elements = sample_size / inputtypesize;
 		}
