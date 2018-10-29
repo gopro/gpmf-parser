@@ -106,9 +106,11 @@ int main(int argc, char *argv[])
 #if 1		// Find all the available Streams and the data carrying FourCC
 			if (index == 0) // show first payload 
 			{
-				while (GPMF_OK == GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS))
+				ret = GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS);
+				while (GPMF_OK == ret)
 				{
-					if (GPMF_OK == GPMF_SeekToSamples(ms)) //find the last FOURCC within the stream
+					ret = GPMF_SeekToSamples(ms);
+					if (GPMF_OK == ret) //find the last FOURCC within the stream
 					{
 						uint32_t key = GPMF_Key(ms);
 						GPMF_SampleType type = GPMF_Type(ms);
@@ -152,6 +154,15 @@ int main(int argc, char *argv[])
 
 							printf("\n");
 						}
+
+						ret = GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS);
+					}
+					else
+					{
+						if (ret == GPMF_ERROR_BAD_STRUCTURE) // some payload element was corrupt, skip to the next valid GPMF KLV at the previous level.
+						{
+							ret = GPMF_Next(ms, GPMF_CURRENT_LEVEL); // this will be the next stream if any more are present.
+						}
 					}
 				}
 				GPMF_ResetState(ms);
@@ -165,7 +176,7 @@ int main(int argc, char *argv[])
 #if 1		// Find GPS values and return scaled doubles. 
 			if (index == 0) // show first payload 
 			{
-				if (GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("GPS5"), GPMF_RECURSE_LEVELS) || //GoPro Hero5 GPS
+				if (GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("GPS5"), GPMF_RECURSE_LEVELS) || //GoPro Hero5/6/7 GPS
 					GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("GPRI"), GPMF_RECURSE_LEVELS))   //GoPro Karma GPS
 				{
 					uint32_t key = GPMF_Key(ms);
