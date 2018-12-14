@@ -544,6 +544,15 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | WBAL | White Balance in Kelvin |  24, 25 or 30 (based video frame rate) | n/a | Classic white balance info |
 | WRGB | White Balance RGB gains |  24, 25 or 30 (based video frame rate) | n/a | Geeky white balance info |
 
+### Hero7 Black Adds, Removes, Changes, Otherwise Supports All HERO6 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| FACE | Face boxes and smile confidence | at base frame rate 24/25/30 | n/a | struct ID,x,y,w,h,unused[17],smile |
+| FCNM | removed| n/a | n/a |  |
+| YAVG | Luma (Y) Average over the frame | 8 - 10 | n/a | range 0 (black) to 255 (white) |
+| HUES | Predominant hues over the frame | 8 - 10 | n/a | struct ubyte hue, ubyte weight, HSV_Hue = hue x 360/255 |
+| SCEN | Scene classifier in probabilities | 8 - 10 | n/a | FourCC scenes: SNOW, URBAn, INDOor, WATR, VEGEtation, BEACh |
 
 ```
 GoPro is trademark of GoPro, Inc.
