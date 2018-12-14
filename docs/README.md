@@ -552,6 +552,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | FCNM | removed| n/a | n/a |  |
 | YAVG | Luma (Y) Average over the frame | 8 - 10 | n/a | range 0 (black) to 255 (white) |
 | HUES | Predominant hues over the frame | 8 - 10 | n/a | struct ubyte hue, ubyte weight, HSV_Hue = hue x 360/255 |
+| UNIF | Image uniformity | 8 - 10 | range 0 to 1.0 where 1.0 is a solid color |
 | SCEN | Scene classifier in probabilities | 8 - 10 | n/a | FourCC scenes: SNOW, URBAn, INDOor, WATR, VEGEtation, BEACh |
 
 ```
