@@ -868,11 +868,11 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 		{
 			if (GPMF_OK == GPMF_Decompress(ms, (uint32_t *)output, buffersize))
 			{
-				uint32_t *gpmf_klv = (uint32_t *)output;
-				data = output + 8;
-				sample_size = GPMF_SAMPLE_SIZE(gpmf_klv[1]);
-				remaining_sample_size = GPMF_DATA_PACKEDSIZE(gpmf_klv[1]);
-				type = GPMF_SAMPLE_TYPE(gpmf_klv[1]);
+				uint32_t compressed_typesize = ms->buffer[ms->pos + 2];
+				sample_size = GPMF_SAMPLE_SIZE(compressed_typesize);
+				remaining_sample_size = GPMF_DATA_PACKEDSIZE(compressed_typesize);
+				type = GPMF_SAMPLE_TYPE(compressed_typesize);
+				data = output;
 			}
 			else
 				return GPMF_ERROR_MEMORY;
@@ -1346,8 +1346,6 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 		uint32_t maxsamples = uncompressed_size / sample_size;
 		int signed_type = 1;
 
-		*localbuf++ = ms->buffer[ms->pos + 0];
-		*localbuf++ = ms->buffer[ms->pos + 2];
 		memset(localbuf, 0, localbuf_size);
 
 		GPMF_codebook *cb = (GPMF_codebook *)ms->cbhandle;
