@@ -168,7 +168,8 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 				if (qttag == MAKEID('m', 'd', 'a', 't') ||
 					qttag == MAKEID('f', 't', 'y', 'p') ||
-					qttag == MAKEID('u', 'd', 't', 'a'))
+					qttag == MAKEID('u', 'd', 't', 'a') ||
+					qttag == MAKEID('f', 'r', 'e', 'e'))
 				{
 					LONGSEEK(mediafp, qtsize - 8, SEEK_CUR);
 
