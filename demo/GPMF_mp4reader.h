@@ -57,13 +57,12 @@ typedef struct mp4object
 	SampleToChunk *metastsc;
 	uint32_t metastsc_count;
 	uint32_t indexcount;
-	float videolength;
-	float metadatalength;
+	double videolength;
+	double metadatalength;
 	uint32_t clockdemon, clockcount;
 	uint32_t trak_clockdemon, trak_clockcount;
 	uint32_t meta_clockdemon, meta_clockcount;
-	uint32_t basemetadataduration;
-	uint32_t basemetadataoffset;
+	double basemetadataduration;
 	FILE *mediafp;
 } mp4object;
 

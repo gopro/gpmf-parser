@@ -163,18 +163,18 @@ Current types:
 | **b** | single byte signed integer | int8\_t | -128 to 127 |
 | **B** | single byte unsigned integer | uint8\_t | 0 to 255 |
 | **c** | single byte &#39;c&#39; style ASCII character string | char | Optionally NULL terminated - size/repeat sets the length |
-| **s** | 16-bit signed integer | int16\_t | -32768 to 32768 |
-| **S** | 16-bit unsigned integer | uint16\_t | 0 to 65536 |
-| **l** | 32-bit signed integer | int32\_t |   |
-| **L** | 32-bit unsigned integer | uint32\_t |   |
-| **f** | 32-bit float (IEEE 754) | float |   |
 | **d** | 64-bit double precision (IEEE 754) | double |   |
+| **f** | 32-bit float (IEEE 754) | float |   |
 | **F** | 32-bit four character key -- FourCC | char fourcc\[4\] |   |
 | **G** | 128-bit ID (like UUID) | uint8\_t guid\[16\] |   |
 | **j** | 64-bit signed unsigned number | int64\_t |   |
 | **J** | 64-bit unsigned unsigned number | uint64\_t |   |
+| **l** | 32-bit signed integer | int32\_t |   |
+| **L** | 32-bit unsigned integer | uint32\_t |   |
 | **q** | 32-bit Q Number Q15.16 | uint32\_t | 16-bit integer (A) with 16-bit fixed point (B) for A.B value (range -32768.0 to 32767.99998) |
 | **Q** | 64-bit Q Number Q31.32 | uint64\_t | 32-bit integer (A) with 32-bit fixed point (B) for A.B value. |
+| **s** | 16-bit signed integer | int16\_t | -32768 to 32768 |
+| **S** | 16-bit unsigned integer | uint16\_t | 0 to 65536 |
 | **U** | UTC Date and Time string | char utcdate\[16\] | Date + UTC Time format yymmddhhmmss.sss - (years 20xx covered) |
 | **?** | data structure is complex | TYPE | Structure is defined with a preceding TYPE |
 | **null** | Nested metadata | uint32\_t | The data within is GPMF structured KLV data |
@@ -544,6 +544,16 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | WBAL | White Balance in Kelvin |  24, 25 or 30 (based video frame rate) | n/a | Classic white balance info |
 | WRGB | White Balance RGB gains |  24, 25 or 30 (based video frame rate) | n/a | Geeky white balance info |
 
+### Hero7 Black Adds, Removes, Changes, Otherwise Supports All HERO6 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| FACE | Face boxes and smile confidence | at base frame rate 24/25/30 | n/a | struct ID,x,y,w,h,unused[17],smile |
+| FCNM | removed| n/a | n/a |  |
+| YAVG | Luma (Y) Average over the frame | 8 - 10 | n/a | range 0 (black) to 255 (white) |
+| HUES | Predominant hues over the frame | 8 - 10 | n/a | struct ubyte hue, ubyte weight, HSV_Hue = hue x 360/255 |
+| UNIF | Image uniformity | 8 - 10 | range 0 to 1.0 where 1.0 is a solid color |
+| SCEN | Scene classifier in probabilities | 8 - 10 | n/a | FourCC scenes: SNOW, URBAn, INDOor, WATR, VEGEtation, BEACh |
 
 ```
 GoPro is trademark of GoPro, Inc.

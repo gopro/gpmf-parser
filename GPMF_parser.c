@@ -38,6 +38,21 @@
 #define DBG_MSG(...)
 #endif
 
+
+GPMF_ERR IsValidSize(GPMF_stream *ms, uint32_t size) // size is in longs not bytes.
+{
+	if (ms)
+	{
+		uint32_t nestsize = ms->nest_size[ms->nest_level];
+		if (nestsize == 0 && ms->nest_level == 0)
+			nestsize = ms->buffer_size_longs;
+
+		if (size + 2 <= nestsize) return GPMF_OK;
+	}
+	return GPMF_ERROR_BAD_STRUCTURE;
+}
+
+
 GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 {
 	if (ms)
@@ -210,6 +225,8 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 
 			uint32_t key, type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
 			uint32_t size = (GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]) >> 2);
+
+			if (GPMF_OK != IsValidSize(ms, size)) return GPMF_ERROR_BAD_STRUCTURE;
 
 			if (GPMF_TYPE_NEST == type && GPMF_KEY_DEVICE == ms->buffer[ms->pos] && ms->nest_level == 0)
 			{
@@ -435,6 +452,12 @@ GPMF_ERR GPMF_SeekToSamples(GPMF_stream *ms)
 			while (0 == GPMF_Next(ms, GPMF_CURRENT_LEVEL))
 			{
 				uint32_t size = (GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]) >> 2);
+				if (GPMF_OK != IsValidSize(ms, size))
+				{
+					memcpy(ms, &prevstate, sizeof(GPMF_stream));
+					return GPMF_ERROR_BAD_STRUCTURE;
+				}
+
 				type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
 
 
@@ -619,7 +642,9 @@ uint32_t GPMF_RawDataSize(GPMF_stream *ms)
 {
 	if (ms && ms->pos+1 < ms->buffer_size_longs)
 	{
-		uint32_t size = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 1])*GPMF_SAMPLES(ms->buffer[ms->pos + 1]);
+		uint32_t size = GPMF_DATA_PACKEDSIZE(ms->buffer[ms->pos + 1]);
+		if (GPMF_OK != IsValidSize(ms, size >> 2)) return 0;
+
 		return size;
 	}
 	return 0;
@@ -834,7 +859,10 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 		char complextype[64] = "L";
 
 		if (type == GPMF_TYPE_NEST)
-			return GPMF_ERROR_MEMORY;
+			return GPMF_ERROR_BAD_STRUCTURE;
+		
+		if (GPMF_OK != IsValidSize(ms, remaining_sample_size>>2))
+			return GPMF_ERROR_BAD_STRUCTURE;
 
 		if (type == GPMF_TYPE_COMPRESSED)
 		{
