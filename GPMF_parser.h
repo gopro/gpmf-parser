@@ -69,7 +69,7 @@ GPMF_ERR GPMF_SeekToSamples(GPMF_stream *gs);													//find the last FourCC
 
 // Get information about the current GPMF KLV
 uint32_t GPMF_Key(GPMF_stream *gs);																//return the current Key (FourCC)
-uint32_t GPMF_Type(GPMF_stream *gs);															//return the current Type (GPMF_Type)
+GPMF_SampleType GPMF_Type(GPMF_stream *gs);														//return the current Type (GPMF_Type)
 uint32_t GPMF_StructSize(GPMF_stream *gs);														//return the current sample structure size
 uint32_t GPMF_Repeat(GPMF_stream *gs);															//return the current repeat or the number of samples of this structure
 uint32_t GPMF_PayloadSampleCount(GPMF_stream *gs);														//return the current number of samples of this structure, supporting multisample entries.

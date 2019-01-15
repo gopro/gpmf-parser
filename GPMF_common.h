@@ -66,6 +66,7 @@ typedef enum
 
 	GPMF_TYPE_NEST = 0, // used to nest more GPMF formatted metadata 
 
+	GPMF_TYPE_ERROR = 0xff // used to report an error
 } GPMF_SampleType;
 
 
@@ -76,7 +77,7 @@ typedef enum
 #define BYTESWAP64(a)			(((a&0xff)<<56)|((a&0xff00)<<40)|((a&0xff0000)<<24)|((a&0xff000000)<<8) | ((a>>56)&0xff)|((a>>40)&0xff00)|((a>>24)&0xff0000)|((a>>8)&0xff000000) )
 #define BYTESWAP32(a)			(((a&0xff)<<24)|((a&0xff00)<<8)|((a>>8)&0xff00)|((a>>24)&0xff))
 #define BYTESWAP16(a)			((((a)>>8)&0xff)|(((a)<<8)&0xff00))
-#define BYTESWAPin32(a,s)		((s>=4)?(((a&0xff)<<24)|((a&0xff00)<<8)|((a>>8)&0xff00)|((a>>24)&0xff)):((s==2)?(((a>>8)&0xff)|((a<<8)&0xff00)|((a>>8)&0xff0000)|((a<<8)&0xff000000)):(a)))
+#define BYTESWAP2x16(a)			(((a>>8)&0xff)|((a<<8)&0xff00)|((a>>8)&0xff0000)|((a<<8)&0xff000000))
 #define NOSWAP8(a)				(a)
 
 #define GPMF_SAMPLES(a)			(((a>>24) & 0xff)|(((a>>16)&0xff)<<8))
@@ -114,6 +115,7 @@ typedef enum GPMFKey // TAG in all caps are GoPro preserved (are defined by GoPr
 	GPMF_KEY_PREFORMATTED =		MAKEID('P','F','R','M'),//PFRM - GPMF data
 	GPMF_KEY_TEMPERATURE_C =	MAKEID('T','M','P','C'),//TMPC - Temperature in Celsius
 	GPMF_KEY_EMPTY_PAYLOADS =	MAKEID('E','M','P','T'),//EMPT - Payloads that are empty since the device start (e.g. BLE disconnect.)
+	GPMF_KEY_QUANTIZE =			MAKEID('Q','U','A','N'),//QUAN - quantize used to enable stream compression - 1 -  enable, 2+ enable and quantize by this value
 	GPMF_KEY_VERSION =			MAKEID('V','E','R','S'),//VERS - version of the metadata stream (debugging)
 	GPMF_KEY_FREESPACE =		MAKEID('F','R','E','E'),//FREE - n bytes reserved for more metadata added to an existing stream
 	GPMF_KEY_REMARK =			MAKEID('R','M','R','K'),//RMRK - adding comments to the bitstream (debugging)

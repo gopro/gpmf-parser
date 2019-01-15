@@ -352,7 +352,7 @@ void printfData(uint32_t type, uint32_t structsize, uint32_t repeat, void *data)
 
 				while (arraysize--)
 				{
-					DBG_MSG("%lld,", BYTESWAP64(*J));
+					DBG_MSG("%lld,", (long long int)BYTESWAP64(*J));
 					J++;
 				}
 				if (repeat) DBG_MSG(" ");
@@ -370,7 +370,7 @@ void printfData(uint32_t type, uint32_t structsize, uint32_t repeat, void *data)
 
 				while (arraysize--)
 				{
-					DBG_MSG("%llu,", BYTESWAP64(*J));
+					DBG_MSG("%llu,", (long long unsigned int)BYTESWAP64(*J));
 					J++;
 				}
 				if (repeat) DBG_MSG(" ");

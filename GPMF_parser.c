@@ -546,18 +546,18 @@ uint32_t GPMF_Key(GPMF_stream *ms)
 }
 
 
-uint32_t GPMF_Type(GPMF_stream *ms)
+GPMF_SampleType GPMF_Type(GPMF_stream *ms)
 {
 	if (ms && ms->pos+1 < ms->buffer_size_longs)
 	{
-		uint32_t type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos+1]);
+		GPMF_SampleType type = (GPMF_SampleType)GPMF_SAMPLE_TYPE(ms->buffer[ms->pos+1]);
 		if (type == GPMF_TYPE_COMPRESSED && ms->pos+2 < ms->buffer_size_longs)
 		{
-			type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 2]);
+			type = (GPMF_SampleType)GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 2]);
 		}
 		return type;
 	}
-	return 0;
+	return GPMF_TYPE_ERROR;
 }
 
 
@@ -731,7 +731,7 @@ uint32_t GPMF_SizeofType(GPMF_SampleType type)
 {
 	uint32_t ssize = 0;
 
-	switch ((int)type)
+	switch (type)
 	{
 	case GPMF_TYPE_STRING_ASCII:		ssize = 1; break;
 	case GPMF_TYPE_SIGNED_BYTE:			ssize = 1; break;
@@ -753,6 +753,7 @@ uint32_t GPMF_SizeofType(GPMF_SampleType type)
 	//All unknown or larger than 8-bytes stored as is:
 	case GPMF_TYPE_GUID:				ssize = 16; break;
 	case GPMF_TYPE_UTC_DATE_TIME:		ssize = 16; break;
+	default: ssize = 0; break;
 	}
 
 	return ssize;
@@ -1091,7 +1092,7 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 		uint32_t elements = 1;
 		uint32_t noswap = 0;
 
-		type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
+		type = (GPMF_SampleType)GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
 
 		if (type == GPMF_TYPE_NEST)
 			return GPMF_ERROR_MEMORY;
@@ -1111,7 +1112,7 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 					read_samples = samples;
 					elements = GPMF_ElementsInStruct(ms);
 					type = GPMF_Type(ms);
-					complextype[0] = type;
+					complextype[0] = (char)type;
 					inputtypesize = GPMF_SizeofType((GPMF_SampleType)type);
 					if (inputtypesize == 0)
 					{
@@ -1333,10 +1334,10 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 		memset(localbuf, 0, localbuf_size); 
 
 		// unpack here
-		uint8_t type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 2]);// The first 32-bit of data, is the uncomresseded type-size-repeat
+		GPMF_SampleType type = (GPMF_SampleType)GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 2]);// The first 32-bit of data, is the uncomresseded type-size-repeat
 		uint8_t *start = (uint8_t *)&ms->buffer[ms->pos + 3];
 		uint16_t quant;
-		uint32_t sOffset = 0;
+		size_t sOffset = 0;
 		uint16_t *compressed_data;
 		uint32_t sample_size = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 2]);
 		uint32_t sizeoftype = GPMF_SizeofType(type);
@@ -1545,7 +1546,7 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 			} while (!end);
 			
 			if (nextBits == 16) compressed_data--;
-			sOffset = (uint32_t)compressed_data - (uint32_t)start;
+			sOffset = (size_t)compressed_data - (size_t)start;
 			end = 0;
 		}
 
@@ -1561,9 +1562,10 @@ GPMF_ERR GPMF_AllocCodebook(size_t *cbhandle)
 	*cbhandle = (size_t)malloc(65536 * sizeof(GPMF_codebook));
 	if (*cbhandle)
 	{
+		int i,v,z;
 		GPMF_codebook *cb = (GPMF_codebook *)*cbhandle;
 
-		for (int i = 0; i <= 0xffff; i++)
+		for (i = 0; i <= 0xffff; i++)
 		{
 			uint16_t code = (uint16_t)i;
 			uint16_t mask = 0x8000;
@@ -1591,7 +1593,7 @@ GPMF_ERR GPMF_AllocCodebook(size_t *cbhandle)
 				continue;
 			}
 			
-			for (int z = enczerorunstable.length-1; z >= 0; z--)
+			for (z = enczerorunstable.length-1; z >= 0; z--)
 			{
 				if (16 - used >= enczerorunstable.entries[z].size)
 				{
@@ -1618,7 +1620,7 @@ GPMF_ERR GPMF_AllocCodebook(size_t *cbhandle)
 			code <<= used;
 
 			cb->bytes_stored = 0;
-			for (int v=enchuftable.length-1; v>0; v--)
+			for (v=enchuftable.length-1; v>0; v--)
 			{
 				if (16-used >= enchuftable.entries[v].size+1) // codeword + sign bit
 				{
