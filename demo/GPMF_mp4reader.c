@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.2.1
+*  @version 1.2.3
 *
 *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
 *
@@ -244,7 +244,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 						len += fread(&skip, 1, 4, mp4->mediafp);
 						len += fread(&temp, 1, 4, mp4->mediafp);  // type will be 'meta' for the correct trak.
 
-						if (temp != MAKEID('a', 'l', 'i', 's'))
+						if (temp != MAKEID('a', 'l', 'i', 's') && temp != MAKEID('u', 'r', 'l', ' '))
 							type = temp;
 
 						LONGSEEK(mp4->mediafp, qtsize - 8 - len, SEEK_CUR); // skip over hldr
@@ -368,6 +368,8 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							num = BYTESWAP32(num);
 							if (num * 4 <= qtsize - 8 - len)
 							{
+								uint32_t metastco_count = num;
+
 								if (mp4->metastsc_count > 0 && num != mp4->metasize_count)
 								{
 									mp4->indexcount = mp4->metasize_count;
@@ -394,16 +396,21 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 											num = 1;
 											while (num < mp4->metasize_count)
 											{
-												if (stsc_pos + 1 < (int)mp4->metastsc_count && num == (uint32_t)stsc_pos)
+												if ((uint32_t)repeat == mp4->metastsc[stsc_pos].samples)
 												{
-													stco_pos++; stsc_pos++;
-													fileoffset = (uint64_t)metaoffsets32[stco_pos];
-													repeat = 1;
-												}
-												else if ((uint32_t)repeat == mp4->metastsc[stsc_pos].samples)
-												{
-													stco_pos++;
-													fileoffset = (uint64_t)metaoffsets32[stco_pos];
+													if ((uint32_t)stco_pos + 1 < metastco_count)
+													{
+														stco_pos++;
+														fileoffset = (uint64_t)metaoffsets32[stco_pos];
+													}
+													else
+													{
+														fileoffset += (uint64_t)mp4->metasizes[num - 1];
+													}
+													if ((uint32_t)stsc_pos + 1 < mp4->metastsc_count)
+														if (mp4->metastsc[stsc_pos + 1].chunk_num == (uint32_t)stco_pos + 1)
+															stsc_pos++;
+
 													repeat = 1;
 												}
 												else
