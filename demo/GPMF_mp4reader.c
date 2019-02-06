@@ -170,7 +170,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					qttag == MAKEID('u', 'd', 't', 'a') ||
 					qttag == MAKEID('f', 'r', 'e', 'e'))
 				{
-					LONGSEEK(mediafp, qtsize - 8, SEEK_CUR);
+					LONGSEEK(mp4->mediafp, qtsize - 8, SEEK_CUR);
 
 					NESTSIZE(qtsize);
 
@@ -298,13 +298,6 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 										mp4->metastsc[num].samples = BYTESWAP32(mp4->metastsc[num].samples);
 										mp4->metastsc[num].id = BYTESWAP32(mp4->metastsc[num].id);
 									} while (num > 0);
-								}
-
-								if (mp4->metastsc_count == 1 && mp4->metastsc[0].samples == 1) // Simplify if the stsc is not reporting any grouped chunks.
-								{
-									if (mp4->metastsc) free(mp4->metastsc);
-									mp4->metastsc = NULL;
-									mp4->metastsc_count = 0;
 								}
 							}
 							LONGSEEK(mp4->mediafp, qtsize - 8 - len, SEEK_CUR); // skip over stsx
