@@ -104,13 +104,12 @@ uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index);
 void SavePayload(size_t handle, uint32_t *payload, uint32_t index);
 void FreePayload(uint32_t *lastpayload);
 uint32_t GetPayloadSize(size_t handle, uint32_t index);
-uint32_t GetPayloadTime(size_t handle, uint32_t index, float *in, float *out); //MP4 timestamps for the payload
+uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out); //MP4 timestamps for the payload
 
 #define GPMF_SAMPLE_RATE_FAST		0
 #define GPMF_SAMPLE_RATE_PRECISE	1
 
-double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags);
-double GetGPMFSampleRateAndTimes(size_t handle, GPMF_stream *gs, double lastrate, uint32_t index, double *in, double *out); //Jitter corrected sample(s) time, if lastrate is unknown, send 0.0 and it will be computed
+double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double *in, double *out);
 
 #ifdef __cplusplus
 }

@@ -109,6 +109,7 @@ typedef enum GPMFKey // TAG in all caps are GoPro preserved (are defined by GoPr
 	GPMF_KEY_TYPE =				MAKEID('T','Y','P','E'),//TYPE - Type define for complex data structures
 	GPMF_KEY_TOTAL_SAMPLES =	MAKEID('T','S','M','P'),//TOTL - Total Sample Count including the current payload 	
 	GPMF_KEY_TICK =				MAKEID('T','I','C','K'),//TICK - Beginning of data timing (arrival) in milliseconds. 
+	GPMF_KEY_TIME_OFFSET =		MAKEID('T','I','M','O'),//TIMO - Time Offset in seconds (normally a float).
 	GPMF_KEY_TOCK =				MAKEID('T','O','C','K'),//TOCK - End of data timing (arrival)  in milliseconds. 
 	GPMF_KEY_TIME_STAMP =		MAKEID('S','T','M','P'),//STMP - Time stamp at the source in microseconds for the first sample. 
 	GPMF_KEY_TIME_STAMPS =		MAKEID('S','T','P','S'),//STPS - Stream of all the timestamps delivered. 
