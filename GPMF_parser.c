@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.3.0
+ *  @version 1.4.0
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
@@ -427,6 +427,8 @@ uint32_t GPMF_PayloadSampleCount(GPMF_stream *ms)
 		else
 		{
 			count = GPMF_Repeat(ms);
+			if (count == 0) // this can happen with an empty FACE, yet this is still a FACE fouce
+				count = 1;
 		}
 	}
 	return count;

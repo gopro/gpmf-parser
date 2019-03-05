@@ -798,8 +798,18 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 			GPMF_CopyState(ms, &find_stream);
 			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES, GPMF_CURRENT_LEVEL))
 				endsamples = BYTESWAP32(*(uint32_t *)GPMF_RawData(&find_stream));
-			else
-				endsamples = (double)((testend - teststart + 1) * GPMF_PayloadSampleCount(ms));
+			else // If there is no TSMP we have to count the samples.
+			{
+				uint32_t i;
+				for (i = teststart; i < testend; i++)
+				{
+					payload = GetPayload(handle,payload, i); // second last payload
+					payloadsize = GetPayloadSize(handle, i);
+					if (GPMF_OK == GPMF_Init(ms, payload, payloadsize))
+						if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS))
+							endsamples += GPMF_PayloadSampleCount(ms);
+				}
+			}
 
 			if (!(flags & GPMF_SAMPLE_RATE_PRECISE))
 			{
@@ -858,7 +868,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 						}
 						else
 						{
-							uint32_t repeat = GPMF_Repeat(ms);
+							uint32_t repeat = GPMF_PayloadSampleCount(ms);
 							samples += repeat;
 
 							if (repeatarray)
@@ -873,6 +883,10 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 							}
 						}
 					}
+					else
+					{
+						repeatarray[payloadpos] = 0;
+					}
 				}
 
 				// Compute the line of best fit for a jitter removed sample rate.  
@@ -886,7 +900,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 					for (payloadpos = teststart; payloadpos < testend; payloadpos++)
 					{
 						double in, out;
-						if(GPMF_OK == GetPayloadTime(handle, payloadpos, &in, &out))
+						if(repeatarray[payloadpos] && GPMF_OK == GetPayloadTime(handle, payloadpos, &in, &out))
 						{
 							top += ((double)out - meanX)*((double)repeatarray[payloadpos] - meanY);
 							bot += ((double)out - meanX)*((double)out - meanX);
@@ -925,23 +939,12 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 
 				if (endpayload > 0 && ret == GPMF_OK)
 				{
-					GPMF_stream find_stream;
 					uint32_t totalsamples = endsamples - startsamples;
 					float timo = 0.0;
 
 					GPMF_CopyState(ms, &find_stream);
 					if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TIME_OFFSET, GPMF_CURRENT_LEVEL))
 						GPMF_FormattedData(&find_stream, &timo, 4, 0, 1);
-
-					if (totalsamples == 0) //TLV doesn't have TSMP
-					{
-						double in, out;
-						if (GPMF_OK == GetPayloadTime(handle, endpayload, &in, &out))
-						{
-							totalsamples = (uint32_t)(in * rate);
-							totalsamples += GPMF_PayloadSampleCount(ms);
-						}
-					}
 
 					double first, last;
 					first = -intercept / rate - timo;
