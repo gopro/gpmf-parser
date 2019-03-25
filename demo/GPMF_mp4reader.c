@@ -919,9 +919,11 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags)
 	}
 
 cleanup:
-	if (payload)
+	if (payload) 
+	{
 		FreePayload(payload);
-	payload = NULL;
+		payload = NULL;
+	}
 
 	return rate;
 }
