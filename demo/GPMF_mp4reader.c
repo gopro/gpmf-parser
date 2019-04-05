@@ -643,7 +643,19 @@ uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out)
 }
 
 
-
+uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, int *in_numerator, int *out_numerator, int *denominator)
+{
+    mp4object *mp4 = (mp4object *)handle;
+    if (mp4 == NULL) return GPMF_ERROR_MEMORY;
+    
+    if (mp4->metaoffsets == 0 || mp4->basemetadataduration == 0 || mp4->meta_clockdemon == 0 || in_numerator == NULL || out_numerator == NULL) return GPMF_ERROR_MEMORY;
+    
+    *in_numerator = index * mp4->basemetadataduration;
+    *out_numerator = (index + 1) * mp4->basemetadataduration;
+    *denominator = mp4->meta_clockdemon;
+    
+    return GPMF_OK;
+}
 
 size_t OpenMP4SourceUDTA(char *filename)
 {
