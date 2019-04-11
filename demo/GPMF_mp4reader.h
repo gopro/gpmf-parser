@@ -105,7 +105,7 @@ void SavePayload(size_t handle, uint32_t *payload, uint32_t index);
 void FreePayload(uint32_t *lastpayload);
 uint32_t GetPayloadSize(size_t handle, uint32_t index);
 uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out); //MP4 timestamps for the payload
-uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, int *in_numerator, int *out_numerator, int *denominator);
+uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, uint32_t *in_numerator, uint32_t *out_numerator, uint32_t *denominator);
 
 #define GPMF_SAMPLE_RATE_FAST		0
 #define GPMF_SAMPLE_RATE_PRECISE	1
