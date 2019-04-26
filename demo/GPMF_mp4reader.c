@@ -2,15 +2,14 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.3.0
+*  @version 1.3.1
 *
 *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
 *
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
+*  Licensed under either:
+*  - Apache License, Version 2.0, http://www.apache.org/licenses/LICENSE-2.0
+*  - MIT license, http://opensource.org/licenses/MIT
+*  at your option.
 *
 *  Unless required by applicable law or agreed to in writing, software
 *  distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,13 +19,13 @@
 *
 */
 
-/* This is not an elegant MP4 parser, only used to help demonstrate extraction of MP4 */
-
+/* This is not an elegant MP4 parser, only used to help demonstrate extraction of GPMF */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+
 #include "GPMF_mp4reader.h"
 #include "../GPMF_common.h"
 
@@ -770,7 +769,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 	if (mp4->indexcount < 1)
 		return 0.0;
 
-	payload = GetPayload(handle, NULL, teststart); // second payload
+	payload = GetPayload(handle, NULL, teststart); 
 	payloadsize = GetPayloadSize(handle, teststart);
 	ret = GPMF_Init(ms, payload, payloadsize);
 
@@ -821,7 +820,6 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				}
 			}
 
-
 			testend = mp4->indexcount;
 			do
 			{
@@ -837,7 +835,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 			else // If there is no TSMP we have to count the samples.
 			{
 				uint32_t i;
-				for (i = teststart; i < testend; i++)
+				for (i = teststart; i <= testend; i++)
 				{
 					payload = GetPayload(handle,payload, i); // second last payload
 					payloadsize = GetPayloadSize(handle, i);
@@ -859,7 +857,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 
 				if (endtimestamp)
 				{
-					double approxrate;
+					double approxrate = 0.0;
 					if (endsamples > startsamples)
 						approxrate = (double)(endsamples - startsamples) / (mp4->metadatalength * ((double)(testend - teststart + 1)) / (double)mp4->indexcount);
 
@@ -903,7 +901,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 
 					samples = 0;
 
-					for (payloadpos = teststart; payloadpos < testend; payloadpos++)
+					for (payloadpos = teststart; payloadpos <= testend; payloadpos++)
 					{
 						payload = GetPayload(handle, payload, payloadpos); // second last payload
 						payloadsize = GetPayloadSize(handle, payloadpos);
@@ -968,7 +966,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 						meanY /= (double)payloadcount;
 						meanX /= (double)payloadcount;
 
-						for (payloadpos = teststart; payloadpos < testend; payloadpos++)
+						for (payloadpos = teststart; payloadpos <= testend; payloadpos++)
 						{
 							double in, out;
 							if (repeatarray[payloadpos] && GPMF_OK == GetPayloadTime(handle, payloadpos, &in, &out))
