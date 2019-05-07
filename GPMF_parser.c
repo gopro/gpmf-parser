@@ -1004,15 +1004,15 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 #define MACRO_CAST_SCALE_UNSIGNED_TYPE(casttype)		\
 {																												\
 	casttype *tmp = (casttype *)output;																			\
-	switch (scaletype)																							\
+	switch (scal_type)																							\
 	{																											\
-	case GPMF_TYPE_SIGNED_BYTE:		*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((int8_t *)scaledata8);	break;	\
-	case GPMF_TYPE_UNSIGNED_BYTE:	*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((uint8_t *)scaledata8);	break;	\
-	case GPMF_TYPE_SIGNED_SHORT:	*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((int16_t *)scaledata8);	break;	\
-	case GPMF_TYPE_UNSIGNED_SHORT:	*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((uint16_t *)scaledata8);	break;	\
-	case GPMF_TYPE_SIGNED_LONG:		*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((int32_t *)scaledata8);	break;	\
-	case GPMF_TYPE_UNSIGNED_LONG:	*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((uint32_t *)scaledata8);	break;  \
-	case GPMF_TYPE_FLOAT:			*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((float *)scaledata8);	break;	\
+	case GPMF_TYPE_SIGNED_BYTE:		*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((int8_t *)scal_data8);	break;	\
+	case GPMF_TYPE_UNSIGNED_BYTE:	*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((uint8_t *)scal_data8);	break;	\
+	case GPMF_TYPE_SIGNED_SHORT:	*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((int16_t *)scal_data8);	break;	\
+	case GPMF_TYPE_UNSIGNED_SHORT:	*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((uint16_t *)scal_data8);	break;	\
+	case GPMF_TYPE_SIGNED_LONG:		*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((int32_t *)scal_data8);	break;	\
+	case GPMF_TYPE_UNSIGNED_LONG:	*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((uint32_t *)scal_data8);	break;  \
+	case GPMF_TYPE_FLOAT:			*tmp++ = (casttype)(*val < 0 ? 0 : *val) / (casttype)*((float *)scal_data8);	break;	\
 	default: break;																								\
 	}																											\
 	output = (uint8_t *)tmp;																					\
@@ -1021,15 +1021,15 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 #define MACRO_CAST_SCALE_SIGNED_TYPE(casttype)		\
 {																											\
 	casttype *tmp = (casttype *)output;																		\
-	switch (scaletype)																						\
+	switch (scal_type)																						\
 	{																										\
-	case GPMF_TYPE_SIGNED_BYTE:		*tmp++ = (casttype)*val / (casttype)*((int8_t *)scaledata8);	break;	\
-	case GPMF_TYPE_UNSIGNED_BYTE:	*tmp++ = (casttype)*val / (casttype)*((uint8_t *)scaledata8);	break;	\
-	case GPMF_TYPE_SIGNED_SHORT:	*tmp++ = (casttype)*val / (casttype)*((int16_t *)scaledata8);	break;	\
-	case GPMF_TYPE_UNSIGNED_SHORT:	*tmp++ = (casttype)*val / (casttype)*((uint16_t *)scaledata8);	break;	\
-	case GPMF_TYPE_SIGNED_LONG:		*tmp++ = (casttype)*val / (casttype)*((int32_t *)scaledata8);	break;	\
-	case GPMF_TYPE_UNSIGNED_LONG:	*tmp++ = (casttype)*val / (casttype)*((uint32_t *)scaledata8);	break;  \
-	case GPMF_TYPE_FLOAT:			*tmp++ = (casttype)*val / (casttype)*((float *)scaledata8);		break;	\
+	case GPMF_TYPE_SIGNED_BYTE:		*tmp++ = (casttype)*val / (casttype)*((int8_t *)scal_data8);	break;	\
+	case GPMF_TYPE_UNSIGNED_BYTE:	*tmp++ = (casttype)*val / (casttype)*((uint8_t *)scal_data8);	break;	\
+	case GPMF_TYPE_SIGNED_SHORT:	*tmp++ = (casttype)*val / (casttype)*((int16_t *)scal_data8);	break;	\
+	case GPMF_TYPE_UNSIGNED_SHORT:	*tmp++ = (casttype)*val / (casttype)*((uint16_t *)scal_data8);	break;	\
+	case GPMF_TYPE_SIGNED_LONG:		*tmp++ = (casttype)*val / (casttype)*((int32_t *)scal_data8);	break;	\
+	case GPMF_TYPE_UNSIGNED_LONG:	*tmp++ = (casttype)*val / (casttype)*((uint32_t *)scal_data8);	break;  \
+	case GPMF_TYPE_FLOAT:			*tmp++ = (casttype)*val / (casttype)*((float *)scal_data8);		break;	\
 	default: break;																							\
 	}																										\
 	output = (uint8_t *)tmp;																				\
@@ -1070,6 +1070,64 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 	data = (uint8_t *)datatemp;							\
 }
 
+// a sensor matrix with only [1,0,0, 0,-1,0, 0,0,1], is just a form of non-calibrated sensor orientation
+#define MACRO_IS_MATRIX_CALIBRATION(inputcast)				\
+{															\
+	inputcast *md = (inputcast *)mtrx_data;					\
+	inputcast one = (inputcast)1;							\
+	inputcast negone = (inputcast)-1;						\
+	mtrx_calibration = 0;									\
+	for (uint32_t m = 0; m < elements*elements; m++, md++)	\
+	{														\
+		if (*md != one && *md != negone && *md != 0)		\
+			mtrx_calibration = 1;							\
+	}														\
+}
+
+
+#define MACRO_APPLY_CALIBRATION(matrixcast, outputcast)																		\
+{																															\
+	uint32_t x,y;																											\
+	outputcast tmpbuf[8];																									\
+	outputcast *tmp = (outputcast *)output;																					\
+	tmp -= elements;																										\
+	matrixcast *mtrx = (matrixcast *)mtrx_data;																				\
+	for (y = 0; y < elements; y++) tmpbuf[y] = 0;																			\
+	for (y = 0; y < elements; y++) for (x = 0; x < elements; x++)  tmpbuf[y] += tmp[x] * (outputcast)mtrx[y*elements + x];	\
+	for (y = 0; y < elements; y++) tmp[y] = tmpbuf[y];																		\
+}
+
+
+#define MACRO_APPLY_MATRIX_CALIBRATION(matrixcast)												\
+{																								\
+	switch (outputType)	{																		\
+		case GPMF_TYPE_SIGNED_BYTE: 	MACRO_APPLY_CALIBRATION(matrixcast, int8_t)		break;	\
+		case GPMF_TYPE_UNSIGNED_BYTE:	MACRO_APPLY_CALIBRATION(matrixcast, uint8_t)	break;	\
+		case GPMF_TYPE_SIGNED_SHORT: 	MACRO_APPLY_CALIBRATION(matrixcast, int16_t)	break;	\
+		case GPMF_TYPE_UNSIGNED_SHORT:	MACRO_APPLY_CALIBRATION(matrixcast, uint16_t)	break;	\
+		case GPMF_TYPE_SIGNED_LONG:		MACRO_APPLY_CALIBRATION(matrixcast, int32_t)	break;	\
+		case GPMF_TYPE_UNSIGNED_LONG:	MACRO_APPLY_CALIBRATION(matrixcast, uint32_t)	break;	\
+		case GPMF_TYPE_FLOAT:			MACRO_APPLY_CALIBRATION(matrixcast, float)		break;	\
+		case GPMF_TYPE_DOUBLE:			MACRO_APPLY_CALIBRATION(matrixcast, double)		break;	\
+		default: break;																			\
+	}																							\
+}
+
+#define MACRO_SET_MATRIX(matrixcast, orin, orio, pos)	\
+{														\
+	matrixcast *mtrx = (matrixcast *)mtrx_data;			\
+	if (orin == orio)									\
+		mtrx[pos] = (matrixcast)1;						\
+	else if ((orin - 'a') == (orio - 'A'))				\
+		mtrx[pos] = (matrixcast)-1;						\
+	else if ((orin - 'A') == (orio - 'a'))				\
+		mtrx[pos] = (matrixcast)-1;						\
+	else												\
+		mtrx[pos] = 0;									\
+}
+
+
+
 GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uint32_t sample_offset, uint32_t read_samples, GPMF_SampleType outputType)
 {
 	if (ms && buffer)
@@ -1084,13 +1142,29 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 		char complextype[64] = "L";
 		uint32_t inputtypesize = 0;
 		uint32_t inputtypeelements = 0;
-		uint8_t scaletype = 0;
-		uint8_t scalecount = 0;
-		uint32_t scaletypesize = 0;
-		uint32_t *scaledata = NULL;
+
+		uint8_t scal_type = 0;
+		uint8_t scal_count = 0;
+		uint32_t scal_typesize = 0;
+		uint32_t *scal_data = NULL;
+		uint32_t scal_buffer[64];
+		uint32_t scal_buffersize = sizeof(scal_buffer);
+
+		uint8_t mtrx_type = 0;
+		uint8_t mtrx_count = 0;
+		uint32_t mtrx_typesize = 0;
+		uint32_t mtrx_sample_size = 0;
+		uint32_t *mtrx_data = NULL;
+		uint32_t mtrx_buffer[64];
+		uint32_t mtrx_buffersize = sizeof(mtrx_buffer);
+		uint32_t mtrx_calibration = 0;
+
+		char *orin_data = NULL;
+		uint32_t orin_len = 0;
+		char *orio_data = NULL;
+		uint32_t orio_len = 0;
+
 		uint32_t *uncompressedSamples = NULL;
-		uint32_t tmpbuffer[64];
-		uint32_t tmpbuffersize = sizeof(tmpbuffer);
 		uint32_t elements = 1;
 		uint32_t noswap = 0;
 
@@ -1202,10 +1276,10 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 
 			if (GPMF_OK == GPMF_FindPrev(&fs, GPMF_KEY_SCALE, GPMF_CURRENT_LEVEL))
 			{
-				scaledata = (uint32_t *)GPMF_RawData(&fs);
-				scaletype = GPMF_SAMPLE_TYPE(fs.buffer[fs.pos + 1]);
+				scal_data = (uint32_t *)GPMF_RawData(&fs);
+				scal_type = GPMF_SAMPLE_TYPE(fs.buffer[fs.pos + 1]);
 
-				switch (scaletype)
+				switch (scal_type)
 				{
 				case GPMF_TYPE_SIGNED_BYTE:
 				case GPMF_TYPE_UNSIGNED_BYTE:
@@ -1214,21 +1288,21 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 				case GPMF_TYPE_SIGNED_LONG:
 				case GPMF_TYPE_UNSIGNED_LONG:
 				case GPMF_TYPE_FLOAT:
-					scalecount = GPMF_SAMPLES(fs.buffer[fs.pos + 1]);
-					scaletypesize = GPMF_SizeofType((GPMF_SampleType)scaletype);
+					scal_count = GPMF_SAMPLES(fs.buffer[fs.pos + 1]);
+					scal_typesize = GPMF_SizeofType((GPMF_SampleType)scal_type);
 
-					if (scalecount > 1)
+					if (scal_count > 1)
 					{
-						if (scalecount != elements)
+						if (scal_count != elements)
 						{
 							ret = GPMF_ERROR_SCALE_COUNT;
 							goto cleanup;
 						}
 					}
 
-					GPMF_FormattedData(&fs, tmpbuffer, tmpbuffersize, 0, scalecount);
+					GPMF_FormattedData(&fs, scal_buffer, scal_buffersize, 0, scal_count);
 
-					scaledata = (uint32_t *)tmpbuffer;
+					scal_data = (uint32_t *)scal_buffer;
 					break;
 				default:
 					return GPMF_ERROR_TYPE_NOT_SUPPORTED;
@@ -1237,17 +1311,116 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 			}
 			else
 			{
-				scaletype = 'L';
-				scalecount = 1;
-				tmpbuffer[0] = 1; // set the scale to 1 is no scale was provided
-				scaledata = (uint32_t *)tmpbuffer;
+				scal_type = 'L';
+				scal_count = 1;
+				scal_buffer[0] = 1; // set the scale to 1 is no scale was provided
+				scal_data = (uint32_t *)scal_buffer;
+			}
+
+			GPMF_CopyState(ms, &fs);
+			if (GPMF_OK == GPMF_FindPrev(&fs, GPMF_KEY_MATRIX, GPMF_CURRENT_LEVEL))
+			{
+				uint32_t mtrx_found_size = 0;
+				uint32_t matrix_size = elements * elements;
+				mtrx_data = (uint32_t *)GPMF_RawData(&fs);
+				mtrx_type = GPMF_SAMPLE_TYPE(fs.buffer[fs.pos + 1]);
+
+				switch (mtrx_type)
+				{
+				case GPMF_TYPE_SIGNED_BYTE:
+				case GPMF_TYPE_UNSIGNED_BYTE:
+				case GPMF_TYPE_SIGNED_SHORT:
+				case GPMF_TYPE_UNSIGNED_SHORT:
+				case GPMF_TYPE_SIGNED_LONG:
+				case GPMF_TYPE_UNSIGNED_LONG:
+				case GPMF_TYPE_FLOAT:
+				case GPMF_TYPE_DOUBLE:
+					mtrx_count = GPMF_SAMPLES(fs.buffer[fs.pos + 1]);
+					mtrx_sample_size = GPMF_SAMPLE_SIZE(fs.buffer[fs.pos + 1]);
+					mtrx_typesize = GPMF_SizeofType((GPMF_SampleType)mtrx_type);
+					mtrx_found_size = mtrx_count * mtrx_sample_size / mtrx_typesize;
+					if (mtrx_found_size != matrix_size)  // e.g XYZ is a 3x3 matrix, RGBA is a 4x4 matrix
+					{
+						ret = GPMF_ERROR_SCALE_COUNT;
+						goto cleanup;
+					}
+					
+					GPMF_FormattedData(&fs, mtrx_buffer, mtrx_buffersize, 0, mtrx_count);
+					mtrx_data = (uint32_t *)mtrx_buffer;
+					break;
+				default:
+					return GPMF_ERROR_TYPE_NOT_SUPPORTED;
+					break;
+				}
+
+				switch (mtrx_type)
+				{
+				case GPMF_TYPE_SIGNED_BYTE:  MACRO_IS_MATRIX_CALIBRATION(int8_t) break;
+				case GPMF_TYPE_UNSIGNED_BYTE:  MACRO_IS_MATRIX_CALIBRATION(uint8_t) break;
+				case GPMF_TYPE_SIGNED_SHORT:  MACRO_IS_MATRIX_CALIBRATION(int16_t) break;
+				case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_IS_MATRIX_CALIBRATION(uint16_t) break;
+				case GPMF_TYPE_SIGNED_LONG:  MACRO_IS_MATRIX_CALIBRATION(int32_t) break;
+				case GPMF_TYPE_UNSIGNED_LONG:  MACRO_IS_MATRIX_CALIBRATION(uint32_t) break;
+				case GPMF_TYPE_FLOAT: MACRO_IS_MATRIX_CALIBRATION(float); break;
+				case GPMF_TYPE_DOUBLE: MACRO_IS_MATRIX_CALIBRATION(double); break;
+				}
+			}
+
+			if (!mtrx_calibration)
+			{
+				GPMF_CopyState(ms, &fs);
+				if (GPMF_OK == GPMF_FindPrev(&fs, GPMF_KEY_ORIENTATION_IN, GPMF_CURRENT_LEVEL))
+				{
+					orin_data = (char *)GPMF_RawData(&fs);
+					orin_len = GPMF_DATA_PACKEDSIZE(fs.buffer[fs.pos + 1]);
+				}
+				GPMF_CopyState(ms, &fs);
+				if (GPMF_OK == GPMF_FindPrev(&fs, GPMF_KEY_ORIENTATION_OUT, GPMF_CURRENT_LEVEL))
+				{
+					orio_data = (char *)GPMF_RawData(&fs);
+					orio_len = GPMF_DATA_PACKEDSIZE(fs.buffer[fs.pos + 1]);
+				}
+				if (orio_len == orin_len && orin_len > 1 && orio_len == elements)
+				{
+					uint32_t x, y, pos = 0;
+					mtrx_type = outputType;
+
+					for (y = 0; y < elements; y++)
+					{
+						for (x = 0; x < elements; x++)
+						{
+							switch (mtrx_type)
+							{
+							case GPMF_TYPE_FLOAT:			MACRO_SET_MATRIX(float, orin_data[y], orio_data[x], pos);  break;
+							case GPMF_TYPE_DOUBLE:			MACRO_SET_MATRIX(double, orin_data[y], orio_data[x], pos);  break;
+							case GPMF_TYPE_SIGNED_BYTE:		MACRO_SET_MATRIX(int8_t, orin_data[y], orio_data[x], pos);   break;
+							case GPMF_TYPE_UNSIGNED_BYTE:	MACRO_SET_MATRIX(uint8_t, orin_data[y], orio_data[x], pos);  break;
+							case GPMF_TYPE_SIGNED_SHORT:	MACRO_SET_MATRIX(int16_t, orin_data[y], orio_data[x], pos);  break;
+							case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_SET_MATRIX(uint16_t, orin_data[y], orio_data[x], pos);  break;
+							case GPMF_TYPE_SIGNED_LONG:		MACRO_SET_MATRIX(int32_t, orin_data[y], orio_data[x], pos);  break;
+							case GPMF_TYPE_UNSIGNED_LONG:	MACRO_SET_MATRIX(uint32_t, orin_data[y], orio_data[x], pos);  break;
+							case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_SET_MATRIX(int64_t, orin_data[y], orio_data[x], pos);  break;
+							case GPMF_TYPE_UNSIGNED_64BIT_INT: MACRO_SET_MATRIX(uint64_t, orin_data[y], orio_data[x], pos);  break;
+							default:
+								ret = GPMF_ERROR_TYPE_NOT_SUPPORTED;
+								goto cleanup;
+								break;
+							}
+
+							pos++;
+						}
+					}
+
+					mtrx_calibration = 1;
+				}
+
 			}
 		}
 
 		while (read_samples--)
 		{
 			uint32_t i;
-			uint8_t *scaledata8 = (uint8_t *)scaledata;
+			uint8_t *scal_data8 = (uint8_t *)scal_data;
 
 			for (i = 0; i < elements; i++)
 			{
@@ -1289,8 +1462,28 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 						break;
 					}
 				}
-				if (scalecount > 1)
-					scaledata8 += scaletypesize;
+				if (scal_count > 1)
+					scal_data8 += scal_typesize;
+			}
+
+
+			if (inputtypeelements == 1)
+			{
+				if (mtrx_calibration)
+				{
+					switch (mtrx_type)
+					{
+					case GPMF_TYPE_SIGNED_BYTE:  MACRO_APPLY_MATRIX_CALIBRATION(int8_t) break;
+					case GPMF_TYPE_UNSIGNED_BYTE:  MACRO_APPLY_MATRIX_CALIBRATION(uint8_t) break;
+					case GPMF_TYPE_SIGNED_SHORT:  MACRO_APPLY_MATRIX_CALIBRATION(int16_t) break;
+					case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_APPLY_MATRIX_CALIBRATION(uint16_t) break;
+					case GPMF_TYPE_SIGNED_LONG:  MACRO_APPLY_MATRIX_CALIBRATION(int32_t) break;
+					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_APPLY_MATRIX_CALIBRATION(uint32_t) break;
+					case GPMF_TYPE_FLOAT: MACRO_APPLY_MATRIX_CALIBRATION(float); break;
+					case GPMF_TYPE_DOUBLE: MACRO_APPLY_MATRIX_CALIBRATION(double); break;
+					default: break;
+					}
+				}
 			}
 		}
 		break;
