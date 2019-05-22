@@ -4,7 +4,7 @@
 *
 *  @version 1.2.1
 *
-*  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
+*  (C) Copyright 2017-2019 GoPro Inc (http://gopro.com/).
 *
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
@@ -170,7 +170,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					qttag == MAKEID('f', 't', 'y', 'p') ||
 					qttag == MAKEID('u', 'd', 't', 'a'))
 				{
-					LONGSEEK(mediafp, qtsize - 8, SEEK_CUR);
+					LONGSEEK(mp4->mediafp, qtsize - 8, SEEK_CUR);
 
 					NESTSIZE(qtsize);
 
@@ -244,7 +244,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 						len += fread(&skip, 1, 4, mp4->mediafp);
 						len += fread(&temp, 1, 4, mp4->mediafp);  // type will be 'meta' for the correct trak.
 
-						if (temp != MAKEID('a', 'l', 'i', 's'))
+						if (temp != MAKEID('a', 'l', 'i', 's') && temp != MAKEID('u', 'r', 'l', ' '))
 							type = temp;
 
 						LONGSEEK(mp4->mediafp, qtsize - 8 - len, SEEK_CUR); // skip over hldr
