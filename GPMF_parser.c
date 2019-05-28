@@ -1435,7 +1435,7 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 					case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_NOSWAP_CAST_SCALE(uint16_t) break;
 					case GPMF_TYPE_SIGNED_LONG:  MACRO_NOSWAP_CAST_SCALE(int32_t) break;
 					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_NOSWAP_CAST_SCALE(uint32_t) break;
-					case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_NOSWAP_CAST_SCALE(uint64_t) break;
+					case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_NOSWAP_CAST_SCALE(int64_t) break;
 					case GPMF_TYPE_UNSIGNED_64BIT_INT:  MACRO_NOSWAP_CAST_SCALE(uint64_t) break;
 					default:
 						ret = GPMF_ERROR_TYPE_NOT_SUPPORTED;
@@ -1454,7 +1454,7 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 					case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, uint16_t, uint16_t) break;
 					case GPMF_TYPE_SIGNED_LONG:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, int32_t, uint32_t) break;
 					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, uint32_t, uint32_t) break;
-					case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP64, uint64_t, uint64_t) break;
+					case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP64, int64_t, uint64_t) break;
 					case GPMF_TYPE_UNSIGNED_64BIT_INT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP64, uint64_t, uint64_t) break;
 					default:
 						ret = GPMF_ERROR_TYPE_NOT_SUPPORTED;

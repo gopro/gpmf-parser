@@ -22,6 +22,7 @@
 #ifndef _GPMF_PARSER_H
 #define _GPMF_PARSER_H
 
+#include <stdint.h>
 #include "GPMF_common.h"
 
 #ifdef __cplusplus

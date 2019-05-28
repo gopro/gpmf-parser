@@ -64,6 +64,8 @@ typedef struct mp4object
 	uint32_t meta_clockdemon, meta_clockcount;
 	double basemetadataduration;
 	FILE *mediafp;
+	uint64_t filesize;
+	uint64_t filepos;
 } mp4object;
 
 #define MAKEID(a,b,c,d)			(((d&0xff)<<24)|((c&0xff)<<16)|((b&0xff)<<8)|(a&0xff))
@@ -101,7 +103,6 @@ void CloseSource(size_t handle);
 float GetDuration(size_t handle);
 uint32_t GetNumberPayloads(size_t handle);
 uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index);
-void SavePayload(size_t handle, uint32_t *payload, uint32_t index);
 void FreePayload(uint32_t *lastpayload);
 uint32_t GetPayloadSize(size_t handle, uint32_t index);
 uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out); //MP4 timestamps for the payload
