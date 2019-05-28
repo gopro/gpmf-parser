@@ -46,6 +46,12 @@ int main(int argc, char *argv[])
 	}
 
 	size_t mp4 = OpenMP4Source(argv[1], MOV_GPMF_TRAK_TYPE, MOV_GPMF_TRAK_SUBTYPE);
+	if (mp4 == 0)
+	{
+		printf("error: %s is an invalid MP4/MOV\n", argv[1]);
+		return -1;
+	}
+
 //	size_t mp4 = OpenMP4SourceUDTA(argv[1]);  //Search for GPMF payload with MP4's udta 
 
 	metadatalength = GetDuration(mp4);
@@ -90,7 +96,7 @@ int main(int argc, char *argv[])
 		for (index = 0; index < payloads; index++)
 		{
 			uint32_t payloadsize = GetPayloadSize(mp4, index);
-			float in = 0.0, out = 0.0; //times
+			double in = 0.0, out = 0.0; //times
 			payload = GetPayload(mp4, payload, index);
 			if (payload == NULL)
 				goto cleanup;
@@ -238,9 +244,10 @@ int main(int argc, char *argv[])
 		{
 			if (GPMF_OK == GPMF_SeekToSamples(ms)) //find the last FOURCC within the stream
 			{
+				double in = 0.0, out = 0.0;
 				uint32_t fourcc = GPMF_Key(ms);
-				double rate = GetGPMFSampleRate(mp4, fourcc, GPMF_SAMPLE_RATE_PRECISE);// GPMF_SAMPLE_RATE_FAST);
-				printf("%c%c%c%c sampling rate = %f Hz\n", PRINTF_4CC(fourcc), rate);
+				double rate = GetGPMFSampleRate(mp4, fourcc, GPMF_SAMPLE_RATE_PRECISE, &in, &out);// GPMF_SAMPLE_RATE_FAST);
+				printf("%c%c%c%c sampling rate = %f Hz (from %f to %f)\n", PRINTF_4CC(fourcc), rate, in, out);
 			}
 		}
 #endif

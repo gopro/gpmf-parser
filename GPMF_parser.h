@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library include
  * 
- *  @version 1.1.0
+ *  @version 1.1.1
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
@@ -126,7 +126,11 @@ typedef enum GPMFKey // TAG in all caps are GoPro preserved (are defined by GoPr
 	GPMF_KEY_UNITS =			MAKEID('U','N','I','T'),//UNIT - Freedform display string for metadata units (char sting like "RPM", "MPH", "km/h", etc)
 	GPMF_KEY_SCALE =			MAKEID('S','C','A','L'),//SCAL - divisor for input data to scale to the correct units.
 	GPMF_KEY_TYPE =				MAKEID('T','Y','P','E'),//TYPE - Type define for complex data structures
-	GPMF_KEY_TOTAL_SAMPLES =	MAKEID('T','S','M','P'),//TOTL - Total Sample Count including the current payload 	
+	GPMF_KEY_TOTAL_SAMPLES =	MAKEID('T','S','M','P'),//TSMP - Total Sample Count including the current payload 	
+	GPMF_KEY_TIME_OFFSET =		MAKEID('T','I','M','O'),//TIMO - Time offset of the metadata stream that follows (single 4 byte float)
+	GPMF_KEY_TIMING_OFFSET =	MAKEID('T','I','M','O'),//TIMO - duplicated, as older code might use the other version of TIMO
+	GPMF_KEY_TIME_STAMP =		MAKEID('S','T','M','P'),//STMP - Time stamp for the first sample. 
+	GPMF_KEY_TIME_STAMPS =		MAKEID('S','T','P','S'),//STPS - Stream of all the timestamps delivered (Generally don't use this. This would be if your sensor has no peroidic times, yet precision is required, or for debugging.) 
 	GPMF_KEY_TICK =				MAKEID('T','I','C','K'),//TICK - Used for slow data. Beginning of data timing in milliseconds. 
 	GPMF_KEY_TOCK =				MAKEID('T','O','C','K'),//TOCK - Used for slow data. End of data timing in milliseconds. 
 	GPMF_KEY_EMPTY_PAYLOADS =	MAKEID('E','M','P','T'),//EMPT - Payloads that are empty since the device start (e.g. BLE disconnect.)

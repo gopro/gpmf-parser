@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.2.1
+ *  @version 1.2.2
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
@@ -42,7 +42,7 @@ GPMF_ERR IsValidSize(GPMF_stream *ms, uint32_t size) // size is in longs not byt
 {
 	if (ms)
 	{
-		int32_t nestsize = (int32_t)ms->nest_size[ms->nest_level];
+		uint32_t nestsize = (uint32_t)ms->nest_size[ms->nest_level];
 		if (nestsize == 0 && ms->nest_level == 0)
 			nestsize = ms->buffer_size_longs;
 
