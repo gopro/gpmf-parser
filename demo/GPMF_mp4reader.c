@@ -34,7 +34,6 @@
 
 #ifdef WIN32
 #define LONGSEEK	_fseeki64
-#define stat64		_stat64
 #else
 #define LONGSEEK	fseeko
 #endif
@@ -120,11 +119,15 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 	if (mp4 == NULL) return 0;
 
 	memset(mp4, 0, sizeof(mp4object));
-
-	struct stat64 mp4stat;
-	stat64(filename, &mp4stat);
+#ifdef _WINDOWS
+	struct _stat64 mp4stat;
+	_stat64(filename, &mp4stat);
+#else
+	struct stat mp4stat;
+	stat(filename, &mp4stat);
+#endif
 	mp4->filesize = mp4stat.st_size;
-
+	//	printf("filesize = %ld\n", mp4->filesize);
 	if (mp4->filesize < 64) return 0;
 
 #ifdef _WINDOWS
