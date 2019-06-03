@@ -126,10 +126,10 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 	_stat64(filename, &mp4stat);
 #else
 	struct stat mp4stat;
-	stat64(filename, &mp4stat);
+	stat(filename, &mp4stat);
 #endif
 	mp4->filesize = mp4stat.st_size;
-
+//	printf("filesize = %ld\n", mp4->filesize);
 	if (mp4->filesize < 64) return 0;
 
 #ifdef _WINDOWS
