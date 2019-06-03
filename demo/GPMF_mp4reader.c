@@ -33,9 +33,8 @@
 
 #define PRINT_MP4_STRUCTURE		0
 
-#ifdef WIN32
+#ifdef _WINDOWS
 #define LONGSEEK	_fseeki64
-#define stat64		_stat64
 #else
 #define LONGSEEK	fseeko
 #endif
@@ -122,8 +121,13 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 	memset(mp4, 0, sizeof(mp4object));
 
-	struct stat64 mp4stat;
+#ifdef _WINDOWS
+	struct _stat64 mp4stat;
+	_stat64(filename, &mp4stat);
+#else
+	struct stat mp4stat;
 	stat64(filename, &mp4stat);
+#endif
 	mp4->filesize = mp4stat.st_size;
 
 	if (mp4->filesize < 64) return 0;

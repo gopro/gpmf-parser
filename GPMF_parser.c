@@ -1073,11 +1073,12 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 // a sensor matrix with only [1,0,0, 0,-1,0, 0,0,1], is just a form of non-calibrated sensor orientation
 #define MACRO_IS_MATRIX_CALIBRATION(inputcast)				\
 {															\
+	uint32_t m;												\
 	inputcast *md = (inputcast *)mtrx_data;					\
 	inputcast one = (inputcast)1;							\
 	inputcast negone = (inputcast)-1;						\
 	mtrx_calibration = 0;									\
-	for (uint32_t m = 0; m < elements*elements; m++, md++)	\
+	for (m = 0; m < elements*elements; m++, md++)	        \
 	{														\
 		if (*md != one && *md != negone && *md != 0)		\
 			mtrx_calibration = 1;							\
