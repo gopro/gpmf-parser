@@ -59,11 +59,11 @@ uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index)
 	uint32_t *MP4buffer = NULL;
 	if (index < mp4->indexcount && mp4->mediafp)
 	{
-		MP4buffer = (uint32_t *)realloc((void *)lastpayload, mp4->metasizes[index]);
-
-		if (MP4buffer)
+		if ((mp4->filesize > mp4->metaoffsets[index]+mp4->metasizes[index]) && (mp4->metasizes[index] > 0))
 		{
-			if (mp4->filesize > mp4->metaoffsets[index]+mp4->metasizes[index])
+			MP4buffer = (uint32_t *)realloc((void *)lastpayload, mp4->metasizes[index]);
+
+			if (MP4buffer)
 			{
 				LONGSEEK(mp4->mediafp, mp4->metaoffsets[index], SEEK_SET);
 				fread(MP4buffer, 1, mp4->metasizes[index], mp4->mediafp);
@@ -72,6 +72,10 @@ uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index)
 			}
 		}
 	}
+
+	if (lastpayload)
+		free(lastpayload);
+
 	return NULL;
 }
 
@@ -864,12 +868,10 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 	if (mp4->indexcount < 1)
 		return 0.0;
 
-	payload = GetPayload(handle, NULL, teststart); 
+	payload = GetPayload(handle, NULL, teststart);
 	payloadsize = GetPayloadSize(handle, teststart);
 	ret = GPMF_Init(ms, payload, payloadsize);
-
-	if (ret != GPMF_OK)
-		goto cleanup;
+	if (ret != GPMF_OK) goto cleanup;
 
 	{
 		uint64_t minimumtimestamp = 0;
@@ -904,14 +906,15 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 			if (starttimestamp) // is this earliest in the payload, examine the other streams in this early payload.
 			{
 				GPMF_stream any_stream;
-				GPMF_Init(&any_stream, payload, payloadsize);
-
-				minimumtimestamp = starttimestamp;
-				while (GPMF_OK == GPMF_FindNext(&any_stream, GPMF_KEY_TIME_STAMP, GPMF_RECURSE_LEVELS))
+				if (GPMF_OK == GPMF_Init(&any_stream, payload, payloadsize))
 				{
-					uint64_t timestamp = BYTESWAP64(*(uint64_t *)GPMF_RawData(&any_stream));
-					if (timestamp < minimumtimestamp)
-						minimumtimestamp = timestamp;
+					minimumtimestamp = starttimestamp;
+					while (GPMF_OK == GPMF_FindNext(&any_stream, GPMF_KEY_TIME_STAMP, GPMF_RECURSE_LEVELS))
+					{
+						uint64_t timestamp = BYTESWAP64(*(uint64_t *)GPMF_RawData(&any_stream));
+						if (timestamp < minimumtimestamp)
+							minimumtimestamp = timestamp;
+					}
 				}
 			}
 
@@ -922,7 +925,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				payload = GetPayload(handle, payload, testend);
 				payloadsize = GetPayloadSize(handle, testend);
 				ret = GPMF_Init(ms, payload, payloadsize);
-			} while (testend > 0 && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS));
+			} while (testend > 0 && ret == GPMF_OK && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS));
 
 			GPMF_CopyState(ms, &find_stream);
 			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES, GPMF_CURRENT_LEVEL))
@@ -1099,7 +1102,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 					payload = GetPayload(handle, payload, endpayload);
 					payloadsize = GetPayloadSize(handle, endpayload);
 					ret = GPMF_Init(ms, payload, payloadsize);
-				} while (endpayload > 0 && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS));
+				} while (endpayload > 0 && ret == GPMF_OK && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS));
 
 				if (endpayload > 0 && ret == GPMF_OK)
 				{
