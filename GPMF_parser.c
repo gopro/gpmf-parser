@@ -190,10 +190,10 @@ GPMF_ERR GPMF_ResetState(GPMF_stream *ms)
 
 GPMF_ERR GPMF_Init(GPMF_stream *ms, uint32_t *buffer, int datasize)
 {
-	if(ms)
+	if(ms && buffer && datasize > 0)
 	{
 		ms->buffer = buffer;
-		ms->buffer_size_longs = datasize >>2;
+		ms->buffer_size_longs = (datasize+3)>>2;
 		ms->cbhandle = 0;
 
 		GPMF_ResetState(ms);
