@@ -32,7 +32,7 @@
 
 #define PRINT_MP4_STRUCTURE		0
 
-#ifdef WIN32
+#ifdef _WINDOWS
 #define LONGSEEK	_fseeki64
 #else
 #define LONGSEEK	fseeko
