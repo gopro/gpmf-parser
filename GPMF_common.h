@@ -2,9 +2,9 @@
  * 
  *  @brief GPMF Parser library include
  * 
- *  @version 1.1.0
+ *  @version 1.2.0
  * 
- *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
+ *  (C) Copyright 2017-2019 GoPro Inc (http://gopro.com/).
  *
  *  Licensed under either:
  *  - Apache License, Version 2.0, http://www.apache.org/licenses/LICENSE-2.0  
@@ -58,6 +58,7 @@ typedef enum
 	GPMF_TYPE_SIGNED_64BIT_INT = 'j', //64 bit signed long
 	GPMF_TYPE_UNSIGNED_64BIT_INT = 'J', //64 bit unsigned long	
 	GPMF_TYPE_DOUBLE = 'd', //64 bit double precision float (IEEE 754)
+	GPMF_TYPE_STRING_UTF8 = 'u', //UTF-8 formatted text string.  As the character storage size varies, the size is in bytes, not UTF characters.
 	GPMF_TYPE_UTC_DATE_TIME = 'U', //128-bit ASCII Date + UTC Time format yymmddhhmmss.sss - 16 bytes ASCII (years 20xx covered)
 	GPMF_TYPE_GUID = 'G', //128-bit ID (like UUID)
 
@@ -66,6 +67,8 @@ typedef enum
 
 	GPMF_TYPE_NEST = 0, // used to nest more GPMF formatted metadata 
 
+	/* ------------- Internal usage only ------------- */
+	GPMF_TYPE_EMPTY = 0xfe, // used to distinguish between grouped metadata (like FACE) with no data (no faces detected) and an empty payload (FACE device reported no samples.)
 	GPMF_TYPE_ERROR = 0xff // used to report an error
 } GPMF_SampleType;
 
@@ -112,10 +115,11 @@ typedef enum GPMFKey // TAG in all caps are GoPro preserved (are defined by GoPr
 	GPMF_KEY_TYPE =				MAKEID('T','Y','P','E'),//TYPE - Type define for complex data structures
 	GPMF_KEY_TOTAL_SAMPLES =	MAKEID('T','S','M','P'),//TOTL - Total Sample Count including the current payload 	
 	GPMF_KEY_TICK =				MAKEID('T','I','C','K'),//TICK - Beginning of data timing (arrival) in milliseconds. 
-	GPMF_KEY_TIME_OFFSET =		MAKEID('T','I','M','O'),//TIMO - Time Offset in seconds (normally a float).
 	GPMF_KEY_TOCK =				MAKEID('T','O','C','K'),//TOCK - End of data timing (arrival)  in milliseconds. 
-	GPMF_KEY_TIME_STAMP =		MAKEID('S','T','M','P'),//STMP - Time stamp at the source in microseconds for the first sample. 
-	GPMF_KEY_TIME_STAMPS =		MAKEID('S','T','P','S'),//STPS - Stream of all the timestamps delivered. 
+	GPMF_KEY_TIME_OFFSET =      MAKEID('T','I','M','O'),//TIMO - Time offset of the metadata stream that follows (single 4 byte float)
+	GPMF_KEY_TIMING_OFFSET =    MAKEID('T','I','M','O'),//TIMO - duplicated, as older code might use the other version of TIMO
+	GPMF_KEY_TIME_STAMP =		MAKEID('S','T','M','P'),//STMP - Time stamp for the first sample. 
+	GPMF_KEY_TIME_STAMPS =		MAKEID('S','T','P','S'),//STPS - Stream of all the timestamps delivered (Generally don't use this. This would be if your sensor has no peroidic times, yet precision is required, or for debugging.) 
 	GPMF_KEY_PREFORMATTED =		MAKEID('P','F','R','M'),//PFRM - GPMF data
 	GPMF_KEY_TEMPERATURE_C =	MAKEID('T','M','P','C'),//TMPC - Temperature in Celsius
 	GPMF_KEY_EMPTY_PAYLOADS =	MAKEID('E','M','P','T'),//EMPT - Payloads that are empty since the device start (e.g. BLE disconnect.)
