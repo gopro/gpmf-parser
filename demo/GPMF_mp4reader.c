@@ -664,8 +664,9 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 									totaldur += duration;
 									mp4->metadatalength += (double)((double)samplecount * (double)duration / (double)mp4->meta_clockdemon);
+									if (samplecount > 1 || num == 1)
+										mp4->basemetadataduration = mp4->metadatalength * (double)mp4->meta_clockdemon / (double)samples;
 								}
-								mp4->basemetadataduration = mp4->metadatalength * (double)mp4->meta_clockdemon / (double)samples;
 							}
 							mp4->filepos += len;
 							LongSeek(mp4, qtsize - 8 - len); // skip over stco
@@ -739,6 +740,9 @@ uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out)
 
 	*in = ((double)index * (double)mp4->basemetadataduration / (double)mp4->meta_clockdemon);
 	*out = ((double)(index + 1) * (double)mp4->basemetadataduration / (double)mp4->meta_clockdemon);
+
+	if (*out > (double)mp4->metadatalength)
+		*out = (double)mp4->metadatalength;
 	return GPMF_OK;
 }
 
@@ -752,6 +756,10 @@ uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, uint32_t *in_nume
 
 	*in_numerator = (uint32_t)(index * mp4->basemetadataduration);
 	*out_numerator = (uint32_t)((index + 1) * mp4->basemetadataduration);
+
+	if (*out_numerator > (uint32_t)((double)mp4->metadatalength*(double)mp4->meta_clockdemon))
+		*out_numerator = (uint32_t)((double)mp4->metadatalength*(double)mp4->meta_clockdemon);
+
 	*denominator = (uint32_t)mp4->meta_clockdemon;
     
     return GPMF_OK;
@@ -896,6 +904,8 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 
 		if (ret == GPMF_OK && payload)
 		{
+			double startin, startout, endin, endout;
+
 			uint32_t samples = GPMF_PayloadSampleCount(ms);
 			GPMF_stream find_stream;
 			GPMF_CopyState(ms, &find_stream);
@@ -930,6 +940,9 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				ret = GPMF_Init(ms, payload, payloadsize);
 			} while (testend > 0 && ret == GPMF_OK &&  GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS));
 
+			GetPayloadTime(handle, teststart, &startin, &startout);
+			GetPayloadTime(handle, teststart, &endin, &endout);
+
 			GPMF_CopyState(ms, &find_stream);
 			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES, GPMF_CURRENT_LEVEL))
 				endsamples = BYTESWAP32(*(uint32_t *)GPMF_RawData(&find_stream));
@@ -960,10 +973,10 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				{
 					double approxrate = 0.0;
 					if (endsamples > startsamples)
-						approxrate = (double)(endsamples - startsamples) / (mp4->metadatalength * ((double)(testend - teststart + 1)) / (double)mp4->indexcount);
+						approxrate = (double)(endsamples - startsamples) / (endout - startin);
 
 					if (approxrate == 0.0)
-						approxrate = (double)(samples) / (mp4->metadatalength * ((double)(testend - teststart + 1)) / (double)mp4->indexcount);
+						approxrate = (double)(samples) / (endout - startin);
 
 
 					while (time_stamp_scale >= 1)
@@ -984,14 +997,12 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				if (!(flags & GPMF_SAMPLE_RATE_PRECISE))
 				{
 					if (endsamples > startsamples)
-						rate = (double)(endsamples - startsamples) / (mp4->metadatalength * ((double)(testend - teststart + 1)) / (double)mp4->indexcount);
+						rate = (double)(endsamples - startsamples) / (endout - startin);
 
 					if (rate == 0.0)
-						rate = (double)(samples) / (mp4->metadatalength * ((double)(testend - teststart + 1)) / (double)mp4->indexcount);
+						rate = (double)(samples) / (endout - startin);
 
-					double in, out;
-					if (GPMF_OK == GetPayloadTime(handle, teststart, &in, &out))
-						intercept = (double)-in * rate;
+					intercept = (double)-startin * rate;
 				}
 				else // for increased precision, for older GPMF streams sometimes missing the total sample count 
 				{
@@ -1089,7 +1100,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 					}
 					else
 					{
-						rate = (double)(samples) / (mp4->metadatalength * ((double)(testend - teststart + 1)) / (double)mp4->indexcount);
+						rate = (double)(samples) / (endout - startin);
 					}
 
 					free(repeatarray);
