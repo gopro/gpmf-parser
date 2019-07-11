@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.3.1
+*  @version 1.4.1
 *
 *  (C) Copyright 2017-2019 GoPro Inc (http://gopro.com/).
 *
@@ -941,7 +941,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 			} while (testend > 0 && ret == GPMF_OK &&  GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS));
 
 			GetPayloadTime(handle, teststart, &startin, &startout);
-			GetPayloadTime(handle, teststart, &endin, &endout);
+			GetPayloadTime(handle, testend, &endin, &endout);
 
 			GPMF_CopyState(ms, &find_stream);
 			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES, GPMF_CURRENT_LEVEL))
