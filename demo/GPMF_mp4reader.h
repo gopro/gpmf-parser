@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.2.0
+*  @version 1.5.0
 *
 *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
 *
@@ -48,7 +48,7 @@ typedef struct SampleToChunk
 	uint32_t id;
 } SampleToChunk;
 
-
+#define MAX_TRACKS	16
 typedef struct mp4object
 {
 	uint32_t *metasizes;
@@ -59,10 +59,13 @@ typedef struct mp4object
 	uint32_t indexcount;
 	double videolength;
 	double metadatalength;
+	int32_t metadataoffset_clockcount;
 	uint32_t clockdemon, clockcount;
 	uint32_t trak_clockdemon, trak_clockcount;
 	uint32_t meta_clockdemon, meta_clockcount;
 	double basemetadataduration;
+	int32_t trak_edit_list_offsets[MAX_TRACKS];
+	uint32_t trak_num;
 	FILE *mediafp;
 	uint64_t filesize;
 	uint64_t filepos;
