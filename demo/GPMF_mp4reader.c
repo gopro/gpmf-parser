@@ -764,6 +764,16 @@ size_t OpenMP4SourceUDTA(char *filename)
 	memset(mp4, 0, sizeof(mp4object));
 
 #ifdef _WINDOWS
+	struct _stat64 mp4stat;
+	_stat64(filename, &mp4stat);
+#else
+	struct stat mp4stat;
+	stat(filename, &mp4stat);
+#endif
+	mp4->filesize = mp4stat.st_size;
+	if (mp4->filesize < 64) return 0;
+
+#ifdef _WINDOWS
 	fopen_s(&mp4->mediafp, filename, "rb");
 #else
 	mp4->mediafp = fopen(filename, "rb");
@@ -785,7 +795,8 @@ size_t OpenMP4SourceUDTA(char *filename)
 			{
 				if (!GPMF_VALID_FOURCC(qttag))
 				{
-					LongSeek(mp4, lastsize - 8 - 8);
+					mp4->filepos += len;
+					LongSeek(mp4, lastsize - 8 - len);
 
 					NESTSIZE(lastsize - 8);
 					continue;
@@ -795,7 +806,8 @@ size_t OpenMP4SourceUDTA(char *filename)
 
 				if (qtsize32 == 1) // 64-bit Atom
 				{
-					fread(&qtsize, 1, 8, mp4->mediafp);
+					len += fread(&qtsize, 1, 8, mp4->mediafp);
+					mp4->filepos += len;
 					qtsize = BYTESWAP64(qtsize) - 8;
 				}
 				else
