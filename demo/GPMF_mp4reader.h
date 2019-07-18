@@ -63,6 +63,9 @@ typedef struct mp4object
 	uint32_t clockdemon, clockcount;
 	uint32_t trak_clockdemon, trak_clockcount;
 	uint32_t meta_clockdemon, meta_clockcount;
+	uint32_t video_framerate_numerator;
+	uint32_t video_framerate_denominator;
+	uint32_t video_frames;
 	double basemetadataduration;
 	int32_t trak_edit_list_offsets[MAX_TRACKS];
 	uint32_t trak_num;
@@ -104,6 +107,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t subtype);
 size_t OpenMP4SourceUDTA(char *filename);
 void CloseSource(size_t handle);
 float GetDuration(size_t handle);
+uint32_t GetVideoFrameRateAndCount(size_t handle, uint32_t *numer, uint32_t *demon);
 uint32_t GetNumberPayloads(size_t handle);
 uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index);
 void FreePayload(uint32_t *lastpayload);

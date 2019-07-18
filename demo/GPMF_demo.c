@@ -56,6 +56,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+
 	metadatalength = GetDuration(mp4);
 
 	if (metadatalength > 0.0)
@@ -63,6 +64,12 @@ int main(int argc, char *argv[])
 		uint32_t index, payloads = GetNumberPayloads(mp4);
 //		printf("found %.2fs of metadata, from %d payloads, within %s\n", metadatalength, payloads, argv[1]);
 
+		uint32_t fr_num, fr_dem;
+		uint32_t frames = GetVideoFrameRateAndCount(mp4, &fr_num, &fr_dem);
+		if (frames)
+		{
+			printf("video framerate is %.2f with %d frames\n", (float)fr_num/(float)fr_dem, frames);
+		}
 #if 1
 		if (payloads == 1) // Printf the contents of the single payload
 		{

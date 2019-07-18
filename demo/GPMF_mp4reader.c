@@ -688,6 +688,41 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					}
 					else if (qttag == MAKEID('s', 't', 't', 's')) // time to samples
 					{
+						if (type == MAKEID('v', 'i', 'd', 'e')) // video trak to get frame rate
+						{
+							uint32_t totaldur = 0, samples = 0;
+							int32_t entries = 0;
+							len = fread(&skip, 1, 4, mp4->mediafp);
+							len += fread(&num, 1, 4, mp4->mediafp);
+							num = BYTESWAP32(num);
+							if (num * 8 <= qtsize - 8 - len)
+							{
+								entries = num;
+
+								while (entries > 0)
+								{
+									int32_t samplecount;
+									int32_t duration;
+									len += fread(&samplecount, 1, 4, mp4->mediafp);
+									samplecount = BYTESWAP32(samplecount);
+									len += fread(&duration, 1, 4, mp4->mediafp);
+									duration = BYTESWAP32(duration);
+
+									samples += samplecount;
+									entries--;
+
+									if (mp4->video_framerate_numerator == 0)
+									{
+										mp4->video_framerate_numerator = mp4->trak_clockdemon;
+										mp4->video_framerate_denominator = duration;
+									}
+								}
+								mp4->video_frames = samples;
+							}
+							mp4->filepos += len;
+							LongSeek(mp4, qtsize - 8 - len); // skip over stco
+						}
+						else
 						if (type == traktype) // meta 
 						{
 							uint32_t totaldur = 0, samples = 0;
@@ -769,6 +804,19 @@ float GetDuration(size_t handle)
 	return (float)mp4->metadatalength;
 }
 
+uint32_t GetVideoFrameRateAndCount(size_t handle, uint32_t *numer, uint32_t *demon)
+{
+	mp4object *mp4 = (mp4object *)handle;
+	if (mp4 == NULL) return 0.0;
+
+	if (numer != NULL && demon != NULL && mp4->video_frames > 0)
+	{
+		*numer = mp4->video_framerate_numerator;
+		*demon = mp4->video_framerate_denominator;
+		return mp4->video_frames;
+	}
+	return 0;
+}
 
 void CloseSource(size_t handle)
 {
