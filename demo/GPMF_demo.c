@@ -45,13 +45,16 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+#if 1 // Search for GPMF Track
 	size_t mp4 = OpenMP4Source(argv[1], MOV_GPMF_TRAK_TYPE, MOV_GPMF_TRAK_SUBTYPE);
+#else // look for a global GPMF payload in the moov header, within 'udta'
+	size_t mp4 = OpenMP4SourceUDTA(argv[1]);  //Search for GPMF payload with MP4's udta 
+#endif
 	if (mp4 == 0)
 	{
 		printf("error: %s is an invalid MP4/MOV\n", argv[1]);
 		return -1;
 	}
-//	size_t mp4 = OpenMP4SourceUDTA(argv[1]);  //Search for GPMF payload with MP4's udta 
 
 	metadatalength = GetDuration(mp4);
 
