@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.4.0
+ *  @version 1.4.1
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
@@ -1395,16 +1395,16 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 						{
 							switch (mtrx_type)
 							{
-							case GPMF_TYPE_FLOAT:			MACRO_SET_MATRIX(float, orin_data[y], orio_data[x], pos);  break;
-							case GPMF_TYPE_DOUBLE:			MACRO_SET_MATRIX(double, orin_data[y], orio_data[x], pos);  break;
-							case GPMF_TYPE_SIGNED_BYTE:		MACRO_SET_MATRIX(int8_t, orin_data[y], orio_data[x], pos);   break;
-							case GPMF_TYPE_UNSIGNED_BYTE:	MACRO_SET_MATRIX(uint8_t, orin_data[y], orio_data[x], pos);  break;
-							case GPMF_TYPE_SIGNED_SHORT:	MACRO_SET_MATRIX(int16_t, orin_data[y], orio_data[x], pos);  break;
-							case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_SET_MATRIX(uint16_t, orin_data[y], orio_data[x], pos);  break;
-							case GPMF_TYPE_SIGNED_LONG:		MACRO_SET_MATRIX(int32_t, orin_data[y], orio_data[x], pos);  break;
-							case GPMF_TYPE_UNSIGNED_LONG:	MACRO_SET_MATRIX(uint32_t, orin_data[y], orio_data[x], pos);  break;
-							case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_SET_MATRIX(int64_t, orin_data[y], orio_data[x], pos);  break;
-							case GPMF_TYPE_UNSIGNED_64BIT_INT: MACRO_SET_MATRIX(uint64_t, orin_data[y], orio_data[x], pos);  break;
+							case GPMF_TYPE_FLOAT:			MACRO_SET_MATRIX(float,       orio_data[y], orin_data[x], pos);  break;
+							case GPMF_TYPE_DOUBLE:			MACRO_SET_MATRIX(double,      orio_data[y], orin_data[x], pos);  break;
+							case GPMF_TYPE_SIGNED_BYTE:		MACRO_SET_MATRIX(int8_t,      orio_data[y], orin_data[x], pos);   break;
+							case GPMF_TYPE_UNSIGNED_BYTE:	MACRO_SET_MATRIX(uint8_t,     orio_data[y], orin_data[x], pos);  break;
+							case GPMF_TYPE_SIGNED_SHORT:	MACRO_SET_MATRIX(int16_t,     orio_data[y], orin_data[x], pos);  break;
+							case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_SET_MATRIX(uint16_t,    orio_data[y], orin_data[x], pos);  break;
+							case GPMF_TYPE_SIGNED_LONG:		MACRO_SET_MATRIX(int32_t,     orio_data[y], orin_data[x], pos);  break;
+							case GPMF_TYPE_UNSIGNED_LONG:	MACRO_SET_MATRIX(uint32_t,    orio_data[y], orin_data[x], pos);  break;
+							case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_SET_MATRIX(int64_t,   orio_data[y], orin_data[x], pos);  break;
+							case GPMF_TYPE_UNSIGNED_64BIT_INT: MACRO_SET_MATRIX(uint64_t, orio_data[y], orin_data[x], pos);  break;
 							default:
 								ret = GPMF_ERROR_TYPE_NOT_SUPPORTED;
 								goto cleanup;
