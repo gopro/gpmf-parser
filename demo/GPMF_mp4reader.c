@@ -807,7 +807,7 @@ float GetDuration(size_t handle)
 uint32_t GetVideoFrameRateAndCount(size_t handle, uint32_t *numer, uint32_t *demon)
 {
 	mp4object *mp4 = (mp4object *)handle;
-	if (mp4 == NULL) return 0.0;
+	if (mp4 == NULL) return 0;
 
 	if (numer != NULL && demon != NULL && mp4->video_frames > 0)
 	{
@@ -821,13 +821,33 @@ uint32_t GetVideoFrameRateAndCount(size_t handle, uint32_t *numer, uint32_t *dem
 void CloseSource(size_t handle)
 {
 	mp4object *mp4 = (mp4object *)handle;
-	if (mp4 == NULL) return;
+	if (mp4 == NULL) 
+	{
+		return;
+	}
 
-	if (mp4->mediafp) fclose(mp4->mediafp), mp4->mediafp = NULL;
-	if (mp4->metasizes) free(mp4->metasizes), mp4->metasizes = 0;
-	if (mp4->metaoffsets) free(mp4->metaoffsets), mp4->metaoffsets = 0;
-
-	free(mp4);
+	if (mp4->mediafp)
+	{
+		fclose(mp4->mediafp);
+		mp4->mediafp = NULL;
+	}
+	if (mp4->metasizes)
+	{
+		free(mp4->metasizes);
+		mp4->metasizes = 0;
+	}
+	if (mp4->metaoffsets)
+	{
+		free(mp4->metaoffsets);
+		mp4->metaoffsets = 0;
+	}
+	if (mp4->metastsc)
+	{
+		free(mp4->metastsc);
+		mp4->metastsc = 0;
+	}
+ 
+ 	free(mp4);
 }
 
 
