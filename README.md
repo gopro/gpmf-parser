@@ -185,19 +185,19 @@ All GPMF data is 32-bit aligned and stored as big-endian. For data types that ar
 
 DEMO,  &#39;b&#39; 1  1,  &lt;byte value&gt; 0 0 0
 
-![](docs/readmegfx/demo1.png)
+![](/docs/readmegfx/demo1.png)
 
 The same data type stored 15 times would have only a only byte pad at the end.
 
 DEMO,  &#39;b&#39; 1  15,  &lt;15 bytes data&gt; 0
 
-![](docs/readmegfx/demo2.png)
+![](/docs/readmegfx/demo2.png)
 
 Packed data will all maintain a 32-bit alignment between GPMF KLV 3-tuples.
 
 DMO1, b  1 1, &lt;byte value&gt; 0 0 0 DMO2 b 1 15 &lt;values&gt; 0 DMO3 L 4 1 &lt;32-bit values&gt;
 
-![](docs/readmegfx/demo3.png)
+![](/docs/readmegfx/demo3.png)
 
 While padding is shown as null values, any value can be used, as this data is simply ignored.
 
@@ -498,7 +498,7 @@ GoPro HERO5, HERO6 and Fusion cameras have a GPMF track. HERO4 Black will have G
 
 ### IMU Orientation Uses These Axis Labels
 
-![](docs/readmegfx/CameraIMUOrientationSM.png "IMU Orientation")
+![](/docs/readmegfx/CameraIMUOrientationSM.png "IMU Orientation")
 
 ### HERO5 Black and Session 
 
