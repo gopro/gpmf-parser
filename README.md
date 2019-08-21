@@ -116,7 +116,7 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 
 All data is Big Endian.
 
-![](docs/readmegfx/KLVDesign.png "KLV Design")
+![](/docs/readmegfx/KLVDesign.png "KLV Design")
 
 ### FourCC
 
