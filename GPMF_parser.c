@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.4.1
+ *  @version 1.4.2
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
@@ -672,16 +672,9 @@ uint32_t GPMF_ScaledDataSize(GPMF_stream *ms, GPMF_SampleType type)
 {
 	if (ms && ms->pos + 1 < ms->buffer_size_longs)
 	{
-		uint32_t size = GPMF_FormattedDataSize(ms);
-        if(size > 0)
-        {
-            int scale_up = GPMF_SizeofType(type) / GPMF_SizeofType(GPMF_Type(ms));
-            int scale_dn = GPMF_SizeofType(GPMF_Type(ms)) / GPMF_SizeofType(type);
-
-            if (scale_up) size *= scale_up;
-            else if (scale_dn) size /= scale_dn;
-            return size;
-        }
+		uint32_t elements = GPMF_ElementsInStruct(ms);
+		uint32_t samples = GPMF_Repeat(ms);
+		return GPMF_SizeofType(type) * elements * samples;
 	}
 	return 0;
 }
