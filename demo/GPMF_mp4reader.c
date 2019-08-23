@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.5.0
+*  @version 1.5.1
 *
 *  (C) Copyright 2017-2019 GoPro Inc (http://gopro.com/).
 *
@@ -157,6 +157,13 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 			mp4->filepos += len;
 			if (len == 8 && mp4->filepos < mp4->filesize)
 			{
+				if (mp4->filepos == 8 && qttag != MAKEID('f', 't', 'y', 'p'))
+				{
+					CloseSource((size_t)mp4);
+					mp4 = NULL;
+					break;
+				}
+
 				if (!GPMF_VALID_FOURCC(qttag))
 				{
 					CloseSource((size_t)mp4);
@@ -174,6 +181,13 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 				}
 				else
 					qtsize = qtsize32;
+
+				if(qtsize-len > (mp4->filesize - mp4->filepos))  // not parser truncated files.
+				{
+					CloseSource((size_t)mp4);
+					mp4 = NULL;
+					break;
+				}
 
 				nest++;
 
@@ -299,25 +313,27 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							{
 								len += fread(&num, 1, 4, mp4->mediafp);
 								num = BYTESWAP32(num);
-
-								int32_t segment_duration; //integer that specifies the duration of this edit segment in units of the movie’s time scale.
-								int32_t segment_mediaTime; //integer containing the starting time within the media of this edit segment(in media timescale units).If this field is set to –1, it is an empty edit.The last edit in a track should never be an empty edit.Any difference between the movie’s duration and the track’s duration is expressed as an implicit empty edit.
-								int32_t segment_mediaRate; //point number that specifies the relative rate at which to play the media corresponding to this edit segment.This rate value cannot be 0 or negative.
-								for (i = 0; i < num; i++)
+								if (num <= ((qtsize - 8 - len) / 12))
 								{
-									len += fread(&segment_duration, 1, 4, mp4->mediafp);
-									len += fread(&segment_mediaTime, 1, 4, mp4->mediafp);
-									len += fread(&segment_mediaRate, 1, 4, mp4->mediafp);
+									int32_t segment_duration; //integer that specifies the duration of this edit segment in units of the movie’s time scale.
+									int32_t segment_mediaTime; //integer containing the starting time within the media of this edit segment(in media timescale units).If this field is set to –1, it is an empty edit.The last edit in a track should never be an empty edit.Any difference between the movie’s duration and the track’s duration is expressed as an implicit empty edit.
+									int32_t segment_mediaRate; //point number that specifies the relative rate at which to play the media corresponding to this edit segment.This rate value cannot be 0 or negative.
+									for (i = 0; i < num; i++)
+									{
+										len += fread(&segment_duration, 1, 4, mp4->mediafp);
+										len += fread(&segment_mediaTime, 1, 4, mp4->mediafp);
+										len += fread(&segment_mediaRate, 1, 4, mp4->mediafp);
 
-									segment_duration = BYTESWAP32(segment_duration);
-									segment_mediaTime = BYTESWAP32(segment_mediaTime);
-									segment_mediaRate = BYTESWAP32(segment_mediaRate);
+										segment_duration = BYTESWAP32(segment_duration);
+										segment_mediaTime = BYTESWAP32(segment_mediaTime);
+										segment_mediaRate = BYTESWAP32(segment_mediaRate);
 
-									if (segment_mediaTime == -1) // the segment_duration for blanked time
-										mp4->trak_edit_list_offsets[mp4->trak_num] += segment_duration;
-									else if (i == 0) // If the first editlst starts after zero, the track is offset by this time
-										mp4->trak_edit_list_offsets[mp4->trak_num] += segment_mediaTime;
+										if (segment_mediaTime == -1) // the segment_duration for blanked time
+											mp4->trak_edit_list_offsets[mp4->trak_num] += segment_duration;
+										else if (i == 0) // If the first editlst starts after zero, the track is offset by this time
+											mp4->trak_edit_list_offsets[mp4->trak_num] += segment_mediaTime;
 
+									}
 								}
 							}
 						}
@@ -361,7 +377,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len += fread(&num, 1, 4, mp4->mediafp);
 
 							num = BYTESWAP32(num);
-							if (num * 12 <= qtsize - 8 - len)
+							if (num <= ((qtsize - 8 - len)/sizeof(SampleToChunk)))
 							{
 								mp4->metastsc_count = num;
 								if (mp4->metastsc) free(mp4->metastsc);
@@ -408,7 +424,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len += fread(&num, 1, 4, mp4->mediafp);
 
 							num = BYTESWAP32(num);
-							if (num * 4 <= qtsize - 8 - len)
+							if (num <= ((qtsize - 8 - len)/sizeof(uint32_t)))
 							{
 								mp4->metasize_count = num;
 								if (mp4->metasizes) free(mp4->metasizes);
@@ -460,7 +476,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len = fread(&skip, 1, 4, mp4->mediafp);
 							len += fread(&num, 1, 4, mp4->mediafp);
 							num = BYTESWAP32(num);
-							if (num * 4 <= qtsize - 8 - len)
+							if (num <= ((qtsize - 8 - len)/sizeof(uint32_t)))
 							{
 								uint32_t metastco_count = num;
 
@@ -597,7 +613,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								break;
 							}
 
-							if (num * 8 <= qtsize - 8 - len)
+							if (num <= ((qtsize - 8 - len)/sizeof(uint64_t)))
 							{
 								if (mp4->metastsc_count > 0 && num != mp4->metasize_count)
 								{
@@ -695,7 +711,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len = fread(&skip, 1, 4, mp4->mediafp);
 							len += fread(&num, 1, 4, mp4->mediafp);
 							num = BYTESWAP32(num);
-							if (num * 8 <= qtsize - 8 - len)
+							if (num <= ((qtsize - 8 - len) / 8))
 							{
 								entries = num;
 
@@ -730,7 +746,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len = fread(&skip, 1, 4, mp4->mediafp);
 							len += fread(&num, 1, 4, mp4->mediafp);
 							num = BYTESWAP32(num);
-							if (num * 8 <= qtsize - 8 - len)
+							if (num <= ((qtsize - 8 - len)/8))
 							{
 								entries = num;
 

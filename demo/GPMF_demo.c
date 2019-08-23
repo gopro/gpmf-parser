@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 #endif
 	if (mp4 == 0)
 	{
-		printf("error: %s is an invalid MP4/MOV\n", argv[1]);
+		printf("error: %s is an invalid MP4/MOV or it has no GPMF data\n", argv[1]);
 		return -1;
 	}
 
