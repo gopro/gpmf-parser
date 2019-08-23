@@ -156,6 +156,13 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 			mp4->filepos += len;
 			if (len == 8 && mp4->filepos < mp4->filesize)
 			{
+				if (mp4->filepos == 8 && qttag != MAKEID('f', 't', 'y', 'p'))
+				{
+					CloseSource((size_t)mp4);
+					mp4 = NULL;
+					break;
+				}
+
 				if (!VALID_FOURCC(qttag))
 				{
 					CloseSource((size_t)mp4);
@@ -173,6 +180,13 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 				}
 				else
 					qtsize = qtsize32;
+
+				if(qtsize-len > (mp4->filesize - mp4->filepos))  // not parser truncated files.
+				{
+					CloseSource((size_t)mp4);
+					mp4 = NULL;
+					break;
+				}
 
 				nest++;
 
@@ -308,7 +322,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len += fread(&num, 1, 4, mp4->mediafp);
 
 							num = BYTESWAP32(num);
-							if (num * 12 <= qtsize - 8 - len)
+							if (num <= ((qtsize - 8 - len)/sizeof(SampleToChunk)))
 							{
 								mp4->metastsc_count = num;
 								if (mp4->metastsc) free(mp4->metastsc);
@@ -355,7 +369,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len += fread(&num, 1, 4, mp4->mediafp);
 
 							num = BYTESWAP32(num);
-							if (num * 4 <= qtsize - 8 - len)
+							if (num <= ((qtsize - 8 - len)/sizeof(uint32_t)))
 							{
 								mp4->metasize_count = num;
 								if (mp4->metasizes) free(mp4->metasizes);
@@ -407,7 +421,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len = fread(&skip, 1, 4, mp4->mediafp);
 							len += fread(&num, 1, 4, mp4->mediafp);
 							num = BYTESWAP32(num);
-							if (num * 4 <= qtsize - 8 - len)
+							if (num <= ((qtsize - 8 - len)/sizeof(uint32_t)))
 							{
 								uint32_t metastco_count = num;
 
@@ -544,7 +558,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								break;
 							}
 
-							if (num * 8 <= qtsize - 8 - len)
+							if (num <= ((qtsize - 8 - len)/sizeof(uint64_t)))
 							{
 								if (mp4->metastsc_count > 0 && num != mp4->metasize_count)
 								{
@@ -642,7 +656,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len = fread(&skip, 1, 4, mp4->mediafp);
 							len += fread(&num, 1, 4, mp4->mediafp);
 							num = BYTESWAP32(num);
-							if (num * 8 <= qtsize - 8 - len)
+							if (num <= ((qtsize - 8 - len)/8))
 							{
 								entries = num;
 
@@ -663,8 +677,9 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 									totaldur += duration;
 									mp4->metadatalength += (double)((double)samplecount * (double)duration / (double)mp4->meta_clockdemon);
+									if (samplecount > 1 || num == 1)
+										mp4->basemetadataduration = mp4->metadatalength * (double)mp4->meta_clockdemon / (double)samples;
 								}
-								mp4->basemetadataduration = mp4->metadatalength * (double)mp4->meta_clockdemon / (double)samples;
 							}
 							mp4->filepos += len;
 							LongSeek(mp4, qtsize - 8 - len); // skip over stco
@@ -880,10 +895,12 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 	if (mp4->indexcount < 1)
 		return 0.0;
 
-	payload = GetPayload(handle, NULL, teststart);
+	payload = GetPayload(handle, NULL, teststart); 
 	payloadsize = GetPayloadSize(handle, teststart);
 	ret = GPMF_Init(ms, payload, payloadsize);
-	if (ret != GPMF_OK) goto cleanup;
+
+	if (ret != GPMF_OK)
+		goto cleanup;
 
 	{
 		uint64_t minimumtimestamp = 0;
