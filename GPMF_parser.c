@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.4.2
+ *  @version 1.5.0
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
@@ -412,6 +412,7 @@ uint32_t GPMF_PayloadSampleCount(GPMF_stream *ms)
 	if (ms)
 	{
 		uint32_t fourcc = GPMF_Key(ms);
+		uint32_t type = GPMF_Type(ms);
 
 		GPMF_stream find_stream;
 		GPMF_CopyState(ms, &find_stream);
@@ -426,9 +427,14 @@ uint32_t GPMF_PayloadSampleCount(GPMF_stream *ms)
 		}
 		else
 		{
-			count = GPMF_Repeat(ms);
-			if (count == 0) // this can happen with an empty FACE, yet this is still a FACE fouce
+			if (type == GPMF_TYPE_GROUPED)
 				count = 1;
+			else
+			{
+				count = GPMF_Repeat(ms);
+				if (count == 0) // this can happen with an empty FACE, yet this is still a FACE fouce
+					count = 1;
+			}
 		}
 	}
 	return count;
@@ -612,9 +618,24 @@ uint32_t GPMF_ElementsInStruct(GPMF_stream *ms)
 		}
 		if (type == GPMF_TYPE_COMPRESSED && ms->pos+2 < ms->buffer_size_longs)
 		{
+			int32_t tsize = 0;
 			type = (GPMF_SampleType)GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 2]);
 			ssize = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 2]);
-			int32_t tsize = GPMF_SizeofType(type);
+			if (type == GPMF_TYPE_GROUPED)
+			{
+				GPMF_stream find_stream;
+				GPMF_CopyState(ms, &find_stream);
+
+				if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
+				{
+					char *data1 = (char *)GPMF_RawData(&find_stream);
+					tsize = GPMF_SizeofType(*data1);
+				}
+			}
+			else
+			{
+				tsize = GPMF_SizeofType(type);
+			}
 			if (tsize > 0)
 				return ssize / tsize;
 			else
@@ -912,6 +933,18 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 		}
 		else
 		{
+			if (type == GPMF_TYPE_GROUPED)
+			{
+				GPMF_stream find_stream;
+				GPMF_CopyState(ms, &find_stream);
+
+				if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
+				{
+					char *data1 = (char *)GPMF_RawData(&find_stream);
+					type = *data1;
+				}
+			}
+
 			typesize = GPMF_SizeofType((GPMF_SampleType)type);
 
 			if (type == GPMF_TYPE_FOURCC)
@@ -1527,6 +1560,17 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 
 		// unpack here
 		GPMF_SampleType type = (GPMF_SampleType)GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 2]);// The first 32-bit of data, is the uncomresseded type-size-repeat
+		if (type == GPMF_TYPE_GROUPED)
+		{
+			GPMF_stream find_stream;
+			GPMF_CopyState(ms, &find_stream);
+
+			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
+			{
+				char *data1 = (char *)GPMF_RawData(&find_stream);
+				type = *data1;
+			}
+		}
 		uint8_t *start = (uint8_t *)&ms->buffer[ms->pos + 3];
 		uint16_t quant;
 		size_t sOffset = 0;

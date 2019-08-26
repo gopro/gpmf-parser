@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 						{
 							printf("  STRM of %c%c%c%c ", PRINTF_4CC(key));
 
-							if (type == GPMF_TYPE_COMPLEX)
+							if (type == GPMF_TYPE_COMPLEX || type == GPMF_TYPE_GROUPED)
 							{
 								GPMF_stream find_stream;
 								GPMF_CopyState(ms, &find_stream);
@@ -155,7 +155,6 @@ int main(int argc, char *argv[])
 										printf("of type %s ", tmp);
 									}
 								}
-
 							}
 							else
 							{

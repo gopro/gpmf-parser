@@ -1124,7 +1124,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TIME_STAMP, GPMF_CURRENT_LEVEL))
 					endtimestamp = BYTESWAP64(*(uint64_t *)GPMF_RawData(&find_stream));
 
-				if (endtimestamp)
+				if (endtimestamp > starttimestamp)
 				{
 					double approxrate = 0.0;
 					if (endsamples > startsamples)
@@ -1244,7 +1244,10 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 							}
 						}
 
-						slope = top / bot;
+						if (bot > 0.0)
+							slope = top / bot;
+						else
+							slope = meanY / meanX;
 						rate = slope;
 
 						// This sample code might be useful for compare data latency between channels.
@@ -1274,7 +1277,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 					ret = GPMF_Init(ms, payload, payloadsize);
 				} while (endpayload > 0 && ret == GPMF_OK && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS));
 
-				if (endpayload > 0 && ret == GPMF_OK)
+				if (endpayload >= 0 && ret == GPMF_OK)
 				{
 					uint32_t totalsamples = endsamples - startsamples;
 					float timo = 0.0;

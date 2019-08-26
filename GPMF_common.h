@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library include
  * 
- *  @version 1.2.0
+ *  @version 1.5.0
  * 
  *  (C) Copyright 2017-2019 GoPro Inc (http://gopro.com/).
  *
@@ -64,6 +64,9 @@ typedef enum
 
 	GPMF_TYPE_COMPLEX = '?', //for sample with complex data structures, base size in bytes.  Data is either opaque, or the stream has a TYPE structure field for the sample.
 	GPMF_TYPE_COMPRESSED = '#', //Huffman compression STRM payloads.  4-CC <type><size><rpt> <data ...> is compressed as 4-CC '#'<new size/rpt> <type><size><rpt> <compressed data ...>
+	GPMF_TYPE_GROUPED = '+', //GROUPED is multiple samples at the same time, like 'n' face in a frame, and when this is only one time sample in a payload -- 
+							 //this TYPE_GROUPED flag is used to distinguish between 'n' sample in one time slot or 'n' time slots. When   
+							 //When TYPE_GROUPED is used, the stream has a TYPE structure field for the sample description.
 
 	GPMF_TYPE_NEST = 0, // used to nest more GPMF formatted metadata 
 
@@ -93,7 +96,6 @@ typedef enum
 								( (((a>>16)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>16)&0xff)>='A'&&((a>>16)&0xff)<='Z') || (((a>>16)&0xff)>='0'&&((a>>16)&0xff)<='9') || (((a>>16)&0xff)==' ') ) && \
 								( (((a>>8)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>8)&0xff)>='A'&&((a>>8)&0xff)<='Z') || (((a>>8)&0xff)>='0'&&((a>>8)&0xff)<='9') || (((a>>8)&0xff)==' ') ) && \
 								( (((a>>0)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>0)&0xff)>='A'&&((a>>0)&0xff)<='Z') || (((a>>0)&0xff)>='0'&&((a>>0)&0xff)<='9') || (((a>>0)&0xff)==' ') )) 
-#define GPMF_KEY_TYPE(a)		(a&0xff)
 
 #define PRINTF_4CC(k)			((k) >> 0) & 0xff, ((k) >> 8) & 0xff, ((k) >> 16) & 0xff, ((k) >> 24) & 0xff
 
