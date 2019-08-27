@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.5.1
+*  @version 1.5.2
 *
 *  (C) Copyright 2017-2019 GoPro Inc (http://gopro.com/).
 *
@@ -880,8 +880,8 @@ uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out)
 	if (*out > (double)mp4->metadatalength)
 		*out = (double)mp4->metadatalength;
 
-	*in += (double)mp4->metadataoffset_clockcount / (double)mp4->meta_clockdemon;
-	*out += (double)mp4->metadataoffset_clockcount / (double)mp4->meta_clockdemon;
+	*in += (double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon;
+	*out += (double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon;
 	return GPMF_OK;
 }
 
@@ -896,13 +896,13 @@ uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, uint32_t *in_nume
 	*in_numerator = (uint32_t)(index * mp4->basemetadataduration);
 	*out_numerator = (uint32_t)((index + 1) * mp4->basemetadataduration);
 
-	if (*out_numerator > (uint32_t)((double)mp4->metadatalength*(double)mp4->meta_clockdemon))
-		*out_numerator = (uint32_t)((double)mp4->metadatalength*(double)mp4->meta_clockdemon);
+	if (*out_numerator > (uint32_t)((double)mp4->metadatalength*(double)mp4->clockdemon))
+		*out_numerator = (uint32_t)((double)mp4->metadatalength*(double)mp4->clockdemon);
 
 	*in_numerator += mp4->metadataoffset_clockcount;
 	*out_numerator += mp4->metadataoffset_clockcount;
 
-	*denominator = (uint32_t)mp4->meta_clockdemon;
+	*denominator = (uint32_t)mp4->clockdemon;
     
     return GPMF_OK;
 }
