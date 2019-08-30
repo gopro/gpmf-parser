@@ -325,7 +325,11 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							if (num <= ((qtsize - 8 - len)/sizeof(SampleToChunk)))
 							{
 								mp4->metastsc_count = num;
-								if (mp4->metastsc) free(mp4->metastsc);
+								if (mp4->metastsc)
+								{
+									free(mp4->metastsc);
+									mp4->metastsc = 0;
+								}
 								if (num > 0)
 								{
 									mp4->metastsc = (SampleToChunk *)malloc(num * sizeof(SampleToChunk));
@@ -372,7 +376,11 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							if (num <= ((qtsize - 8 - len)/sizeof(uint32_t)))
 							{
 								mp4->metasize_count = num;
-								if (mp4->metasizes) free(mp4->metasizes);
+								if (mp4->metasizes)
+								{
+									free(mp4->metasizes);
+									mp4->metasizes = 0;
+								}
 								if(num > 0)
 								{
 									mp4->metasizes = (uint32_t *)malloc(num * 4);
@@ -428,7 +436,11 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								if (mp4->metastsc_count > 0 && num != mp4->metasize_count)
 								{
 									mp4->indexcount = num;
-									if (mp4->metaoffsets) free(mp4->metaoffsets);
+									if (mp4->metaoffsets)
+									{
+										free(mp4->metaoffsets);
+										mp4->metaoffsets = 0;
+									}
 									if(num > 0)
 									{
 										mp4->metaoffsets = (uint64_t *)malloc(num * 8);
@@ -502,7 +514,11 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								else
 								{
 									mp4->indexcount = num;
-									if (mp4->metaoffsets) free(mp4->metaoffsets);
+									if (mp4->metaoffsets)
+									{
+										free(mp4->metaoffsets);
+										mp4->metaoffsets = 0;
+									}
 									if (num > 0)
 									{
 										mp4->metaoffsets = (uint64_t *)malloc(num * 8);
@@ -563,7 +579,11 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								if (mp4->metastsc_count > 0 && num != mp4->metasize_count)
 								{
 									mp4->indexcount = mp4->metasize_count;
-									if (mp4->metaoffsets) free(mp4->metaoffsets);
+									if (mp4->metaoffsets)
+									{
+										free(mp4->metaoffsets);
+										mp4->metaoffsets = 0;
+									}
 									if (mp4->metasize_count)
 									{
 										mp4->metaoffsets = (uint64_t *)malloc(mp4->metasize_count * 8);
@@ -626,7 +646,11 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								else
 								{
 									mp4->indexcount = num;
-									if (mp4->metaoffsets) free(mp4->metaoffsets);
+									if (mp4->metaoffsets)
+									{
+										free(mp4->metaoffsets);
+										mp4->metaoffsets = 0;
+									}
 									mp4->metaoffsets = (uint64_t *)malloc(num * 8);
 									if (mp4->metaoffsets)
 									{
@@ -734,13 +758,33 @@ float GetDuration(size_t handle)
 void CloseSource(size_t handle)
 {
 	mp4object *mp4 = (mp4object *)handle;
-	if (mp4 == NULL) return;
+	if (mp4 == NULL) 
+	{
+		return;
+	}
 
-	if (mp4->mediafp) fclose(mp4->mediafp), mp4->mediafp = NULL;
-	if (mp4->metasizes) free(mp4->metasizes), mp4->metasizes = 0;
-	if (mp4->metaoffsets) free(mp4->metaoffsets), mp4->metaoffsets = 0;
-
-	free(mp4);
+	if (mp4->mediafp)
+	{
+		fclose(mp4->mediafp);
+		mp4->mediafp = NULL;
+	}
+	if (mp4->metasizes)
+	{
+		free(mp4->metasizes);
+		mp4->metasizes = 0;
+	}
+	if (mp4->metaoffsets)
+	{
+		free(mp4->metaoffsets);
+		mp4->metaoffsets = 0;
+	}
+	if (mp4->metastsc)
+	{
+		free(mp4->metastsc);
+		mp4->metastsc = 0;
+	}
+ 
+ 	free(mp4);
 }
 
 
