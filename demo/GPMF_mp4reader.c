@@ -60,7 +60,7 @@ uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index)
 	uint32_t *MP4buffer = NULL;
 	if (index < mp4->indexcount && mp4->mediafp)
 	{
-		if ((mp4->filesize > mp4->metaoffsets[index]+mp4->metasizes[index]) && (mp4->metasizes[index] > 0))
+		if ((mp4->filesize >= mp4->metaoffsets[index]+mp4->metasizes[index]) && (mp4->metasizes[index] > 0))
 		{
 			MP4buffer = (uint32_t *)realloc((void *)lastpayload, mp4->metasizes[index]);
 
