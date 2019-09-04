@@ -910,18 +910,18 @@ uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out)
 }
 
 
-uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, uint32_t *in_numerator, uint32_t *out_numerator, uint32_t *denominator)
+uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, int32_t *in_numerator, int32_t *out_numerator, uint32_t *denominator)
 {
     mp4object *mp4 = (mp4object *)handle;
     if (mp4 == NULL) return GPMF_ERROR_MEMORY;
     
     if (mp4->metaoffsets == 0 || mp4->basemetadataduration == 0 || mp4->meta_clockdemon == 0 || in_numerator == NULL || out_numerator == NULL) return GPMF_ERROR_MEMORY;
 
-	*in_numerator = (uint32_t)(index * mp4->basemetadataduration);
-	*out_numerator = (uint32_t)((index + 1) * mp4->basemetadataduration);
+	*in_numerator = (int32_t)(index * mp4->basemetadataduration);
+	*out_numerator = (int32_t)((index + 1) * mp4->basemetadataduration);
 
-	if (*out_numerator > (uint32_t)((double)mp4->metadatalength*(double)mp4->clockdemon))
-		*out_numerator = (uint32_t)((double)mp4->metadatalength*(double)mp4->clockdemon);
+	if (*out_numerator > (int32_t)((double)mp4->metadatalength*(double)mp4->clockdemon))
+		*out_numerator = (int32_t)((double)mp4->metadatalength*(double)mp4->clockdemon);
 
 	*in_numerator += mp4->metadataoffset_clockcount;
 	*out_numerator += mp4->metadataoffset_clockcount;
