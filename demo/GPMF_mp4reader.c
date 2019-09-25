@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.5.2
+*  @version 1.6.0
 *
 *  (C) Copyright 2017-2019 GoPro Inc (http://gopro.com/).
 *
@@ -324,15 +324,18 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 										len += fread(&segment_mediaTime, 1, 4, mp4->mediafp);
 										len += fread(&segment_mediaRate, 1, 4, mp4->mediafp);
 
-										segment_duration = BYTESWAP32(segment_duration);
-										segment_mediaTime = BYTESWAP32(segment_mediaTime);
-										segment_mediaRate = BYTESWAP32(segment_mediaRate);
+										segment_duration = BYTESWAP32(segment_duration);  // in MP4 clock base
+										segment_mediaTime = BYTESWAP32(segment_mediaTime); // in trak clock base
+										segment_mediaRate = BYTESWAP32(segment_mediaRate); // Fixed-point 65536 = 1.0X
 
 										if (segment_mediaTime == -1) // the segment_duration for blanked time
-											mp4->trak_edit_list_offsets[mp4->trak_num] += segment_duration;
-										else if (i == 0) // If the first editlst starts after zero, the track is offset by this time
-											mp4->trak_edit_list_offsets[mp4->trak_num] += segment_mediaTime;
-
+											mp4->trak_edit_list_offsets[mp4->trak_num] += segment_duration;  //samples are delay, data starts after presentation time zero.
+										else if (i == 0) // If the first editlst starts after zero, the track is offset by this time (time before presentation time zero.)
+											mp4->trak_edit_list_offsets[mp4->trak_num] -= (int32_t)((double)segment_mediaTime/(double)mp4->trak_clockdemon*(double)mp4->clockdemon); //convert to MP4 clock base.
+									}
+									if (type == traktype) // GPMF metadata 
+									{
+										mp4->metadataoffset_clockcount = mp4->trak_edit_list_offsets[mp4->trak_num]; //leave in MP4 clock base
 									}
 								}
 							}
@@ -352,11 +355,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len += fread(&subtype, 1, 4, mp4->mediafp);  // type will be 'meta' for the correct trak.
 							if (len == 16)
 							{
-								if (subtype == traksubtype) // MP4 metadata 
-								{
-									mp4->metadataoffset_clockcount = mp4->trak_edit_list_offsets[mp4->trak_num] - mp4->trak_edit_list_offsets[1];
-								}
-								else
+								if (subtype != traksubtype) // not MP4 metadata 
 								{
 									type = 0; // MP4
 								}
@@ -1063,7 +1062,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 		goto cleanup;
 
 	{
-		uint64_t minimumtimestamp = 0;
+		uint64_t basetimestamp = 0;
 		uint64_t starttimestamp = 0;
 		uint64_t endtimestamp = 0;
 		uint32_t startsamples = 0;
@@ -1100,15 +1099,19 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				GPMF_stream any_stream;
 				if (GPMF_OK == GPMF_Init(&any_stream, payload, payloadsize))
 				{
-					minimumtimestamp = starttimestamp;
+					basetimestamp = starttimestamp;  
 					while (GPMF_OK == GPMF_FindNext(&any_stream, GPMF_KEY_TIME_STAMP, GPMF_RECURSE_LEVELS))
 					{
 						uint64_t timestamp = BYTESWAP64(*(uint64_t *)GPMF_RawData(&any_stream));
-						if (timestamp < minimumtimestamp)
-							minimumtimestamp = timestamp;
+						if (timestamp < basetimestamp)
+							basetimestamp = timestamp;
 					}
 				}
 			}
+			//Note: basetimestamp is used the remove offset from the timestamp, 
+			// however 0.0 may not be the same zero for your video or audio presentation time (although it should be close.)
+			// On GoPro camera, metadata streams like SHUT and ISOE are metadata fields associated with video, and these can be used
+			// to accurately sync meta with video.
 
 			testend = mp4->indexcount;
 			do
@@ -1167,7 +1170,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 						time_stamp_scale *= 0.1;
 					}
 					if (time_stamp_scale < 1.0) rate = 0.0;
-					intercept = (((double)minimumtimestamp - (double)starttimestamp) / time_stamp_scale) * rate;
+					intercept = (((double)basetimestamp - (double)starttimestamp) / time_stamp_scale) * rate;
 					usedTimeStamps = 1;
 				}
 			}
@@ -1314,8 +1317,8 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 					//Apply any Edit List corrections.
 					if (usedTimeStamps)  // clips with STMP have the Edit List already applied via GetPayloadTime()
 					{
-						first += (double)mp4->metadataoffset_clockcount / (double)mp4->meta_clockdemon;
-						last += (double)mp4->metadataoffset_clockcount / (double)mp4->meta_clockdemon;
+						first += (double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon;
+						last += (double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon;
 					}
 
 					//printf("%c%c%c%c first sample at time %.3fms, last at %.3fms\n", PRINTF_4CC(fourcc), 1000.0*first, 1000.0*last);

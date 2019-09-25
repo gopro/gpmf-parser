@@ -2,7 +2,7 @@
  *
  *  @brief Demo to extract GPMF from an MP4
  *
- *  @version 1.0.1
+ *  @version 1.2.0
  *
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
 	int32_t ret = GPMF_OK;
 	GPMF_stream metadata_stream, *ms = &metadata_stream;
 	double metadatalength;
+	double start_offset = 0.0;
 	uint32_t *payload = NULL; //buffer to store GPMF samples from the MP4.
 
 
@@ -121,6 +122,28 @@ int main(int argc, char *argv[])
 #if 1		// Find all the available Streams and the data carrying FourCC
 			if (index == 0) // show first payload 
 			{
+				GPMF_stream find;
+				GPMF_CopyState(ms, &find);
+				//SHUT should be preset in all GoPro files, if STMP and SHUT are both present, additional sync precision can be obtained.
+				if (GPMF_OK == GPMF_FindNext(&find, GPMF_KEY_TIME_STAMP, GPMF_RECURSE_LEVELS))
+				{
+					double payload_in = 0.0, payload_out;
+					double start = 0.0, end;
+
+					GetPayloadTime(mp4, 0, &payload_in, &payload_out); 
+					
+					if (GPMF_OK == GPMF_FindNext(&find, STR2FOURCC("SHUT"), GPMF_RECURSE_LEVELS))
+					{
+						//if SHUT contains TMSP (timestamps) very more  precision sync with video data can be achieved
+						if (GPMF_OK == GPMF_FindPrev(&find, GPMF_KEY_TIME_STAMP, GPMF_CURRENT_LEVEL))
+						{
+							double rate = GetGPMFSampleRate(mp4, STR2FOURCC("SHUT"), GPMF_SAMPLE_RATE_PRECISE, &start, &end);// GPMF_SAMPLE_RATE_FAST);
+							start_offset = start - payload_in;
+						}
+					}
+				}
+
+
 				ret = GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS);
 				while (GPMF_OK == ret)
 				{
@@ -257,6 +280,9 @@ int main(int argc, char *argv[])
 				double start, end;
 				uint32_t fourcc = GPMF_Key(ms);
 				double rate = GetGPMFSampleRate(mp4, fourcc, GPMF_SAMPLE_RATE_PRECISE, &start, &end);// GPMF_SAMPLE_RATE_FAST);
+
+				start -= start_offset;
+				end -= start_offset;
 				printf("%c%c%c%c sampling rate = %fHz (time %f to %f)\",\n", PRINTF_4CC(fourcc), rate, start, end);
 			}
 		}
