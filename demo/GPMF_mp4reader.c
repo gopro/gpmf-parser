@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.6.0
+*  @version 1.6.1
 *
 *  (C) Copyright 2017-2019 GoPro Inc (http://gopro.com/).
 *
@@ -790,7 +790,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 									totaldur += duration;
 									mp4->metadatalength += (double)((double)samplecount * (double)duration / (double)mp4->meta_clockdemon);
-									if (samplecount > 1 || num == 1)
+									if (samplecount > 1 || entries == 1)
 										mp4->basemetadataduration = mp4->metadatalength * (double)mp4->meta_clockdemon / (double)samples;
 								}
 							}
