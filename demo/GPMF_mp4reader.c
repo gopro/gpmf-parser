@@ -238,7 +238,6 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					NESTSIZE(qtsize);
 				}
 				else
-#endif
 					if (qttag == MAKEID('m', 'v', 'h', 'd')) //mvhd  movie header
 					{
 						len = fread(&skip, 1, 4, mp4->mediafp);
