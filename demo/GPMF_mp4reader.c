@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.6.1
+*  @version 1.6.2
 *
 *  (C) Copyright 2017-2019 GoPro Inc (http://gopro.com/).
 *
@@ -213,7 +213,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 					continue;
 				}
-#else
+#endif
 				if (qttag != MAKEID('m', 'o', 'o', 'v') && //skip over all but these atoms
 					qttag != MAKEID('m', 'v', 'h', 'd') &&
 					qttag != MAKEID('t', 'r', 'a', 'k') &&
