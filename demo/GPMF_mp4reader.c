@@ -919,13 +919,13 @@ uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, int32_t *in_numer
 	*in_numerator = (int32_t)(index * mp4->basemetadataduration);
 	*out_numerator = (int32_t)((index + 1) * mp4->basemetadataduration);
 
-	if (*out_numerator > (int32_t)((double)mp4->metadatalength*(double)mp4->clockdemon))
-		*out_numerator = (int32_t)((double)mp4->metadatalength*(double)mp4->clockdemon);
+	if (*out_numerator > (int32_t)((double)mp4->metadatalength*(double)mp4->meta_clockdemon))
+		*out_numerator = (int32_t)((double)mp4->metadatalength*(double)mp4->meta_clockdemon);
 
-	*in_numerator += mp4->metadataoffset_clockcount;
-	*out_numerator += mp4->metadataoffset_clockcount;
+	*in_numerator += (int32_t)(((double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon) * mp4->meta_clockdemon);
+	*out_numerator += (int32_t)(((double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon) * mp4->meta_clockdemon);
 
-	*denominator = (uint32_t)mp4->clockdemon;
+	*denominator = mp4->meta_clockdemon;
     
     return GPMF_OK;
 }
