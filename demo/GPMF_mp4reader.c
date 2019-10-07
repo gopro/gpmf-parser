@@ -902,6 +902,7 @@ uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out)
 	if (*out > (double)mp4->metadatalength)
 		*out = (double)mp4->metadatalength;
 
+	// Add any Edit List offset
 	*in += (double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon;
 	*out += (double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon;
 	return GPMF_OK;
@@ -921,6 +922,7 @@ uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, int32_t *in_numer
 	if (*out_numerator > (int32_t)((double)mp4->metadatalength*(double)mp4->meta_clockdemon))
 		*out_numerator = (int32_t)((double)mp4->metadatalength*(double)mp4->meta_clockdemon);
 
+	// Add any Edit List offset
 	*in_numerator += (int32_t)(((double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon) * mp4->meta_clockdemon);
 	*out_numerator += (int32_t)(((double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon) * mp4->meta_clockdemon);
 
@@ -928,6 +930,34 @@ uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, int32_t *in_numer
     
     return GPMF_OK;
 }
+
+
+uint32_t GetEditListOffset(size_t handle, double *offset)
+{
+	mp4object *mp4 = (mp4object *)handle;
+	if (mp4 == NULL) return GPMF_ERROR_MEMORY;
+
+	if (mp4->clockdemon == 0) return GPMF_ERROR_MEMORY;
+
+	*offset = (double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon;
+
+	return GPMF_OK;
+}
+
+uint32_t GetEditListOffsetRationalTime(size_t handle, int32_t *offset_numerator, uint32_t *denominator)
+{
+	mp4object *mp4 = (mp4object *)handle;
+	if (mp4 == NULL) return GPMF_ERROR_MEMORY;
+
+	if (mp4->clockdemon == 0) return GPMF_ERROR_MEMORY;
+
+	*offset_numerator = mp4->metadataoffset_clockcount;
+	*denominator = mp4->clockdemon;
+
+	return GPMF_OK;
+}
+
+
 
 size_t OpenMP4SourceUDTA(char *filename)
 {
