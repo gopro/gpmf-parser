@@ -426,7 +426,8 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len += fread(&num, 1, 4, mp4->mediafp);
 
 							num = BYTESWAP32(num);
-							if (num <= ((qtsize - 8 - len)/sizeof(uint32_t)))
+							// if equalsamplesize != 0, it is the size of all the samples and the length should be 20 (size,fourcc,flags,samplesize,samplecount)
+							if ((num <= ((qtsize - 8 - len)/sizeof(uint32_t))) || (equalsamplesize != 0 && qtsize == 20))
 							{
 								mp4->metasize_count = num;
 								if (mp4->metasizes)
