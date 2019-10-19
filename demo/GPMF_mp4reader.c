@@ -35,8 +35,10 @@
 
 #ifdef _WINDOWS
 #define LONGSEEK	_fseeki64
+#define LONGTELL	_ftelli64
 #else
 #define LONGSEEK	fseeko
+#define LONGTELL	ftell
 #endif
 
 
@@ -1044,7 +1046,7 @@ size_t OpenMP4SourceUDTA(char *filename)
 					mp4->metaoffsets = (uint64_t *)malloc(mp4->indexcount * 8 + 8);  memset(mp4->metaoffsets, 0, mp4->indexcount * 8 + 8);
 
 					mp4->metasizes[0] = (int)qtsize - 8;
-					mp4->metaoffsets[0] = ftell(mp4->mediafp);
+					mp4->metaoffsets[0] = LONGTELL(mp4->mediafp);
 					mp4->metasize_count = 1;
 
 					return (size_t)mp4;  // not an MP4, RAW GPMF which has not inherent timing, assigning a during of 1second.
