@@ -43,7 +43,7 @@ GPMF_ERR IsValidSize(GPMF_stream *ms, uint32_t size) // size is in longs not byt
 {
 	if (ms)
 	{
-		uint32_t nestsize = ms->nest_size[ms->nest_level];
+		uint32_t nestsize = (uint32_t)ms->nest_size[ms->nest_level];
 		if (nestsize == 0 && ms->nest_level == 0)
 			nestsize = ms->buffer_size_longs;
 
@@ -192,7 +192,7 @@ GPMF_ERR GPMF_Init(GPMF_stream *ms, uint32_t *buffer, int datasize)
 {
 	if(ms && buffer && datasize > 0)
 	{
-		uint32_t pos = 0;
+		int pos = 0;
 		//Validate DEVC GPMF
 		while((pos+1) * 4 < datasize && buffer[pos] == GPMF_KEY_DEVICE)
 		{
