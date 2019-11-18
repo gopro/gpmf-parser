@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
 					uint32_t elements = GPMF_ElementsInStruct(ms);
 					uint32_t buffersize = samples * elements * sizeof(double);
 					GPMF_stream find_stream;
-					double *ptr, *tmpbuffer = malloc(buffersize);
+					double *ptr, *tmpbuffer = (double *)malloc(buffersize);
 					char units[10][6] = { "" };
 					uint32_t unit_samples = 1;
 

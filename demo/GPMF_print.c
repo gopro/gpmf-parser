@@ -423,7 +423,7 @@ void PrintGPMF(GPMF_stream *ms)
 				GPMF_CopyState(ms, &find_stream);
 				if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
 				{
-					char *srctype = GPMF_RawData(&find_stream);
+					char *srctype = (char *)GPMF_RawData(&find_stream);
 					uint32_t typelen = GPMF_RawDataSize(&find_stream);
 					int struct_size_of_type;
 
@@ -459,7 +459,7 @@ void PrintGPMF(GPMF_stream *ms)
 								}
 								for (i = 0; i < elements; i++)
 								{
-									int elementsize = GPMF_SizeofType(typearray[i]);
+									int elementsize = (int)GPMF_SizeofType((GPMF_SampleType)typearray[i]);
 									printfData(typearray[i], elementsize, 1, bdata);
 									bdata += elementsize;
 								}

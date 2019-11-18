@@ -1223,7 +1223,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				{
 					uint32_t payloadpos = 0, payloadcount = 0;
 					double slope, top = 0.0, bot = 0.0, meanX = 0, meanY = 0;
-					uint32_t *repeatarray = malloc(mp4->indexcount * 4 + 4);
+					uint32_t *repeatarray = (uint32_t *)malloc(mp4->indexcount * 4 + 4);
 					memset(repeatarray, 0, mp4->indexcount * 4 + 4);
 
 					samples = 0;
