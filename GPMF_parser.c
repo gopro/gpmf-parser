@@ -192,13 +192,27 @@ GPMF_ERR GPMF_Init(GPMF_stream *ms, uint32_t *buffer, int datasize)
 {
 	if(ms && buffer && datasize > 0)
 	{
-		ms->buffer = buffer;
-		ms->buffer_size_longs = (datasize+3)>>2;
-		ms->cbhandle = 0;
+		uint32_t pos = 0;
+		//Validate DEVC GPMF
+		while((pos+1) * 4 < datasize && buffer[pos] == GPMF_KEY_DEVICE)
+		{
+			uint32_t size = GPMF_DATA_SIZE(buffer[pos+1]);
+			pos += 2 + (size >> 2);
+		}
+		if (pos * 4 == datasize)
+		{
+			ms->buffer = buffer;
+			ms->buffer_size_longs = (datasize + 3) >> 2;
+			ms->cbhandle = 0;
 
-		GPMF_ResetState(ms);
+			GPMF_ResetState(ms);
 
-		return GPMF_OK;
+			return GPMF_OK;
+		}
+		else
+		{
+			return GPMF_ERROR_BAD_STRUCTURE;
+		}
 	}
 	
 	return GPMF_ERROR_MEMORY;

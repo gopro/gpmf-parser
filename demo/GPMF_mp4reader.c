@@ -111,7 +111,7 @@ uint32_t GetPayloadSize(size_t handle, uint32_t index)
 	if (mp4 == NULL) return 0;
 
 	if (mp4->metasizes && mp4->metasize_count > index)
-		return mp4->metasizes[index];
+		return mp4->metasizes[index] & ~0x3;  //All GPMF payloads are 32-bit aligned and sized
 
 	return 0;
 }
@@ -487,11 +487,10 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							num = BYTESWAP32(num);
 							if (num <= ((qtsize - 8 - len)/sizeof(uint32_t)))
 							{
-								uint32_t metastco_count = num;
+								mp4->metastco_count = num;
 
 								if (mp4->metastsc_count > 0 && num != mp4->metasize_count)
 								{
-									mp4->indexcount = num;
 									if (mp4->metaoffsets)
 									{
 										free(mp4->metaoffsets);
@@ -519,11 +518,11 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 												mp4->metaoffsets[0] = fileoffset = metaoffsets32[stco_pos];
 												num = 1;
-												while (num < mp4->indexcount)
+												while (num < mp4->metastco_count)
 												{
 													if ((uint32_t)repeat == mp4->metastsc[stsc_pos].samples)
 													{
-														if ((uint32_t)stco_pos + 1 < metastco_count)
+														if ((uint32_t)stco_pos + 1 < mp4->metastco_count)
 														{
 															stco_pos++;
 															fileoffset = (uint64_t)metaoffsets32[stco_pos];
@@ -569,7 +568,6 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								}
 								else
 								{
-									mp4->indexcount = num;
 									if (mp4->metaoffsets)
 									{
 										free(mp4->metaoffsets);
@@ -632,9 +630,10 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 							if (num <= ((qtsize - 8 - len)/sizeof(uint64_t)))
 							{
+								mp4->metastco_count = num;
+
 								if (mp4->metastsc_count > 0 && num != mp4->metasize_count)
 								{
-									mp4->indexcount = mp4->metasize_count;
 									if (mp4->metaoffsets)
 									{
 										free(mp4->metaoffsets);
@@ -701,7 +700,6 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								}
 								else
 								{
-									mp4->indexcount = num;
 									if (mp4->metaoffsets)
 									{
 										free(mp4->metaoffsets);
@@ -821,6 +819,14 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 			{
 				CloseSource((size_t)mp4);
 				mp4 = NULL;
+			}
+			
+			// set the numbers of payload with both size and offset
+			if (mp4 != NULL)
+			{
+				mp4->indexcount = mp4->metasize_count;
+				if (mp4->metastco_count < mp4->indexcount)
+					mp4->indexcount = mp4->metastco_count;
 			}
 		}
 	}

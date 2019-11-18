@@ -54,6 +54,7 @@ typedef struct mp4object
 	uint32_t *metasizes;
 	uint32_t metasize_count;
 	uint64_t *metaoffsets;
+	uint32_t metastco_count;
 	SampleToChunk *metastsc;
 	uint32_t metastsc_count;
 	uint32_t indexcount;
