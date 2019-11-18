@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.5.0
+*  @version 1.7.0
 *
 *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
 *
