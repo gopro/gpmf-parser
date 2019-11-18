@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.3.1
+*  @version 1.7.0
 *
 *  (C) Copyright 2017-2019 GoPro Inc (http://gopro.com/).
 *
@@ -29,13 +29,16 @@
 #include <sys/stat.h>
 
 #include "GPMF_mp4reader.h"
+#include "../GPMF_common.h"
 
 #define PRINT_MP4_STRUCTURE		0
 
 #ifdef _WINDOWS
 #define LONGSEEK	_fseeki64
+#define LONGTELL	_ftelli64
 #else
 #define LONGSEEK	fseeko
+#define LONGTELL	ftell
 #endif
 
 
@@ -72,7 +75,6 @@ uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index)
 			}
 		}
 	}
-
 	if (lastpayload)
 		free(lastpayload);
 
@@ -109,7 +111,7 @@ uint32_t GetPayloadSize(size_t handle, uint32_t index)
 	if (mp4 == NULL) return 0;
 
 	if (mp4->metasizes && mp4->metasize_count > index)
-		return mp4->metasizes[index];
+		return mp4->metasizes[index] & ~0x3;  //All GPMF payloads are 32-bit aligned and sized
 
 	return 0;
 }
@@ -123,6 +125,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 	if (mp4 == NULL) return 0;
 
 	memset(mp4, 0, sizeof(mp4object));
+
 #ifdef _WINDOWS
 	struct _stat64 mp4stat;
 	_stat64(filename, &mp4stat);
@@ -131,7 +134,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 	stat(filename, &mp4stat);
 #endif
 	mp4->filesize = mp4stat.st_size;
-	//	printf("filesize = %ld\n", mp4->filesize);
+//	printf("filesize = %ld\n", mp4->filesize);
 	if (mp4->filesize < 64) return 0;
 
 #ifdef _WINDOWS
@@ -163,7 +166,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					break;
 				}
 
-				if (!VALID_FOURCC(qttag))
+				if (!GPMF_VALID_FOURCC(qttag))
 				{
 					CloseSource((size_t)mp4);
 					mp4 = NULL;
@@ -212,7 +215,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 					continue;
 				}
-#else
+#endif
 				if (qttag != MAKEID('m', 'o', 'o', 'v') && //skip over all but these atoms
 					qttag != MAKEID('m', 'v', 'h', 'd') &&
 					qttag != MAKEID('t', 'r', 'a', 'k') &&
@@ -229,14 +232,14 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					qttag != MAKEID('s', 't', 's', 'z') &&
 					qttag != MAKEID('s', 't', 'c', 'o') &&
 					qttag != MAKEID('c', 'o', '6', '4') &&
-					qttag != MAKEID('h', 'd', 'l', 'r'))
+					qttag != MAKEID('h', 'd', 'l', 'r') &&
+					qttag != MAKEID('e', 'd', 't', 's'))
 				{
 					LongSeek(mp4, qtsize - 8);
 
 					NESTSIZE(qtsize);
 				}
 				else
-#endif
 					if (qttag == MAKEID('m', 'v', 'h', 'd')) //mvhd  movie header
 					{
 						len = fread(&skip, 1, 4, mp4->mediafp);
@@ -247,6 +250,14 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 						mp4->filepos += len;
 						LongSeek(mp4, qtsize - 8 - len); // skip over mvhd
+
+						NESTSIZE(qtsize);
+					}
+					else if (qttag == MAKEID('t', 'r', 'a', 'k')) //trak header
+					{
+
+						if (mp4->trak_num+1 < MAX_TRACKS)
+							mp4->trak_num++;
 
 						NESTSIZE(qtsize);
 					}
@@ -291,6 +302,50 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 						NESTSIZE(qtsize);
 
 					}
+					else if (qttag == MAKEID('e', 'd', 't', 's')) //edit list
+					{
+						uint32_t elst,temp,num,i;
+						len = fread(&skip, 1, 4, mp4->mediafp);
+						len += fread(&elst, 1, 4, mp4->mediafp);
+						if (elst == MAKEID('e', 'l', 's', 't'))
+						{
+							len += fread(&temp, 1, 4, mp4->mediafp);
+							if (temp == 0)
+							{
+								len += fread(&num, 1, 4, mp4->mediafp);
+								num = BYTESWAP32(num);
+								if (num <= ((qtsize - 8 - len) / 12))
+								{
+									int32_t segment_duration; //integer that specifies the duration of this edit segment in units of the movie’s time scale.
+									int32_t segment_mediaTime; //integer containing the starting time within the media of this edit segment(in media timescale units).If this field is set to –1, it is an empty edit.The last edit in a track should never be an empty edit.Any difference between the movie’s duration and the track’s duration is expressed as an implicit empty edit.
+									int32_t segment_mediaRate; //point number that specifies the relative rate at which to play the media corresponding to this edit segment.This rate value cannot be 0 or negative.
+									for (i = 0; i < num; i++)
+									{
+										len += fread(&segment_duration, 1, 4, mp4->mediafp);
+										len += fread(&segment_mediaTime, 1, 4, mp4->mediafp);
+										len += fread(&segment_mediaRate, 1, 4, mp4->mediafp);
+
+										segment_duration = BYTESWAP32(segment_duration);  // in MP4 clock base
+										segment_mediaTime = BYTESWAP32(segment_mediaTime); // in trak clock base
+										segment_mediaRate = BYTESWAP32(segment_mediaRate); // Fixed-point 65536 = 1.0X
+
+										if (segment_mediaTime == -1) // the segment_duration for blanked time
+											mp4->trak_edit_list_offsets[mp4->trak_num] += segment_duration;  //samples are delay, data starts after presentation time zero.
+										else if (i == 0) // If the first editlst starts after zero, the track is offset by this time (time before presentation time zero.)
+											mp4->trak_edit_list_offsets[mp4->trak_num] -= (int32_t)((double)segment_mediaTime/(double)mp4->trak_clockdemon*(double)mp4->clockdemon); //convert to MP4 clock base.
+									}
+									if (type == traktype) // GPMF metadata 
+									{
+										mp4->metadataoffset_clockcount = mp4->trak_edit_list_offsets[mp4->trak_num]; //leave in MP4 clock base
+									}
+								}
+							}
+						}
+						mp4->filepos += len;
+						LongSeek(mp4, qtsize - 8 - len); // skip over edts
+
+						NESTSIZE(qtsize);
+					}
 					else if (qttag == MAKEID('s', 't', 's', 'd')) //read the sample decription to determine the type of metadata
 					{
 						if (type == traktype) //like meta
@@ -301,7 +356,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len += fread(&subtype, 1, 4, mp4->mediafp);  // type will be 'meta' for the correct trak.
 							if (len == 16)
 							{
-								if (subtype != traksubtype) // MP4 metadata 
+								if (subtype != traksubtype) // not MP4 metadata 
 								{
 									type = 0; // MP4
 								}
@@ -373,7 +428,8 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len += fread(&num, 1, 4, mp4->mediafp);
 
 							num = BYTESWAP32(num);
-							if (num <= ((qtsize - 8 - len)/sizeof(uint32_t)))
+							// if equalsamplesize != 0, it is the size of all the samples and the length should be 20 (size,fourcc,flags,samplesize,samplecount)
+							if ((num <= ((qtsize - 8 - len)/sizeof(uint32_t))) || (equalsamplesize != 0 && qtsize == 20))
 							{
 								mp4->metasize_count = num;
 								if (mp4->metasizes)
@@ -431,11 +487,10 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							num = BYTESWAP32(num);
 							if (num <= ((qtsize - 8 - len)/sizeof(uint32_t)))
 							{
-								uint32_t metastco_count = num;
+								mp4->metastco_count = num;
 
 								if (mp4->metastsc_count > 0 && num != mp4->metasize_count)
 								{
-									mp4->indexcount = num;
 									if (mp4->metaoffsets)
 									{
 										free(mp4->metaoffsets);
@@ -463,11 +518,11 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 												mp4->metaoffsets[0] = fileoffset = metaoffsets32[stco_pos];
 												num = 1;
-												while (num < mp4->indexcount)
+												while (num < mp4->metastco_count)
 												{
 													if ((uint32_t)repeat == mp4->metastsc[stsc_pos].samples)
 													{
-														if ((uint32_t)stco_pos + 1 < metastco_count)
+														if ((uint32_t)stco_pos + 1 < mp4->metastco_count)
 														{
 															stco_pos++;
 															fileoffset = (uint64_t)metaoffsets32[stco_pos];
@@ -513,7 +568,6 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								}
 								else
 								{
-									mp4->indexcount = num;
 									if (mp4->metaoffsets)
 									{
 										free(mp4->metaoffsets);
@@ -576,9 +630,10 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 							if (num <= ((qtsize - 8 - len)/sizeof(uint64_t)))
 							{
+								mp4->metastco_count = num;
+
 								if (mp4->metastsc_count > 0 && num != mp4->metasize_count)
 								{
-									mp4->indexcount = mp4->metasize_count;
 									if (mp4->metaoffsets)
 									{
 										free(mp4->metaoffsets);
@@ -645,7 +700,6 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								}
 								else
 								{
-									mp4->indexcount = num;
 									if (mp4->metaoffsets)
 									{
 										free(mp4->metaoffsets);
@@ -673,6 +727,41 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					}
 					else if (qttag == MAKEID('s', 't', 't', 's')) // time to samples
 					{
+						if (type == MAKEID('v', 'i', 'd', 'e')) // video trak to get frame rate
+						{
+							uint32_t totaldur = 0, samples = 0;
+							int32_t entries = 0;
+							len = fread(&skip, 1, 4, mp4->mediafp);
+							len += fread(&num, 1, 4, mp4->mediafp);
+							num = BYTESWAP32(num);
+							if (num <= ((qtsize - 8 - len) / 8))
+							{
+								entries = num;
+
+								while (entries > 0)
+								{
+									int32_t samplecount;
+									int32_t duration;
+									len += fread(&samplecount, 1, 4, mp4->mediafp);
+									samplecount = BYTESWAP32(samplecount);
+									len += fread(&duration, 1, 4, mp4->mediafp);
+									duration = BYTESWAP32(duration);
+
+									samples += samplecount;
+									entries--;
+
+									if (mp4->video_framerate_numerator == 0)
+									{
+										mp4->video_framerate_numerator = mp4->trak_clockdemon;
+										mp4->video_framerate_denominator = duration;
+									}
+								}
+								mp4->video_frames = samples;
+							}
+							mp4->filepos += len;
+							LongSeek(mp4, qtsize - 8 - len); // skip over stco
+						}
+						else
 						if (type == traktype) // meta 
 						{
 							uint32_t totaldur = 0, samples = 0;
@@ -701,7 +790,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 									totaldur += duration;
 									mp4->metadatalength += (double)((double)samplecount * (double)duration / (double)mp4->meta_clockdemon);
-									if (samplecount > 1 || num == 1)
+									if (samplecount > 1 || entries == 1)
 										mp4->basemetadataduration = mp4->metadatalength * (double)mp4->meta_clockdemon / (double)samples;
 								}
 							}
@@ -731,6 +820,14 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 				CloseSource((size_t)mp4);
 				mp4 = NULL;
 			}
+			
+			// set the numbers of payload with both size and offset
+			if (mp4 != NULL)
+			{
+				mp4->indexcount = mp4->metasize_count;
+				if (mp4->metastco_count < mp4->indexcount)
+					mp4->indexcount = mp4->metastco_count;
+			}
 		}
 	}
 	else
@@ -754,6 +851,19 @@ float GetDuration(size_t handle)
 	return (float)mp4->metadatalength;
 }
 
+uint32_t GetVideoFrameRateAndCount(size_t handle, uint32_t *numer, uint32_t *demon)
+{
+	mp4object *mp4 = (mp4object *)handle;
+	if (mp4 == NULL) return 0;
+
+	if (numer != NULL && demon != NULL && mp4->video_frames > 0)
+	{
+		*numer = mp4->video_framerate_numerator;
+		*demon = mp4->video_framerate_denominator;
+		return mp4->video_frames;
+	}
+	return 0;
+}
 
 void CloseSource(size_t handle)
 {
@@ -797,23 +907,66 @@ uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out)
 
 	*in = ((double)index * (double)mp4->basemetadataduration / (double)mp4->meta_clockdemon);
 	*out = ((double)(index + 1) * (double)mp4->basemetadataduration / (double)mp4->meta_clockdemon);
+
+	if (*out > (double)mp4->metadatalength)
+		*out = (double)mp4->metadatalength;
+
+	// Add any Edit List offset
+	*in += (double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon;
+	*out += (double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon;
 	return GPMF_OK;
 }
 
 
-uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, uint32_t *in_numerator, uint32_t *out_numerator, uint32_t *denominator)
+uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, int32_t *in_numerator, int32_t *out_numerator, uint32_t *denominator)
 {
     mp4object *mp4 = (mp4object *)handle;
     if (mp4 == NULL) return GPMF_ERROR_MEMORY;
     
     if (mp4->metaoffsets == 0 || mp4->basemetadataduration == 0 || mp4->meta_clockdemon == 0 || in_numerator == NULL || out_numerator == NULL) return GPMF_ERROR_MEMORY;
 
-	*in_numerator = (uint32_t)(index * mp4->basemetadataduration);
-	*out_numerator = (uint32_t)((index + 1) * mp4->basemetadataduration);
-	*denominator = (uint32_t)mp4->meta_clockdemon;
+	*in_numerator = (int32_t)(index * mp4->basemetadataduration);
+	*out_numerator = (int32_t)((index + 1) * mp4->basemetadataduration);
+
+	if (*out_numerator > (int32_t)((double)mp4->metadatalength*(double)mp4->meta_clockdemon))
+		*out_numerator = (int32_t)((double)mp4->metadatalength*(double)mp4->meta_clockdemon);
+
+	// Add any Edit List offset
+	*in_numerator += (int32_t)(((double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon) * mp4->meta_clockdemon);
+	*out_numerator += (int32_t)(((double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon) * mp4->meta_clockdemon);
+
+	*denominator = mp4->meta_clockdemon;
     
     return GPMF_OK;
 }
+
+
+uint32_t GetEditListOffset(size_t handle, double *offset)
+{
+	mp4object *mp4 = (mp4object *)handle;
+	if (mp4 == NULL) return GPMF_ERROR_MEMORY;
+
+	if (mp4->clockdemon == 0) return GPMF_ERROR_MEMORY;
+
+	*offset = (double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon;
+
+	return GPMF_OK;
+}
+
+uint32_t GetEditListOffsetRationalTime(size_t handle, int32_t *offset_numerator, uint32_t *denominator)
+{
+	mp4object *mp4 = (mp4object *)handle;
+	if (mp4 == NULL) return GPMF_ERROR_MEMORY;
+
+	if (mp4->clockdemon == 0) return GPMF_ERROR_MEMORY;
+
+	*offset_numerator = mp4->metadataoffset_clockcount;
+	*denominator = mp4->clockdemon;
+
+	return GPMF_OK;
+}
+
+
 
 size_t OpenMP4SourceUDTA(char *filename)
 {
@@ -899,7 +1052,7 @@ size_t OpenMP4SourceUDTA(char *filename)
 					mp4->metaoffsets = (uint64_t *)malloc(mp4->indexcount * 8 + 8);  memset(mp4->metaoffsets, 0, mp4->indexcount * 8 + 8);
 
 					mp4->metasizes[0] = (int)qtsize - 8;
-					mp4->metaoffsets[0] = ftell(mp4->mediafp);
+					mp4->metaoffsets[0] = LONGTELL(mp4->mediafp);
 					mp4->metasize_count = 1;
 
 					return (size_t)mp4;  // not an MP4, RAW GPMF which has not inherent timing, assigning a during of 1second.
@@ -947,7 +1100,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 		goto cleanup;
 
 	{
-		uint64_t minimumtimestamp = 0;
+		uint64_t basetimestamp = 0;
 		uint64_t starttimestamp = 0;
 		uint64_t endtimestamp = 0;
 		uint32_t startsamples = 0;
@@ -966,6 +1119,9 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 
 		if (ret == GPMF_OK && payload)
 		{
+			double startin, startout, endin, endout;
+			int usedTimeStamps = 0;
+
 			uint32_t samples = GPMF_PayloadSampleCount(ms);
 			GPMF_stream find_stream;
 			GPMF_CopyState(ms, &find_stream);
@@ -981,15 +1137,19 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				GPMF_stream any_stream;
 				if (GPMF_OK == GPMF_Init(&any_stream, payload, payloadsize))
 				{
-					minimumtimestamp = starttimestamp;
+					basetimestamp = starttimestamp;  
 					while (GPMF_OK == GPMF_FindNext(&any_stream, GPMF_KEY_TIME_STAMP, GPMF_RECURSE_LEVELS))
 					{
 						uint64_t timestamp = BYTESWAP64(*(uint64_t *)GPMF_RawData(&any_stream));
-						if (timestamp < minimumtimestamp)
-							minimumtimestamp = timestamp;
+						if (timestamp < basetimestamp)
+							basetimestamp = timestamp;
 					}
 				}
 			}
+			//Note: basetimestamp is used the remove offset from the timestamp, 
+			// however 0.0 may not be the same zero for your video or audio presentation time (although it should be close.)
+			// On GoPro camera, metadata streams like SHUT and ISOE are metadata fields associated with video, and these can be used
+			// to accurately sync meta with video.
 
 			testend = mp4->indexcount;
 			do
@@ -998,7 +1158,10 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				payload = GetPayload(handle, payload, testend);
 				payloadsize = GetPayloadSize(handle, testend);
 				ret = GPMF_Init(ms, payload, payloadsize);
-			} while (testend > 0 && ret == GPMF_OK && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS));
+			} while (testend > 0 && ret == GPMF_OK &&  GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS));
+
+			GetPayloadTime(handle, teststart, &startin, &startout);
+			GetPayloadTime(handle, testend, &endin, &endout);
 
 			GPMF_CopyState(ms, &find_stream);
 			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES, GPMF_CURRENT_LEVEL))
@@ -1030,10 +1193,10 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				{
 					double approxrate = 0.0;
 					if (endsamples > startsamples)
-						approxrate = (double)(endsamples - startsamples) / (mp4->metadatalength * ((double)(testend - teststart + 1)) / (double)mp4->indexcount);
+						approxrate = (double)(endsamples - startsamples) / (endout - startin);
 
 					if (approxrate == 0.0)
-						approxrate = (double)(samples) / (mp4->metadatalength * ((double)(testend - teststart + 1)) / (double)mp4->indexcount);
+						approxrate = (double)(samples) / (endout - startin);
 
 
 					while (time_stamp_scale >= 1)
@@ -1045,7 +1208,8 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 						time_stamp_scale *= 0.1;
 					}
 					if (time_stamp_scale < 1.0) rate = 0.0;
-					intercept = (((double)minimumtimestamp - (double)starttimestamp) / time_stamp_scale) * rate;
+					intercept = (((double)basetimestamp - (double)starttimestamp) / time_stamp_scale) * rate;
+					usedTimeStamps = 1;
 				}
 			}
 
@@ -1054,20 +1218,18 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				if (!(flags & GPMF_SAMPLE_RATE_PRECISE))
 				{
 					if (endsamples > startsamples)
-						rate = (double)(endsamples - startsamples) / (mp4->metadatalength * ((double)(testend - teststart + 1)) / (double)mp4->indexcount);
+						rate = (double)(endsamples - startsamples) / (endout - startin);
 
 					if (rate == 0.0)
-						rate = (double)(samples) / (mp4->metadatalength * ((double)(testend - teststart + 1)) / (double)mp4->indexcount);
+						rate = (double)(samples) / (endout - startin);
 
-					double in, out;
-					if (GPMF_OK == GetPayloadTime(handle, teststart, &in, &out))
-						intercept = (double)-in * rate;
+					intercept = (double)-startin * rate;
 				}
 				else // for increased precision, for older GPMF streams sometimes missing the total sample count 
 				{
 					uint32_t payloadpos = 0, payloadcount = 0;
 					double slope, top = 0.0, bot = 0.0, meanX = 0, meanY = 0;
-					uint32_t *repeatarray = malloc(mp4->indexcount * 4 + 4);
+					uint32_t *repeatarray = (uint32_t *)malloc(mp4->indexcount * 4 + 4);
 					memset(repeatarray, 0, mp4->indexcount * 4 + 4);
 
 					samples = 0;
@@ -1159,7 +1321,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 					}
 					else
 					{
-						rate = (double)(samples) / (mp4->metadatalength * ((double)(testend - teststart + 1)) / (double)mp4->indexcount);
+						rate = (double)(samples) / (endout - startin);
 					}
 
 					free(repeatarray);
@@ -1189,6 +1351,13 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 					double first, last;
 					first = -intercept / rate - timo;
 					last = first + (double)totalsamples / rate;
+
+					//Apply any Edit List corrections.
+					if (usedTimeStamps)  // clips with STMP have the Edit List already applied via GetPayloadTime()
+					{
+						first += (double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon;
+						last += (double)mp4->metadataoffset_clockcount / (double)mp4->clockdemon;
+					}
 
 					//printf("%c%c%c%c first sample at time %.3fms, last at %.3fms\n", PRINTF_4CC(fourcc), 1000.0*first, 1000.0*last);
 

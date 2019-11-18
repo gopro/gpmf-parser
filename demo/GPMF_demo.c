@@ -2,7 +2,7 @@
  *
  *  @brief Demo to extract GPMF from an MP4
  *
- *  @version 1.0.1
+ *  @version 1.5.0
  *
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
 	int32_t ret = GPMF_OK;
 	GPMF_stream metadata_stream, *ms = &metadata_stream;
 	double metadatalength;
+	double start_offset = 0.0;
 	uint32_t *payload = NULL; //buffer to store GPMF samples from the MP4.
 
 
@@ -44,14 +45,15 @@ int main(int argc, char *argv[])
 		printf("usage: %s <file_with_GPMF>\n", argv[0]);
 		return -1;
 	}
-#if 1
+
+#if 1 // Search for GPMF Track
 	size_t mp4 = OpenMP4Source(argv[1], MOV_GPMF_TRAK_TYPE, MOV_GPMF_TRAK_SUBTYPE);
-#else
+#else // look for a global GPMF payload in the moov header, within 'udta'
 	size_t mp4 = OpenMP4SourceUDTA(argv[1]);  //Search for GPMF payload with MP4's udta 
 #endif
 	if (mp4 == 0)
 	{
-		printf("error: %s is an invalid MP4/MOV\n", argv[1]);
+		printf("error: %s is an invalid MP4/MOV or it has no GPMF data\n", argv[1]);
 		return -1;
 	}
 
@@ -63,6 +65,12 @@ int main(int argc, char *argv[])
 		uint32_t index, payloads = GetNumberPayloads(mp4);
 //		printf("found %.2fs of metadata, from %d payloads, within %s\n", metadatalength, payloads, argv[1]);
 
+		uint32_t fr_num, fr_dem;
+		uint32_t frames = GetVideoFrameRateAndCount(mp4, &fr_num, &fr_dem);
+		if (frames)
+		{
+			printf("video framerate is %.2f with %d frames\n", (float)fr_num/(float)fr_dem, frames);
+		}
 #if 1
 		if (payloads == 1) // Printf the contents of the single payload
 		{
@@ -114,6 +122,28 @@ int main(int argc, char *argv[])
 #if 1		// Find all the available Streams and the data carrying FourCC
 			if (index == 0) // show first payload 
 			{
+				GPMF_stream find;
+				GPMF_CopyState(ms, &find);
+				//SHUT should be preset in all GoPro files, if STMP and SHUT are both present, additional sync precision can be obtained.
+				if (GPMF_OK == GPMF_FindNext(&find, GPMF_KEY_TIME_STAMP, GPMF_RECURSE_LEVELS))
+				{
+					double payload_in = 0.0, payload_out;
+					double start = 0.0, end;
+
+					GetPayloadTime(mp4, 0, &payload_in, &payload_out); 
+					
+					if (GPMF_OK == GPMF_FindNext(&find, STR2FOURCC("SHUT"), GPMF_RECURSE_LEVELS))
+					{
+						//if SHUT contains TMSP (timestamps) very more  precision sync with video data can be achieved
+						if (GPMF_OK == GPMF_FindPrev(&find, GPMF_KEY_TIME_STAMP, GPMF_CURRENT_LEVEL))
+						{
+							double rate = GetGPMFSampleRate(mp4, STR2FOURCC("SHUT"), GPMF_SAMPLE_RATE_PRECISE, &start, &end);// GPMF_SAMPLE_RATE_FAST);
+							start_offset = start - payload_in;
+						}
+					}
+				}
+
+
 				ret = GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS);
 				while (GPMF_OK == ret)
 				{
@@ -184,15 +214,16 @@ int main(int argc, char *argv[])
 #if 1		// Find GPS values and return scaled doubles. 
 			if (index == 0) // show first payload 
 			{
-				if (GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("GPS5"), GPMF_RECURSE_LEVELS) || //GoPro Hero5/6/7 GPS
-					GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("GPRI"), GPMF_RECURSE_LEVELS))   //GoPro Karma GPS
+		//		if (GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("GPS5"), GPMF_RECURSE_LEVELS) || //GoPro Hero5/6/7 GPS
+			//		GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("GPRI"), GPMF_RECURSE_LEVELS))   //GoPro Karma GPS
+				if (GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("ACCL"), GPMF_RECURSE_LEVELS)) //GoPro Hero5/6/7 Accelerometer
 				{
 					uint32_t key = GPMF_Key(ms);
 					uint32_t samples = GPMF_Repeat(ms);
 					uint32_t elements = GPMF_ElementsInStruct(ms);
 					uint32_t buffersize = samples * elements * sizeof(double);
 					GPMF_stream find_stream;
-					double *ptr, *tmpbuffer = malloc(buffersize);
+					double *ptr, *tmpbuffer = (double *)malloc(buffersize);
 					char units[10][6] = { "" };
 					uint32_t unit_samples = 1;
 
@@ -246,10 +277,13 @@ int main(int argc, char *argv[])
 		{
 			if (GPMF_OK == GPMF_SeekToSamples(ms)) //find the last FOURCC within the stream
 			{
-				double in = 0.0, out = 0.0;
+				double start, end;
 				uint32_t fourcc = GPMF_Key(ms);
-				double rate = GetGPMFSampleRate(mp4, fourcc, GPMF_SAMPLE_RATE_PRECISE, &in, &out);// GPMF_SAMPLE_RATE_FAST);
-				printf("%c%c%c%c sampling rate = %f Hz (from %f to %f)\n", PRINTF_4CC(fourcc), rate, in, out);
+				double rate = GetGPMFSampleRate(mp4, fourcc, GPMF_SAMPLE_RATE_PRECISE, &start, &end);// GPMF_SAMPLE_RATE_FAST);
+
+				start -= start_offset;
+				end -= start_offset;
+				printf("%c%c%c%c sampling rate = %fHz (time %f to %f)\",\n", PRINTF_4CC(fourcc), rate, start, end);
 			}
 		}
 #endif

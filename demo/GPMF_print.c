@@ -352,7 +352,7 @@ void printfData(uint32_t type, uint32_t structsize, uint32_t repeat, void *data)
 
 				while (arraysize--)
 				{
-					DBG_MSG("%lld,", BYTESWAP64(*J));
+					DBG_MSG("%lld,", (long long int)BYTESWAP64(*J));
 					J++;
 				}
 				if (repeat) DBG_MSG(" ");
@@ -370,7 +370,7 @@ void printfData(uint32_t type, uint32_t structsize, uint32_t repeat, void *data)
 
 				while (arraysize--)
 				{
-					DBG_MSG("%llu,", BYTESWAP64(*J));
+					DBG_MSG("%llu,", (long long unsigned int)BYTESWAP64(*J));
 					J++;
 				}
 				if (repeat) DBG_MSG(" ");
@@ -423,7 +423,7 @@ void PrintGPMF(GPMF_stream *ms)
 				GPMF_CopyState(ms, &find_stream);
 				if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
 				{
-					char *srctype = GPMF_RawData(&find_stream);
+					char *srctype = (char *)GPMF_RawData(&find_stream);
 					uint32_t typelen = GPMF_RawDataSize(&find_stream);
 					int struct_size_of_type;
 
@@ -459,7 +459,7 @@ void PrintGPMF(GPMF_stream *ms)
 								}
 								for (i = 0; i < elements; i++)
 								{
-									int elementsize = GPMF_SizeofType(typearray[i]);
+									int elementsize = (int)GPMF_SizeofType((GPMF_SampleType)typearray[i]);
 									printfData(typearray[i], elementsize, 1, bdata);
 									bdata += elementsize;
 								}

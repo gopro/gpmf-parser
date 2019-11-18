@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.2.0
+*  @version 1.7.0
 *
 *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
 *
@@ -48,21 +48,28 @@ typedef struct SampleToChunk
 	uint32_t id;
 } SampleToChunk;
 
-
+#define MAX_TRACKS	16
 typedef struct mp4object
 {
 	uint32_t *metasizes;
 	uint32_t metasize_count;
 	uint64_t *metaoffsets;
+	uint32_t metastco_count;
 	SampleToChunk *metastsc;
 	uint32_t metastsc_count;
 	uint32_t indexcount;
 	double videolength;
 	double metadatalength;
+	int32_t metadataoffset_clockcount;
 	uint32_t clockdemon, clockcount;
 	uint32_t trak_clockdemon, trak_clockcount;
 	uint32_t meta_clockdemon, meta_clockcount;
+	uint32_t video_framerate_numerator;
+	uint32_t video_framerate_denominator;
+	uint32_t video_frames;
 	double basemetadataduration;
+	int32_t trak_edit_list_offsets[MAX_TRACKS];
+	uint32_t trak_num;
 	FILE *mediafp;
 	uint64_t filesize;
 	uint64_t filepos;
@@ -101,12 +108,15 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t subtype);
 size_t OpenMP4SourceUDTA(char *filename);
 void CloseSource(size_t handle);
 float GetDuration(size_t handle);
+uint32_t GetVideoFrameRateAndCount(size_t handle, uint32_t *numer, uint32_t *demon);
 uint32_t GetNumberPayloads(size_t handle);
 uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index);
 void FreePayload(uint32_t *lastpayload);
 uint32_t GetPayloadSize(size_t handle, uint32_t index);
 uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out); //MP4 timestamps for the payload
-uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, uint32_t *in_numerator, uint32_t *out_numerator, uint32_t *denominator);
+uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, int32_t *in_numerator, int32_t *out_numerator, uint32_t *denominator);
+uint32_t GetEditListOffset(size_t handle, double *offset);
+uint32_t GetEditListOffsetRationalTime(size_t handle, int32_t *offset_numerator, uint32_t *denominator);
 
 #define GPMF_SAMPLE_RATE_FAST		0
 #define GPMF_SAMPLE_RATE_PRECISE	1
