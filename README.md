@@ -509,7 +509,7 @@ GoPro HERO5, HERO6 and Fusion cameras have a GPMF track. HERO4 Black will have G
 | ISOG | Image sensor gain | 24, 25 or 30 (based video frame rate) | n/a | HERO5 v2 or greater firmware |   
 | SHUT | Exposure time | 24, 25 or 30 (based video frame rate) | s | HERO5 v2 or greater firmware |  
 
-### Hero5 Black with GPS Enabled Adds
+### HERO5 Black with GPS Enabled Adds
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
@@ -531,7 +531,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | ISOG | Image sensor gain | increased to 60 | n/a | per frame exposure metadata |   
 | SHUT | Exposure time | increased to 60 | s | per frame exposure metadata | 
 
-### Hero6 Black Adds and Changes, Otherwise Supports All HERO5 metadata
+### HERO6 Black Adds and Changes, Otherwise Supports All HERO5 metadata
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
@@ -544,7 +544,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | WBAL | White Balance in Kelvin |  24, 25 or 30 (based video frame rate) | n/a | Classic white balance info |
 | WRGB | White Balance RGB gains |  24, 25 or 30 (based video frame rate) | n/a | Geeky white balance info |
 
-### Hero7 Black Adds, Removes, Changes, Otherwise Supports All HERO6 metadata
+### HERO7 Black (v1.8) Adds, Removes, Changes, Otherwise Supports All HERO6 metadata
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
@@ -554,6 +554,28 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | HUES | Predominant hues over the frame | 8 - 10 | n/a | struct ubyte hue, ubyte weight, HSV_Hue = hue x 360/255 |
 | UNIF | Image uniformity | 8 - 10 | range 0 to 1.0 where 1.0 is a solid color |
 | SCEN | Scene classifier in probabilities | 8 - 10 | n/a | FourCC scenes: SNOW, URBAn, INDOor, WATR, VEGEtation, BEACh |
+| SROT | Sensor Read Out Time | at base frame rate 24/25/30  | n/a | this moves to a global value in HERO8 |
+
+### HERO8 Black (v1.2) Adds, Removes, Changes, Otherwise Supports All HERO7 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| CORI | Camera ORIentation | frame rate | n/a | Quaterions for the camera orientation since capture start |
+| IORI | Image ORIentation | frame rate | n/a | Quaterions for the image orientation relative to the camera body |
+| GRAV | GRAvity Vector | frame rate | n/a | Vector for the direction for gravitiy |
+| WNDM | Wind Processing | 10Hz | n/a | marks whether wind processing is active |
+| MWET | Microphone is WET | 10Hz | n/a | marks whether some of the microphones are wet |
+| AALP | Audio Levels | 10Hz | dBFS | RMS and peak audio levels in dBFS |
+
+### GoPro MAX (v1.3) Adds, Removes, Changes, Otherwise Supports All HERO7 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| CORI | Camera ORIentation | frame rate | n/a | Quaterions for the camera orientation since capture start |
+| IORI | Image ORIentation | frame rate | n/a | Quaterions for the image orientation relative to the camera body |
+| GRAV | GRAvity Vector | frame rate | n/a | Vector for the direction for gravitiy |
+| DISP | Dispartity track (360 modes) | frame rate | n/a | 1-D depth map for the objects seen by the two lenses |
+
 
 ```
 GoPro is trademark of GoPro, Inc.
