@@ -207,7 +207,7 @@ The packed data size with in a GPMF KLV is the structure size times the number o
 
 As sensor data like gyro and accelerometer commonly have three (or more) axes of the same data type, the combination of Type and Structure Size, will indicate the type of data within. Three axis GYRO data could have a Type of &#39;s&#39; (short 16-bit signed integer) with a Structure size of 6. As the size of the Type is known, the number of axes in each sample is Structure size / sizeof (Type). An examples of 6 samples of a 6 byte x,y,z structure GYRO data is shown here:
 
-![](docs/readmegfx/demo4.png)
+![](/docs/readmegfx/demo4.png)
 
 ## GPMF Nesting
 
@@ -221,7 +221,7 @@ DEVC null 4 7
 
 This is a valid nested GPMF structure. DEVC describe 4\*7 = 28 bytes of data, which are packed and aligned GPMF KLV values describing a camera device with a Device ID and a Device Name.
 
-![](docs/readmegfx/demo5.png)
+![](/docs/readmegfx/demo5.png)
 
 ### Property Hierarchy
 
