@@ -1075,6 +1075,19 @@ size_t OpenMP4SourceUDTA(char *filename)
 }
 
 
+void SetTimeBaseStream(size_t handle, uint32_t fourcc)
+{
+	mp4object* mp4 = (mp4object*)handle;
+	if (mp4 == NULL) return;
+
+	mp4->timeBaseFourCC = 0;
+
+	if (!GPMF_VALID_FOURCC(fourcc)) return;
+
+	mp4->timeBaseFourCC = fourcc;
+}
+
+
 double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double *firstsampletime, double *lastsampletime)
 {
 	mp4object *mp4 = (mp4object *)handle;
@@ -1124,7 +1137,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 
 			uint32_t samples = GPMF_PayloadSampleCount(ms);
 			GPMF_stream find_stream;
-			GPMF_CopyState(ms, &find_stream);
+			GPMF_CopyState(ms, &find_stream);  //ms is at the searched fourcc
 			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TOTAL_SAMPLES, GPMF_CURRENT_LEVEL))
 				startsamples = BYTESWAP32(*(uint32_t *)GPMF_RawData(&find_stream)) - samples;
 
@@ -1132,17 +1145,32 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TIME_STAMP, GPMF_CURRENT_LEVEL))
 				starttimestamp = BYTESWAP64(*(uint64_t *)GPMF_RawData(&find_stream));
 
-			if (starttimestamp) // is this earliest in the payload, examine the other streams in this early payload.
+			if (starttimestamp) // how does this compare to other streams in this early payload?
 			{
 				GPMF_stream any_stream;
 				if (GPMF_OK == GPMF_Init(&any_stream, payload, payloadsize))
 				{
 					basetimestamp = starttimestamp;  
-					while (GPMF_OK == GPMF_FindNext(&any_stream, GPMF_KEY_TIME_STAMP, GPMF_RECURSE_LEVELS))
+
+					if (mp4->timeBaseFourCC)
 					{
-						uint64_t timestamp = BYTESWAP64(*(uint64_t *)GPMF_RawData(&any_stream));
-						if (timestamp < basetimestamp)
-							basetimestamp = timestamp;
+						if (GPMF_OK == GPMF_FindNext(&any_stream, mp4->timeBaseFourCC, GPMF_RECURSE_LEVELS))
+						{
+							if (GPMF_OK == GPMF_FindPrev(&any_stream, GPMF_KEY_TIME_STAMP, GPMF_CURRENT_LEVEL))
+							{
+								basetimestamp = BYTESWAP64(*(uint64_t*)GPMF_RawData(&any_stream));
+							}
+						}
+
+					}
+					else
+					{
+						while (GPMF_OK == GPMF_FindNext(&any_stream, GPMF_KEY_TIME_STAMP, GPMF_RECURSE_LEVELS))
+						{
+							uint64_t timestamp = BYTESWAP64(*(uint64_t*)GPMF_RawData(&any_stream));
+							if (timestamp < basetimestamp)
+								basetimestamp = timestamp;
+						}
 					}
 				}
 			}
@@ -1213,7 +1241,7 @@ double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double 
 				}
 			}
 
-			if (rate == 0.0) //Timestamps didn't help weren't available
+			if (rate == 0.0) //Timestamps didn't help, or weren't available
 			{
 				if (!(flags & GPMF_SAMPLE_RATE_PRECISE))
 				{

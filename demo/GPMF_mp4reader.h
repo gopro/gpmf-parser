@@ -73,6 +73,8 @@ typedef struct mp4object
 	FILE *mediafp;
 	uint64_t filesize;
 	uint64_t filepos;
+
+	uint32_t timeBaseFourCC;
 } mp4object;
 
 #define MAKEID(a,b,c,d)			(((d&0xff)<<24)|((c&0xff)<<16)|((b&0xff)<<8)|(a&0xff))
@@ -121,6 +123,7 @@ uint32_t GetEditListOffsetRationalTime(size_t handle, int32_t *offset_numerator,
 #define GPMF_SAMPLE_RATE_FAST		0
 #define GPMF_SAMPLE_RATE_PRECISE	1
 
+void SetTimeBaseStream(size_t handle, uint32_t fourcc); // Called before GetGPMFSampleRate if you what the returned in/out times to be relative to a particular stream (like GPS5 or SHUT etc.), rather than the earliest time
 double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double *in, double *out);
 
 #ifdef __cplusplus
