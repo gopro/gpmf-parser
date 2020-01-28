@@ -73,7 +73,7 @@ typedef struct mp4object
 	FILE *mediafp;
 	uint64_t filesize;
 	uint64_t filepos;
-
+	uint64_t trak_filepos;
 	uint32_t timeBaseFourCC;
 } mp4object;
 

@@ -255,7 +255,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					}
 					else if (qttag == MAKEID('t', 'r', 'a', 'k')) //trak header
 					{
-
+						mp4->trak_filepos = mp4->filepos - 8;
 						if (mp4->trak_num+1 < MAX_TRACKS)
 							mp4->trak_num++;
 
@@ -354,6 +354,12 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len += fread(&skip, 1, 4, mp4->mediafp);
 							len += fread(&skip, 1, 4, mp4->mediafp);
 							len += fread(&subtype, 1, 4, mp4->mediafp);  // type will be 'meta' for the correct trak.
+							
+							if (subtype == traksubtype)
+								return (size_t)mp4;
+							else
+								mp4->trak_filepos = 0;
+
 							if (len == 16)
 							{
 								if (subtype != traksubtype) // not MP4 metadata 
