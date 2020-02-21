@@ -214,6 +214,19 @@ int main(int argc, char *argv[])
 					{
 						uint32_t i, j;
 
+#if 0					// Sample code for changing GPMF KLVs
+						GPMF_CopyState(ms, &find_stream);
+						if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_SCALE, GPMF_CURRENT_LEVEL))
+						{
+							float scale = 4096.0;
+							if (GPMF_OK == GPMF_Modify(&find_stream, 
+								GPMF_KEY_SCALE, GPMF_KEY_SCALE, 'f', 4, 1, (void*)&scale))
+							{
+								printf("change scale\n");
+							}
+						}
+#endif
+
 						//Search for any units to display
 						GPMF_CopyState(ms, &find_stream);
 						if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_SI_UNITS, GPMF_CURRENT_LEVEL) ||

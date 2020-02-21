@@ -739,6 +739,158 @@ void *GPMF_RawData(GPMF_stream *ms)
 
 
 
+int32_t GPMFTypeEndianSize(int type)
+{
+	int32_t ssize = -1;
+
+	switch ((int)type)
+	{
+	case GPMF_TYPE_STRING_ASCII:		ssize = 1; break;
+	case GPMF_TYPE_SIGNED_BYTE:			ssize = 1; break;
+	case GPMF_TYPE_UNSIGNED_BYTE:		ssize = 1; break;
+	case GPMF_TYPE_STRING_UTF8:			ssize = 1; break;
+
+		// These datatype can always be stored in Big-Endian
+	case GPMF_TYPE_SIGNED_SHORT:		ssize = 2; break;
+	case GPMF_TYPE_UNSIGNED_SHORT:		ssize = 2; break;
+	case GPMF_TYPE_FLOAT:				ssize = 4; break;
+	case GPMF_TYPE_FOURCC:				ssize = 1; break;
+	case GPMF_TYPE_SIGNED_LONG:			ssize = 4; break;
+	case GPMF_TYPE_UNSIGNED_LONG:		ssize = 4; break;
+	case GPMF_TYPE_Q15_16_FIXED_POINT:  ssize = 4; break;
+	case GPMF_TYPE_Q31_32_FIXED_POINT:  ssize = 8; break;
+	case GPMF_TYPE_DOUBLE:				ssize = 8; break;
+	case GPMF_TYPE_SIGNED_64BIT_INT:	ssize = 8; break;
+	case GPMF_TYPE_UNSIGNED_64BIT_INT:  ssize = 8; break;
+
+	case GPMF_TYPE_GUID:				ssize = 1; break; // Do not byte swap
+	case GPMF_TYPE_UTC_DATE_TIME:		ssize = 1; break; // Do not byte swap
+
+	//All unknown,complex or larger than 8-bytes store as is:
+	default:							ssize = -1;  // unsupported for structsize type
+	}
+
+	return ssize;
+}
+
+
+void ByteSwap2Buffer(uint32_t* input, uint32_t* output, GPMF_SampleType data_type, uint32_t structSize, uint32_t repeat)
+{
+	int32_t i, len = 0, endianSize = GPMFTypeEndianSize(data_type);
+	if (endianSize == 8) // 64-bit swap required
+	{
+		for (i = 0; i < (repeat * structSize + 3) / sizeof(uint32_t); i += 2)
+		{
+			output[len++] = BYTESWAP32(input[i + 1]); 
+			output[len++] = BYTESWAP32(input[i]);
+		}
+	}
+	else if (endianSize >= 1)
+	{
+		for (i = 0; i < (repeat * structSize + 3) / sizeof(uint32_t); i++)
+		{
+			switch (endianSize)
+			{
+			case 2:		output[len++] = BYTESWAP2x16(input[i]); break;
+			case 4:		output[len++] = BYTESWAP32(input[i]); break;
+			default:	output[len++] = input[i]; break;
+			}
+		}
+	}
+}
+
+
+
+//find and inplace overwrite a GPMF KLV with new KLV, if the lengths match.
+GPMF_ERR GPMF_Modify(GPMF_stream* ms, uint32_t origfourCC, uint32_t newfourCC, 
+	GPMF_SampleType newType, uint32_t newStructSize, uint32_t newRepeat, void* newData)
+{
+	uint32_t dataSizeLongs = (newStructSize * newRepeat + 3) >> 2;
+
+	if (ms && ms->pos + 1 + dataSizeLongs < ms->buffer_size_longs)
+	{
+		GPMF_stream fs;
+		GPMF_CopyState(ms, &fs);
+
+		uint32_t key = fs.buffer[fs.pos];
+		uint32_t tsr = fs.buffer[fs.pos + 1];
+		uint32_t ssize = GPMF_SAMPLE_SIZE(tsr);
+		uint32_t repeat = GPMF_SAMPLES(tsr);
+
+		if (key == origfourCC && (((ssize * repeat + 3) >> 2) == ((newStructSize * newRepeat + 3) >> 2)))  // no find required and data will fit
+		{
+			fs.buffer[fs.pos] = newfourCC;
+			fs.buffer[fs.pos + 1] = GPMF_MAKE_TYPE_SIZE_COUNT(newType, newStructSize, newRepeat);
+
+			ByteSwap2Buffer((uint32_t*)newData, (uint32_t*)&fs.buffer[fs.pos + 2], newType, newStructSize, newRepeat);
+			return GPMF_OK;
+		}
+		else
+		{
+			// search forward from the current position at this level
+			if (GPMF_OK == GPMF_FindNext(&fs, origfourCC, GPMF_CURRENT_LEVEL))
+			{
+				tsr = fs.buffer[fs.pos + 1];
+				ssize = GPMF_SAMPLE_SIZE(tsr);
+				repeat = GPMF_SAMPLES(tsr);
+
+				if (((ssize * repeat + 3) >> 2) == ((newStructSize * newRepeat + 3) >> 2))  //will the new data fit
+				{
+					fs.buffer[fs.pos] = newfourCC;
+					fs.buffer[fs.pos + 1] = GPMF_MAKE_TYPE_SIZE_COUNT(newType, newStructSize, newRepeat);
+
+					ByteSwap2Buffer((uint32_t*)newData, (uint32_t*)&fs.buffer[fs.pos + 2], newType, newStructSize, newRepeat);
+					return GPMF_OK;
+				}
+				return GPMF_ERROR_BAD_STRUCTURE;  // sizes don't match
+			}
+			// search backward from the current position at this level
+			else if (GPMF_OK == GPMF_FindPrev(&fs, origfourCC, GPMF_CURRENT_LEVEL))
+			{
+				tsr = fs.buffer[fs.pos + 1];
+				ssize = GPMF_SAMPLE_SIZE(tsr);
+				repeat = GPMF_SAMPLES(tsr);
+
+				if (((ssize * repeat + 3) >> 2) == ((newStructSize * newRepeat + 3) >> 2))  //will the new data fit
+				{
+					fs.buffer[fs.pos] = newfourCC;
+					fs.buffer[fs.pos + 1] = GPMF_MAKE_TYPE_SIZE_COUNT(newType, newStructSize, newRepeat);
+
+					ByteSwap2Buffer((uint32_t*)newData, (uint32_t*)&fs.buffer[fs.pos + 2], newType, newStructSize, newRepeat);
+					return GPMF_OK;
+				}
+				return GPMF_ERROR_BAD_STRUCTURE;  // sizes don't match
+			}
+			else 
+			{
+				// search from the beginning through all levels
+				GPMF_ResetState(&fs);
+				if (GPMF_OK == GPMF_FindNext(&fs, origfourCC, GPMF_RECURSE_LEVELS))
+				{ 
+					uint32_t tsr = fs.buffer[fs.pos + 1];
+					uint32_t ssize = GPMF_SAMPLE_SIZE(tsr);
+					uint32_t repeat = GPMF_SAMPLES(tsr);
+
+					if (((ssize * repeat + 3) >> 2) == ((newStructSize * newRepeat + 3) >> 2))  //will the new data fit
+					{
+						fs.buffer[fs.pos] = newfourCC;
+						fs.buffer[fs.pos + 1] = GPMF_MAKE_TYPE_SIZE_COUNT(newType, newStructSize, newRepeat);
+
+						ByteSwap2Buffer((uint32_t*)newData, (uint32_t*)&fs.buffer[fs.pos + 2], newType, newStructSize, newRepeat);
+						return GPMF_OK;
+					}
+					return GPMF_ERROR_BAD_STRUCTURE;  // sizes don't match
+				}
+				else
+					return GPMF_ERROR_FIND; // if can't find the data to replace.
+			}
+		}
+	}
+	return GPMF_ERROR_BAD_STRUCTURE;  // sizes don't match
+}
+
+
+
 uint32_t GPMF_SizeofType(GPMF_SampleType type)
 {
 	uint32_t ssize = 0;

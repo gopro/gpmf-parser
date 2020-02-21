@@ -79,6 +79,10 @@ uint32_t GPMF_ElementsInStruct(GPMF_stream *gs);												//return the current
 uint32_t GPMF_RawDataSize(GPMF_stream *gs);														//return the data size for the current GPMF KLV 
 void *   GPMF_RawData(GPMF_stream *gs);															//return a pointer the KLV data (which is Bigendian if the type is known.)
 
+
+GPMF_ERR GPMF_Modify(GPMF_stream* gs,                                                           //find and inplace overwrite a GPMF KLV with new KLV, if the lengths match.
+    uint32_t origfourCC, uint32_t newfourCC, GPMF_SampleType newType, uint32_t newStructSize, uint32_t newRepeat, void* newData);
+
 // Get information about where the GPMF KLV is nested
 uint32_t GPMF_NestLevel(GPMF_stream *gs);														//return the current nest level
 uint32_t GPMF_DeviceID(GPMF_stream *gs);														//return the current device ID (DVID), to seperate match sensor data from difference devices.
