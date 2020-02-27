@@ -82,6 +82,28 @@ uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index)
 }
 
 
+uint32_t WritePayload(size_t handle, uint32_t *payload, uint32_t payloadsize, uint32_t index)
+{
+	mp4object* mp4 = (mp4object*)handle;
+	if (mp4 == NULL) return NULL;
+
+	uint32_t* MP4buffer = NULL;
+	if (index < mp4->indexcount && mp4->mediafp)
+	{
+		if ((mp4->filesize >= mp4->metaoffsets[index] + mp4->metasizes[index]) && mp4->metasizes[index] == payloadsize)
+		{
+			LONGSEEK(mp4->mediafp, mp4->metaoffsets[index], SEEK_SET);
+			fwrite(payload, 1, payloadsize, mp4->mediafp);
+			mp4->filepos = mp4->metaoffsets[index] + payloadsize;
+			return payloadsize;
+		}
+	}
+
+	return 0;
+}
+
+
+
 void LongSeek(mp4object *mp4, int64_t offset)
 {
 	if (mp4 && offset)
@@ -138,9 +160,9 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 	if (mp4->filesize < 64) return 0;
 
 #ifdef _WINDOWS
-	fopen_s(&mp4->mediafp, filename, "rb");
+	fopen_s(&mp4->mediafp, filename, "rb+");
 #else
-	mp4->mediafp = fopen(filename, "rb");
+	mp4->mediafp = fopen(filename, "rb+");
 #endif
 
 	if (mp4->mediafp)
@@ -986,9 +1008,9 @@ size_t OpenMP4SourceUDTA(char *filename)
 	if (mp4->filesize < 64) return 0;
 
 #ifdef _WINDOWS
-	fopen_s(&mp4->mediafp, filename, "rb");
+	fopen_s(&mp4->mediafp, filename, "rb+");
 #else
-	mp4->mediafp = fopen(filename, "rb");
+	mp4->mediafp = fopen(filename, "rb+");
 #endif
 
 	if (mp4->mediafp)

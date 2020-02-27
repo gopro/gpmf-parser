@@ -223,6 +223,12 @@ int main(int argc, char *argv[])
 								GPMF_KEY_SCALE, GPMF_KEY_SCALE, 'f', 4, 1, (void*)&scale))
 							{
 								printf("change scale\n");
+								uint32_t ret = 0; 
+								ret = WritePayload(mp4, payload, payloadsize, index);
+								if (ret != 0)
+								{
+									printf("updated file data\n");
+								}
 							}
 						}
 #endif

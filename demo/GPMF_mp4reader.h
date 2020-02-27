@@ -113,6 +113,7 @@ float GetDuration(size_t handle);
 uint32_t GetVideoFrameRateAndCount(size_t handle, uint32_t *numer, uint32_t *demon);
 uint32_t GetNumberPayloads(size_t handle);
 uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index);
+uint32_t WritePayload(size_t handle, uint32_t* payload, uint32_t payloadsize, uint32_t index);
 void FreePayload(uint32_t *lastpayload);
 uint32_t GetPayloadSize(size_t handle, uint32_t index);
 uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out); //MP4 timestamps for the payload
