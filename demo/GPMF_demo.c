@@ -35,7 +35,6 @@ int main(int argc, char *argv[])
 	int32_t ret = GPMF_OK;
 	GPMF_stream metadata_stream, *ms = &metadata_stream;
 	double metadatalength;
-	double start_offset = 0.0;
 	uint32_t *payload = NULL; //buffer to store GPMF samples from the MP4.
 
 

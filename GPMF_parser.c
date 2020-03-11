@@ -783,7 +783,7 @@ void ByteSwap2Buffer(uint32_t* input, uint32_t* output, GPMF_SampleType data_typ
 	int32_t i, len = 0, endianSize = GPMFTypeEndianSize(data_type);
 	if (endianSize == 8) // 64-bit swap required
 	{
-		for (i = 0; i < (repeat * structSize + 3) / sizeof(uint32_t); i += 2)
+		for (i = 0; i < (int32_t)((repeat * structSize + 3) / sizeof(int32_t)); i += 2)
 		{
 			output[len++] = BYTESWAP32(input[i + 1]); 
 			output[len++] = BYTESWAP32(input[i]);
@@ -791,7 +791,7 @@ void ByteSwap2Buffer(uint32_t* input, uint32_t* output, GPMF_SampleType data_typ
 	}
 	else if (endianSize >= 1)
 	{
-		for (i = 0; i < (repeat * structSize + 3) / sizeof(uint32_t); i++)
+		for (i = 0; i < (int32_t)((repeat * structSize + 3) / sizeof(int32_t)); i++)
 		{
 			switch (endianSize)
 			{
@@ -871,9 +871,9 @@ GPMF_ERR GPMF_Modify(GPMF_stream* ms, uint32_t origfourCC, uint32_t newfourCC,
 				GPMF_ResetState(&fs);
 				if (GPMF_OK == GPMF_FindNext(&fs, origfourCC, GPMF_RECURSE_LEVELS))
 				{ 
-					uint32_t tsr = fs.buffer[fs.pos + 1];
-					uint32_t ssize = GPMF_SAMPLE_SIZE(tsr);
-					uint32_t repeat = GPMF_SAMPLES(tsr);
+					tsr = fs.buffer[fs.pos + 1];
+					ssize = GPMF_SAMPLE_SIZE(tsr);
+					repeat = GPMF_SAMPLES(tsr);
 
 					if (((ssize * repeat + 3) >> 2) == ((newStructSize * newRepeat + 3) >> 2))  //will the new data fit
 					{
@@ -1212,7 +1212,20 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 		case GPMF_TYPE_UNSIGNED_LONG:	MACRO_CAST_SCALE_UNSIGNED_TYPE(uint32_t)	break;	\
 		case GPMF_TYPE_DOUBLE:			MACRO_CAST_SCALE_SIGNED_TYPE(double)	break;		\
 		default: break;																		\
-		}																									
+		}		
+
+#define MACRO_CAST_UNSIGNED_SCALE															\
+		switch (outputType)	{																\
+		case GPMF_TYPE_SIGNED_BYTE: 	MACRO_CAST_SCALE_SIGNED_TYPE(int8_t)	break;		\
+		case GPMF_TYPE_UNSIGNED_BYTE:	MACRO_CAST_SCALE_SIGNED_TYPE(uint8_t)	break;		\
+		case GPMF_TYPE_SIGNED_SHORT: 	MACRO_CAST_SCALE_SIGNED_TYPE(int16_t)	break;		\
+		case GPMF_TYPE_UNSIGNED_SHORT:	MACRO_CAST_SCALE_SIGNED_TYPE(uint16_t)	break;		\
+		case GPMF_TYPE_FLOAT:			MACRO_CAST_SCALE_SIGNED_TYPE(float)		break;		\
+		case GPMF_TYPE_SIGNED_LONG:		MACRO_CAST_SCALE_SIGNED_TYPE(int32_t)	break;		\
+		case GPMF_TYPE_UNSIGNED_LONG:	MACRO_CAST_SCALE_SIGNED_TYPE(uint32_t)	break;		\
+		case GPMF_TYPE_DOUBLE:			MACRO_CAST_SCALE_SIGNED_TYPE(double)	break;		\
+		default: break;																		\
+		}						
 
 #define MACRO_BSWAP_CAST_SCALE(swap, inputcast, tempcast)	\
 {														\
@@ -1225,6 +1238,18 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 	data = (uint8_t *)datatemp;							\
 }
 
+
+#define MACRO_BSWAP_CAST_UNSIGNED_SCALE(swap, inputcast, tempcast)	\
+{														\
+	inputcast *val;										\
+	tempcast temp,  *datatemp = (tempcast *)data;		\
+	temp = swap(*datatemp);								\
+	val = (inputcast *)&temp;							\
+	MACRO_CAST_UNSIGNED_SCALE							\
+	datatemp++;											\
+	data = (uint8_t *)datatemp;							\
+}
+
 #define MACRO_NOSWAP_CAST_SCALE(inputcast)	\
 {														\
 	inputcast *val;										\
@@ -1232,6 +1257,18 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 	temp = *(inputcast *)data;							\
 	val = (inputcast *)&temp;							\
 	MACRO_CAST_SCALE									\
+	datatemp++;											\
+	data = (uint8_t *)datatemp;							\
+}
+
+
+#define MACRO_NOSWAP_CAST_UNSIGNED_SCALE(inputcast)	\
+{														\
+	inputcast *val;										\
+	inputcast temp,  *datatemp = (inputcast *)data;		\
+	temp = *(inputcast *)data;							\
+	val = (inputcast *)&temp;							\
+	MACRO_CAST_UNSIGNED_SCALE							\
 	datatemp++;											\
 	data = (uint8_t *)datatemp;							\
 }
@@ -1597,13 +1634,13 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 					{
 					case GPMF_TYPE_FLOAT:  MACRO_NOSWAP_CAST_SCALE(float) break;
 					case GPMF_TYPE_SIGNED_BYTE:  MACRO_NOSWAP_CAST_SCALE(int8_t) break;
-					case GPMF_TYPE_UNSIGNED_BYTE:  MACRO_NOSWAP_CAST_SCALE(uint8_t) break;
+					case GPMF_TYPE_UNSIGNED_BYTE:  MACRO_NOSWAP_CAST_UNSIGNED_SCALE(uint8_t) break;
 					case GPMF_TYPE_SIGNED_SHORT:  MACRO_NOSWAP_CAST_SCALE(int16_t) break;
-					case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_NOSWAP_CAST_SCALE(uint16_t) break;
+					case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_NOSWAP_CAST_UNSIGNED_SCALE(uint16_t) break;
 					case GPMF_TYPE_SIGNED_LONG:  MACRO_NOSWAP_CAST_SCALE(int32_t) break;
-					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_NOSWAP_CAST_SCALE(uint32_t) break;
+					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_NOSWAP_CAST_UNSIGNED_SCALE(uint32_t) break;
 					case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_NOSWAP_CAST_SCALE(int64_t) break;
-					case GPMF_TYPE_UNSIGNED_64BIT_INT:  MACRO_NOSWAP_CAST_SCALE(uint64_t) break;
+					case GPMF_TYPE_UNSIGNED_64BIT_INT:  MACRO_NOSWAP_CAST_UNSIGNED_SCALE(uint64_t) break;
 					default:
 						ret = GPMF_ERROR_TYPE_NOT_SUPPORTED;
 						goto cleanup;
@@ -1616,13 +1653,13 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 					{
 					case GPMF_TYPE_FLOAT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, float, uint32_t) break;
 					case GPMF_TYPE_SIGNED_BYTE:  MACRO_BSWAP_CAST_SCALE(NOSWAP8, int8_t, uint8_t) break;
-					case GPMF_TYPE_UNSIGNED_BYTE:  MACRO_BSWAP_CAST_SCALE(NOSWAP8, uint8_t, uint8_t) break;
+					case GPMF_TYPE_UNSIGNED_BYTE:  MACRO_BSWAP_CAST_UNSIGNED_SCALE(NOSWAP8, uint8_t, uint8_t) break;
 					case GPMF_TYPE_SIGNED_SHORT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, int16_t, uint16_t) break;
-					case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, uint16_t, uint16_t) break;
+					case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_BSWAP_CAST_UNSIGNED_SCALE(BYTESWAP16, uint16_t, uint16_t) break;
 					case GPMF_TYPE_SIGNED_LONG:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, int32_t, uint32_t) break;
-					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, uint32_t, uint32_t) break;
+					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_BSWAP_CAST_UNSIGNED_SCALE(BYTESWAP32, uint32_t, uint32_t) break;
 					case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP64, int64_t, uint64_t) break;
-					case GPMF_TYPE_UNSIGNED_64BIT_INT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP64, uint64_t, uint64_t) break;
+					case GPMF_TYPE_UNSIGNED_64BIT_INT:  MACRO_BSWAP_CAST_UNSIGNED_SCALE(BYTESWAP64, uint64_t, uint64_t) break;
 					default:
 						ret = GPMF_ERROR_TYPE_NOT_SUPPORTED;
 						goto cleanup;

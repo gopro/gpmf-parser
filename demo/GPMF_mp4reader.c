@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.7.1
+*  @version 1.7.2
 *
 *  (C) Copyright 2017-2019 GoPro Inc (http://gopro.com/).
 *
@@ -87,7 +87,6 @@ uint32_t WritePayload(size_t handle, uint32_t *payload, uint32_t payloadsize, ui
 	mp4object* mp4 = (mp4object*)handle;
 	if (mp4 == NULL) return 0;
 
-	uint32_t* MP4buffer = NULL;
 	if (index < mp4->indexcount && mp4->mediafp)
 	{
 		if ((mp4->filesize >= mp4->metaoffsets[index] + mp4->metasizes[index]) && mp4->metasizes[index] == payloadsize)
@@ -170,7 +169,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 		uint32_t qttag, qtsize32, skip, type = 0, subtype = 0, num;
 		size_t len;
 		int32_t nest = 0;
-		uint64_t nestsize[MAX_NEST_LEVEL] = { 0 };
+		int64_t nestsize[MAX_NEST_LEVEL] = { 0 };
 		uint64_t lastsize = 0, qtsize;
 
 
@@ -751,7 +750,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					{
 						if (type == MAKEID('v', 'i', 'd', 'e')) // video trak to get frame rate
 						{
-							uint32_t totaldur = 0, samples = 0;
+							uint32_t samples = 0;
 							int32_t entries = 0;
 							len = fread(&skip, 1, 4, mp4->mediafp);
 							len += fread(&num, 1, 4, mp4->mediafp);
@@ -1018,7 +1017,7 @@ size_t OpenMP4SourceUDTA(char *filename)
 		uint32_t qttag, qtsize32;
 		size_t len;
 		int32_t nest = 0;
-		uint64_t nestsize[MAX_NEST_LEVEL] = { 0 };
+		int64_t nestsize[MAX_NEST_LEVEL] = { 0 };
 		uint64_t lastsize = 0, qtsize;
 
 		do
