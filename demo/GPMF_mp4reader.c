@@ -85,7 +85,7 @@ uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index)
 uint32_t WritePayload(size_t handle, uint32_t *payload, uint32_t payloadsize, uint32_t index)
 {
 	mp4object* mp4 = (mp4object*)handle;
-	if (mp4 == NULL) return NULL;
+	if (mp4 == NULL) return 0;
 
 	uint32_t* MP4buffer = NULL;
 	if (index < mp4->indexcount && mp4->mediafp)
