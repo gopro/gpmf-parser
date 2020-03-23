@@ -32,7 +32,7 @@ extern void PrintGPMF(GPMF_stream *ms);
 
 int main(int argc, char *argv[])
 {
-	int32_t ret = GPMF_OK;
+	GPMF_ERR ret = GPMF_OK;
 	GPMF_stream metadata_stream, *ms = &metadata_stream;
 	double metadatalength;
 	uint32_t *payload = NULL; //buffer to store GPMF samples from the MP4.
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 								{
 									char tmp[64];
 									char *data = (char *)GPMF_RawData(&find_stream);
-									int size = GPMF_RawDataSize(&find_stream);
+									uint32_t size = GPMF_RawDataSize(&find_stream);
 
 									if (size < sizeof(tmp))
 									{
@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
 							GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_UNITS, GPMF_CURRENT_LEVEL))
 						{
 							char *data = (char *)GPMF_RawData(&find_stream);
-							int ssize = GPMF_StructSize(&find_stream);
+							uint32_t ssize = GPMF_StructSize(&find_stream);
 							unit_samples = GPMF_Repeat(&find_stream);
 
 							for (i = 0; i < unit_samples; i++)
@@ -290,5 +290,5 @@ int main(int argc, char *argv[])
 		CloseSource(mp4);
 	}
 
-	return ret;
+	return (int) ret;
 }

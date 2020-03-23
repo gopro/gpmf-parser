@@ -2,9 +2,9 @@
  * 
  *  @brief GPMF Parser library include
  * 
- *  @version 1.6.0
+ *  @version 1.6.1
  * 
- *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
+ *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *
  *  Licensed under either:
  *  - Apache License, Version 2.0, http://www.apache.org/licenses/LICENSE-2.0  
@@ -58,7 +58,7 @@ typedef enum GPMF_LEVELS
  
 
 // Prepare GPMF data 
-GPMF_ERR GPMF_Init(GPMF_stream *gs, uint32_t *buffer, int datasize);							//Initialize a GPMF_stream for parsing a particular buffer.
+GPMF_ERR GPMF_Init(GPMF_stream *gs, uint32_t *buffer, uint32_t datasize);							//Initialize a GPMF_stream for parsing a particular buffer.
 GPMF_ERR GPMF_ResetState(GPMF_stream *gs);														//Read from beginning of the buffer again
 GPMF_ERR GPMF_CopyState(GPMF_stream *src, GPMF_stream *dst);									//Copy state, 
 GPMF_ERR GPMF_Validate(GPMF_stream *gs, GPMF_LEVELS recurse);									//Is the nest structure valid GPMF? 

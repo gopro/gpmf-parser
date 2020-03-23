@@ -2,9 +2,9 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.7.2
+*  @version 1.7.3
 *
-*  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
+*  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
 *
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ typedef struct mp4object
 #define AVI_VIDS_TRAK_TYPE		MAKEID('v', 'i', 'd', 's')		// track is the type for video
 #define AVI_CFHD_SUBTYPE		MAKEID('c', 'f', 'h', 'd')		// subtype is CineForm HD
 
-#define NESTSIZE(x) { int64_t i = nest; while (i > 0 && nestsize[i] > 0) { nestsize[i] -= x; if(nestsize[i]>=0 && nestsize[i] <= 8) { nestsize[i]=0; nest--; } i--; } }
+#define NESTSIZE(x) { int _i = nest; while (_i > 0 && nestsize[_i] > 0) { (nestsize[_i] >= x) ? (nestsize[_i]-=x) : (nestsize[_i]=0); if(nestsize[_i] <= 8) { nestsize[_i]=0; nest--; } _i--; } }
 
 #define VALID_FOURCC(a)	(((((a>>24)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>24)&0xff)>='A'&&((a>>24)&0xff)<='Z') || (((a>>24)&0xff)>='0'&&((a>>24)&0xff)<='9') || (((a>>24)&0xff)==' ') ) && \
 						( (((a>>16)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>16)&0xff)>='A'&&((a>>16)&0xff)<='Z') || (((a>>16)&0xff)>='0'&&((a>>16)&0xff)<='9') || (((a>>16)&0xff)==' ') ) && \
