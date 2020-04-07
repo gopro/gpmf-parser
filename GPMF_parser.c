@@ -199,7 +199,7 @@ GPMF_ERR GPMF_Init(GPMF_stream *ms, uint32_t *buffer, uint32_t datasize)
 			uint32_t size = GPMF_DATA_SIZE(buffer[pos+1]);
 			pos += 2 + (size >> 2);
 		}
-		if (buffer[pos] == GPMF_KEY_END) // NULL terminated GPMF
+		if ((pos*4) < datasize && buffer[pos] == GPMF_KEY_END) // NULL terminated GPMF
 		{
 			datasize = pos * 4;
 		}
