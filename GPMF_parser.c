@@ -347,41 +347,6 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 
 
 
-GPMF_ERR GPMF_FindNextMulti(GPMF_stream *ms, char** strms, int numStrms, GPMF_LEVELS recurse)
-{
-	GPMF_stream prevstate;
-
-	if (ms)
-	{
-		memcpy(&prevstate, ms, sizeof(GPMF_stream));
-
-		if (ms->pos < ms->buffer_size_longs)
-		{
-			while (0 == GPMF_Next(ms, recurse))
-			{
-				uint32_t fourcc = ms->buffer[ms->pos];
-				if (strms) {
-					char** strm = strms;
-					for (int i = 0; i < numStrms; i++) {
-						if (!strms[i]) continue;
-						uint32_t cur = STR2FOURCC(strms[i]);
-						if (fourcc == cur)
-						{
-							strms[i] = NULL;
-							return GPMF_OK; //found match
-						}
-					}
-				}
-			}
-
-			// restore read position
-			memcpy(ms, &prevstate, sizeof(GPMF_stream));
-			return GPMF_ERROR_FIND;
-		}
-	}
-	return GPMF_ERROR_FIND;
-}
-
 GPMF_ERR GPMF_FindNext(GPMF_stream *ms, uint32_t fourcc, GPMF_LEVELS recurse)
 {
 	GPMF_stream prevstate;

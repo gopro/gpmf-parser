@@ -19,6 +19,7 @@
  *
  */
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -257,7 +258,7 @@ int main(int argc, char *argv[])
 #if 1		// Find GPS values and return scaled doubles.
 			if (index == 0) // show first payload
 			{
-				while (GPMF_OK == GPMF_FindNextMulti(ms, &strms[curStrm], 1, GPMF_RECURSE_LEVELS))
+				while (curStrm < numStrms && GPMF_OK == GPMF_FindNext(ms, STR2FOURCC(strms[curStrm]), GPMF_RECURSE_LEVELS))
 				{
 					curStrm++;
 					uint32_t key = GPMF_Key(ms);
@@ -266,7 +267,10 @@ int main(int argc, char *argv[])
 					uint32_t buffersize = samples * elements * sizeof(double);
 					GPMF_stream find_stream;
 					double *ptr, *tmpbuffer = (double *)malloc(buffersize);
-					char units[10][6] = { "" };
+					static const int MAX_UNIT_SIZE = 6;
+					static const int NUM_UNITS = 10;
+					char units[NUM_UNITS][MAX_UNIT_SIZE];
+					memset(units, 0, NUM_UNITS * MAX_UNIT_SIZE * sizeof(char));
 					uint32_t unit_samples = 1;
 
 					printf("MP4 Payload time %.3f to %.3f seconds\n", in, out);
@@ -286,8 +290,29 @@ int main(int argc, char *argv[])
 
 							for (i = 0; i < unit_samples; i++)
 							{
-								memcpy(units[i], data, ssize);
-								units[i][ssize] = 0;
+								char* unit = units[i];
+								memcpy(unit, data, ssize);
+
+								//Check for non-ASCII characters
+								for (int j = 0; j < ssize; j++) {
+									char ch = unit[j];
+									if (ch & 0x80) {
+										// Allowed special chars
+										uint8_t val = ch;
+										assert(val == 0xb0 || val == 0xb2 || val == 0xb3 || val == 0xb5);
+										if (ssize + 1 >= MAX_UNIT_SIZE) {
+											fprintf(stderr, "unit size %d, but max %d", ssize, MAX_UNIT_SIZE);
+										}
+										assert (ssize + 1 < MAX_UNIT_SIZE);
+										for (int k = MAX_UNIT_SIZE - 1; k > ssize; k--) {
+											unit[k] = 0;
+										}
+										for (int k = ssize; k > j; k--) {
+											unit[k] = unit[k-1];
+										}
+										unit[j] = (char)0xc2;
+									}
+								}
 								data += ssize;
 							}
 						}
@@ -308,6 +333,10 @@ int main(int argc, char *argv[])
 					}
 					printf("\n");
 					GPMF_ResetState(ms);
+				}
+				if (curStrm != numStrms) {
+					fprintf(stderr, "STRM %s not found\n", strms[curStrm]);
+					exit(1);
 				}
 			}
 #endif
