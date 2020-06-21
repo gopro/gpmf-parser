@@ -33,6 +33,11 @@
 
 extern void PrintGPMF(GPMF_stream *ms);
 
+void usage(char** argv) {
+	fprintf(stderr, "Usage: %s [-L] [-R] [-S | -s strm1[,strm2,...]] [file]\n", argv[0]);
+	exit(EXIT_FAILURE);
+}
+
 int main(int argc, char *argv[])
 {
 	int32_t ret = GPMF_OK;
@@ -43,18 +48,18 @@ int main(int argc, char *argv[])
 
 	//Parse command-line flags
 	int opt;
-	bool listStrms = true;
-	bool noStrms = false;
-	char *strmParam = NULL;
+	bool listStrms = true; //list streams at beginning of output
+	bool showRates = true; //show sampling rates of streams at end of output
+	bool noStrms = false; //don't show any streams (default: show ACCL stream)
+	char *strmParam = NULL; //streams to show (comma-separated list passed to "-s" flag)
 
-	while ((opt = getopt(argc, argv, "LSs:")) != -1) {
+	while ((opt = getopt(argc, argv, "LRSs:")) != -1) {
 		switch (opt) {
 		case 'L': listStrms = false; break;
+		case 'R': showRates = false; break;
 		case 'S': noStrms = true; break;
 		case 's': strmParam = optarg; break;
-		default:
-			fprintf(stderr, "Usage: %s [-L] [-S | -s strm1[,strm2,...]] [file]\n", argv[0]);
-			exit(EXIT_FAILURE);
+		default: usage(argv);
 		}
 	}
 
@@ -63,20 +68,25 @@ int main(int argc, char *argv[])
 	if (strmParam == NULL) {
 		if (!noStrms) {
 			strms = (char**)malloc(sizeof(char*));
-			strms[0] = "ACCL"; //GoPro Hero5/6/7 Accelerometer
+			strms[0] = strdup("ACCL"); //GoPro Hero5/6/7 Accelerometer
 		}
 	} else {
 		if (noStrms) {
-			fprintf(stderr, "Usage: %s [-L] [-S | -s strm1[,strm2,...]] [file]\n", argv[0]);
-			exit(EXIT_FAILURE);
+			usage(argv);
 		} else {
 			strms = str_split(strmParam, ',');
 		}
 	}
+	int numStrms = 0;
+	char** tmp = strms;
+	while (tmp && *tmp) {
+		numStrms++;
+		tmp++;
+	}
+	int curStrm = 0;
 
 	if (optind + 1 != argc) {
-		fprintf(stderr, "Usage: %s [-L] [-s strm1[,strm2,...]] [file]\n", argv[0]);
-		exit(EXIT_FAILURE);
+		usage(argv);
 	}
 
 #if 1 // Search for GPMF Track
@@ -96,7 +106,7 @@ int main(int argc, char *argv[])
 	if (metadatalength > 0.0)
 	{
 		uint32_t index, payloads = GetNumberPayloads(mp4);
-//		printf("found %.2fs of metadata, from %d payloads, within %s\n", metadatalength, payloads, argv[optind]);
+		//printf("found %.2fs of metadata, from %d payloads, within %s\n", metadatalength, payloads, argv[optind]);
 
 		uint32_t fr_num, fr_dem;
 		uint32_t frames = GetVideoFrameRateAndCount(mp4, &fr_num, &fr_dem);
@@ -237,7 +247,7 @@ int main(int argc, char *argv[])
 					}
 				}
 				GPMF_ResetState(ms);
-				printf("\n");
+				if (listStrms) printf("\n");
 			}
 #endif
 
@@ -247,8 +257,9 @@ int main(int argc, char *argv[])
 #if 1		// Find GPS values and return scaled doubles.
 			if (index == 0) // show first payload
 			{
-				if (GPMF_OK == GPMF_FindNextMulti(ms, strms, GPMF_RECURSE_LEVELS))
+				while (GPMF_OK == GPMF_FindNextMulti(ms, &strms[curStrm], 1, GPMF_RECURSE_LEVELS))
 				{
+					curStrm++;
 					uint32_t key = GPMF_Key(ms);
 					uint32_t samples = GPMF_Repeat(ms);
 					uint32_t elements = GPMF_ElementsInStruct(ms);
@@ -295,9 +306,9 @@ int main(int argc, char *argv[])
 						}
 						free(tmpbuffer);
 					}
+					printf("\n");
+					GPMF_ResetState(ms);
 				}
-				GPMF_ResetState(ms);
-				printf("\n");
 			}
 #endif
 		}
@@ -314,14 +325,20 @@ int main(int argc, char *argv[])
 
 				start -= start_offset;
 				end -= start_offset;
-				if (listStrms) printf("%c%c%c%c sampling rate = %fHz (time %f to %f)\",\n", PRINTF_4CC(fourcc), rate, start, end);
+				if (showRates) printf("%c%c%c%c sampling rate = %fHz (time %f to %f)\",\n", PRINTF_4CC(fourcc), rate, start, end);
 			}
 		}
 #endif
 
 
 	cleanup:
-		if (strms) free(strms); strms = NULL;
+		if (strms) {
+			for (int i = 0; i < numStrms; i++) {
+				free(strms[i]);
+			}
+			free(strms);
+			strms = NULL;
+		}
 		if (payload) FreePayload(payload); payload = NULL;
 		CloseSource(mp4);
 	}

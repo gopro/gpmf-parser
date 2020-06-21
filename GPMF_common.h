@@ -76,6 +76,12 @@ typedef enum
 
 #define MAKEID(a,b,c,d)			(((d&0xff)<<24)|((c&0xff)<<16)|((b&0xff)<<8)|(a&0xff))
 #define STR2FOURCC(s)			((s[0]<<0)|(s[1]<<8)|(s[2]<<16)|(s[3]<<24))
+#define FOURCC2STR(name, f) \
+char name[5] = {0,0,0,0,0}; \
+name[3] = (char)((f & 0xff000000) >> 24); \
+name[2] = (char)((f & 0x00ff0000) >> 16); \
+name[1] = (char)((f & 0x0000ff00) >>  8); \
+name[0] = (char)((f & 0x000000ff) >>  0);
 
 #define BYTESWAP64(a)			(((a&0xff)<<56)|((a&0xff00)<<40)|((a&0xff0000)<<24)|((a&0xff000000)<<8) | ((a>>56)&0xff)|((a>>40)&0xff00)|((a>>24)&0xff0000)|((a>>8)&0xff000000) )
 #define BYTESWAP32(a)			(((a&0xff)<<24)|((a&0xff00)<<8)|((a>>8)&0xff00)|((a>>24)&0xff))
