@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.7.3
+*  @version 1.7.4
 *
 *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
 *
@@ -166,7 +166,11 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 #endif
 	mp4->filesize = (uint64_t) mp4stat.st_size;
 //	printf("filesize = %ld\n", mp4->filesize);
-	if (mp4->filesize < 64) return 0;
+	if (mp4->filesize < 64) 
+	{
+		free(mp4);
+		return 0;
+	}
 
 #ifdef _WINDOWS
 	fopen_s(&mp4->mediafp, filename, "rb+");
@@ -1014,7 +1018,11 @@ size_t OpenMP4SourceUDTA(char *filename)
 	stat(filename, &mp4stat);
 #endif
 	mp4->filesize = (uint64_t)mp4stat.st_size;
-	if (mp4->filesize < 64) return 0;
+	if (mp4->filesize < 64) 
+	{
+		free(mp4);
+		return 0;
+	}
 
 #ifdef _WINDOWS
 	fopen_s(&mp4->mediafp, filename, "rb+");
