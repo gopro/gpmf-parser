@@ -351,9 +351,9 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								readnum = BYTESWAP32(readnum);
 								if (readnum <= ((qtsize - 8 - len) / 12))
 								{
-									int32_t segment_duration; //integer that specifies the duration of this edit segment in units of the movie’s time scale.
-									int32_t segment_mediaTime; //integer containing the starting time within the media of this edit segment(in media timescale units).If this field is set to –1, it is an empty edit.The last edit in a track should never be an empty edit.Any difference between the movie’s duration and the track’s duration is expressed as an implicit empty edit.
-									int32_t segment_mediaRate; //point number that specifies the relative rate at which to play the media corresponding to this edit segment.This rate value cannot be 0 or negative.
+									uint32_t segment_duration; //integer that specifies the duration of this edit segment in units of the movie’s time scale.
+									uint32_t segment_mediaTime; //integer containing the starting time within the media of this edit segment(in media timescale units).If this field is set to –1, it is an empty edit.The last edit in a track should never be an empty edit.Any difference between the movie’s duration and the track’s duration is expressed as an implicit empty edit.
+									uint32_t segment_mediaRate; //point number that specifies the relative rate at which to play the media corresponding to this edit segment.This rate value cannot be 0 or negative.
 									for (i = 0; i < readnum; i++)
 									{
 										len += fread(&segment_duration, 1, 4, mp4->mediafp);
@@ -364,8 +364,8 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 										segment_mediaTime = BYTESWAP32(segment_mediaTime); // in trak clock base
 										segment_mediaRate = BYTESWAP32(segment_mediaRate); // Fixed-point 65536 = 1.0X
 
-										if (segment_mediaTime == -1) // the segment_duration for blanked time
-											mp4->trak_edit_list_offsets[mp4->trak_num] += segment_duration;  //samples are delay, data starts after presentation time zero.
+										if (segment_mediaTime == 0xffffffff) // the segment_duration for blanked time
+											mp4->trak_edit_list_offsets[mp4->trak_num] += (int32_t)segment_duration;  //samples are delay, data starts after presentation time zero.
 										else if (i == 0) // If the first editlst starts after zero, the track is offset by this time (time before presentation time zero.)
 											mp4->trak_edit_list_offsets[mp4->trak_num] -= (int32_t)((double)segment_mediaTime/(double)mp4->trak_clockdemon*(double)mp4->clockdemon); //convert to MP4 clock base.
 									}
