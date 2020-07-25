@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 			ret = GPMF_Validate(ms, GPMF_RECURSE_LEVELS); // optional
 			if (GPMF_OK != ret)
 			{
-				printf("Invalid Structure\n");
+				printf("Invalid GPMF Structure\n");
 				goto cleanup;
 			}
 
@@ -177,9 +177,13 @@ int main(int argc, char *argv[])
 					}
 					else
 					{
-						if (ret == GPMF_ERROR_BAD_STRUCTURE) // some payload element was corrupt, skip to the next valid GPMF KLV at the previous level.
+						if (ret != GPMF_OK) // some payload element was corrupt, skip to the next valid GPMF KLV at the previous level.
 						{
 							ret = GPMF_Next(ms, GPMF_CURRENT_LEVEL); // this will be the next stream if any more are present.
+							if (ret != GPMF_OK)
+							{
+								break; //skip to the next payload as this one is corrupt
+							}
 						}
 					}
 				}
@@ -204,7 +208,10 @@ int main(int argc, char *argv[])
 					uint32_t buffersize = samples * elements * sizeof(double);
 					GPMF_stream find_stream;
 					double *ptr, *tmpbuffer = (double *)malloc(buffersize);
-					char units[10][6] = { "" };
+
+#define MAX_UNITS	16
+#define MAX_UNITLEN	8
+					char units[MAX_UNITS][MAX_UNITLEN] = { "" };
 					uint32_t unit_samples = 1;
 
 					printf("MP4 Payload time %.3f to %.3f seconds\n", in, out);
@@ -239,9 +246,10 @@ int main(int argc, char *argv[])
 						{
 							char *data = (char *)GPMF_RawData(&find_stream);
 							uint32_t ssize = GPMF_StructSize(&find_stream);
+							if (ssize > MAX_UNITLEN-1) ssize = MAX_UNITLEN-1;
 							unit_samples = GPMF_Repeat(&find_stream);
 
-							for (i = 0; i < unit_samples; i++)
+							for (i = 0; i < unit_samples && i < MAX_UNITS; i++)
 							{
 								memcpy(units[i], data, ssize);
 								units[i][ssize] = 0;
@@ -289,6 +297,9 @@ int main(int argc, char *argv[])
 		if (payload) FreePayload(payload); payload = NULL;
 		CloseSource(mp4);
 	}
+
+	if (ret != 0)
+		printf("GPMF data has corruption\n");
 
 	return (int) ret;
 }

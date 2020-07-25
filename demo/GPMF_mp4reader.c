@@ -310,6 +310,13 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							mp4->trak_clockdemon = md.time_scale;
 							mp4->trak_clockcount = md.duration;
 
+							if (mp4->trak_clockdemon == 0 || mp4->trak_clockcount == 0)
+							{
+								CloseSource((size_t)mp4);
+								mp4 = NULL;
+								break;
+							}
+
 							if (mp4->videolength == 0.0) // Get the video length from the first track
 							{
 								mp4->videolength = (float)((double)mp4->trak_clockcount / (double)mp4->trak_clockdemon);
@@ -349,7 +356,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							{
 								len += fread(&readnum, 1, 4, mp4->mediafp);
 								readnum = BYTESWAP32(readnum);
-								if (readnum <= ((qtsize - 8 - len) / 12))
+								if (readnum <= (qtsize / 12))
 								{
 									uint32_t segment_duration; //integer that specifies the duration of this edit segment in units of the movie’s time scale.
 									uint32_t segment_mediaTime; //integer containing the starting time within the media of this edit segment(in media timescale units).If this field is set to –1, it is an empty edit.The last edit in a track should never be an empty edit.Any difference between the movie’s duration and the track’s duration is expressed as an implicit empty edit.
@@ -412,7 +419,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len += fread(&num, 1, 4, mp4->mediafp);
 
 							num = BYTESWAP32(num);
-							if (num <= ((qtsize - 8 - len)/sizeof(SampleToChunk)))
+							if (num <= (qtsize/sizeof(SampleToChunk)))
 							{
 								mp4->metastsc_count = num;
 								if (mp4->metastsc)
@@ -420,7 +427,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 									free(mp4->metastsc);
 									mp4->metastsc = 0;
 								}
-								if (num > 0)
+								if (num > 0 && qtsize > (num * sizeof(SampleToChunk)))
 								{
 									mp4->metastsc = (SampleToChunk *)malloc(num * sizeof(SampleToChunk));
 									if (mp4->metastsc)
@@ -464,16 +471,16 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 							num = BYTESWAP32(num);
 							// if equalsamplesize != 0, it is the size of all the samples and the length should be 20 (size,fourcc,flags,samplesize,samplecount)
-							if ((num <= ((qtsize - 8 - len)/sizeof(uint32_t))) || (equalsamplesize != 0 && qtsize == 20))
+							if ((num <= (qtsize/sizeof(uint32_t))) || (equalsamplesize != 0 && qtsize == 20))
 							{
-								mp4->metasize_count = num;
 								if (mp4->metasizes)
 								{
 									free(mp4->metasizes);
 									mp4->metasizes = 0;
 								}
-								if(num > 0)
+								if(num > 0 && qtsize > (num * 4))
 								{
+									mp4->metasize_count = num;
 									mp4->metasizes = (uint32_t *)malloc(num * 4);
 									if (mp4->metasizes)
 									{
@@ -520,7 +527,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len = fread(&skip, 1, 4, mp4->mediafp);
 							len += fread(&num, 1, 4, mp4->mediafp);
 							num = BYTESWAP32(num);
-							if (num <= ((qtsize - 8 - len)/sizeof(uint32_t)))
+							if (num <= (qtsize/sizeof(uint32_t)))
 							{
 								mp4->metastco_count = num;
 
@@ -531,7 +538,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 										free(mp4->metaoffsets);
 										mp4->metaoffsets = 0;
 									}
-									if(num > 0)
+									if(num > 0 && qtsize > (num * 4))
 									{
 										mp4->metaoffsets = (uint64_t *)malloc(num * 8);
 										if (mp4->metaoffsets)
@@ -608,7 +615,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 										free(mp4->metaoffsets);
 										mp4->metaoffsets = 0;
 									}
-									if (num > 0)
+									if (num > 0 && qtsize > (num * 4))
 									{
 										mp4->metaoffsets = (uint64_t *)malloc(num * 8);
 										if (mp4->metaoffsets)
@@ -663,7 +670,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								break;
 							}
 
-							if (num <= ((qtsize - 8 - len)/sizeof(uint64_t)))
+							if (num <= (qtsize/sizeof(uint64_t)))
 							{
 								mp4->metastco_count = num;
 
@@ -674,7 +681,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 										free(mp4->metaoffsets);
 										mp4->metaoffsets = 0;
 									}
-									if (mp4->metasize_count)
+									if (mp4->metasize_count && mp4->metasizes && qtsize > (num*8))
 									{
 										mp4->metaoffsets = (uint64_t *)malloc(mp4->metasize_count * 8);
 										if (mp4->metaoffsets)
@@ -700,14 +707,16 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 												num = 1;
 												while (num < mp4->metasize_count)
 												{
-													if (num != mp4->metastsc[stsc_pos].chunk_num - 1 && 0 == (num - (mp4->metastsc[stsc_pos].chunk_num - 1)) % mp4->metastsc[stsc_pos].samples)
+													if (num != mp4->metastsc[stsc_pos].chunk_num - 1 && mp4->metastsc[stsc_pos].samples && 0 == (num - (mp4->metastsc[stsc_pos].chunk_num - 1)) % mp4->metastsc[stsc_pos].samples)
 													{
 														stco_pos++;
-														fileoffset = metaoffsets64[stco_pos];
+														if(stco_pos < (int)mp4->metastco_count)
+															fileoffset = metaoffsets64[stco_pos];
 													}
 													else
 													{
-														fileoffset += (uint64_t)mp4->metasizes[num - 1];
+														if(num <= mp4->indexcount)
+															fileoffset += (uint64_t)mp4->metasizes[num - 1];
 													}
 
 													mp4->metaoffsets[num] = fileoffset;
@@ -740,15 +749,18 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 										free(mp4->metaoffsets);
 										mp4->metaoffsets = 0;
 									}
-									mp4->metaoffsets = (uint64_t *)malloc(num * 8);
-									if (mp4->metaoffsets)
+									if (qtsize > (num * 8))
 									{
-										len += fread(mp4->metaoffsets, 1, num * 8, mp4->mediafp);
-										do
+										mp4->metaoffsets = (uint64_t*)malloc(num * 8);
+										if (mp4->metaoffsets)
 										{
-											num--;
-											mp4->metaoffsets[num] = BYTESWAP64(mp4->metaoffsets[num]);
-										} while (num > 0);
+											len += fread(mp4->metaoffsets, 1, num * 8, mp4->mediafp);
+											do
+											{
+												num--;
+												mp4->metaoffsets[num] = BYTESWAP64(mp4->metaoffsets[num]);
+											} while (num > 0);
+										}
 									}
 								}
 							}
@@ -769,7 +781,8 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len = fread(&skip, 1, 4, mp4->mediafp);
 							len += fread(&num, 1, 4, mp4->mediafp);
 							num = BYTESWAP32(num);
-							if (num <= ((qtsize - 8 - len) / 8))
+
+							if (num <= (qtsize / 8))
 							{
 								entries = num;
 
@@ -804,12 +817,21 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							len = fread(&skip, 1, 4, mp4->mediafp);
 							len += fread(&num, 1, 4, mp4->mediafp);
 							num = BYTESWAP32(num);
-							if (num <= ((qtsize - 8 - len)/8))
+							if (num <= (qtsize / 8))
 							{
 								entries = num;
 
 								mp4->meta_clockdemon = mp4->trak_clockdemon;
 								mp4->meta_clockcount = mp4->trak_clockcount;
+
+
+								if(mp4->meta_clockdemon == 0) 
+								{
+									//prevent divide by zero
+									CloseSource((size_t)mp4);
+									mp4 = NULL;
+									break;
+								}
 
 								while (entries > 0)
 								{
