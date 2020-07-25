@@ -1,5 +1,15 @@
+# Address-sanitizer library
+ASAN_FLAGS := -lasan
+ifneq ($(OS),Windows_NT)
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Darwin)
+		# macOS requires different a flag
+		ASAN_FLAGS := -fsanitize=address
+	endif
+endif
+
 gpmfdemo : GPMF_demo.o GPMF_parser.o GPMF_mp4reader.o GPMF_print.o
-		gcc -o gpmfdemo GPMF_demo.o GPMF_parser.o GPMF_mp4reader.o GPMF_print.o -lasan
+		gcc -o gpmfdemo GPMF_demo.o GPMF_parser.o GPMF_mp4reader.o GPMF_print.o $(ASAN_FLAGS)
 
 GPMF_demo.o : GPMF_demo.c ../GPMF_parser.h
 		gcc -g -c GPMF_demo.c

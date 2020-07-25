@@ -573,8 +573,8 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | --- | --- | --- | --- | --- |
 | CORI | Camera ORIentation | frame rate | n/a | Quaterions for the camera orientation since capture start |
 | IORI | Image ORIentation | frame rate | n/a | Quaterions for the image orientation relative to the camera body |
-| GRAV | GRAvity Vector | frame rate | n/a | Vector for the direction for gravitiy |
-| DISP | Dispartity track (360 modes) | frame rate | n/a | 1-D depth map for the objects seen by the two lenses |
+| GRAV | GRAvity Vector | frame rate | n/a | Vector for the direction for gravity |
+| DISP | Disparity track (360 modes) | frame rate | n/a | 1-D depth map for the objects seen by the two lenses |
 
 
 ```
