@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.6.2
+ *  @version 1.7.0
  * 
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *	

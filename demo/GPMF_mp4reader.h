@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.7.3
+*  @version 1.8.0
 *
 *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
 *
@@ -102,9 +102,9 @@ typedef struct mp4object
 #define NESTSIZE(x) { int _i = nest; while (_i > 0 && nestsize[_i] > 0) { (nestsize[_i] >= x) ? (nestsize[_i]-=x) : (nestsize[_i]=0); if(nestsize[_i] <= 8) { nestsize[_i]=0; nest--; } _i--; } }
 
 #define VALID_FOURCC(a)	(((((a>>24)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>24)&0xff)>='A'&&((a>>24)&0xff)<='Z') || (((a>>24)&0xff)>='0'&&((a>>24)&0xff)<='9') || (((a>>24)&0xff)==' ') ) && \
-						( (((a>>16)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>16)&0xff)>='A'&&((a>>16)&0xff)<='Z') || (((a>>16)&0xff)>='0'&&((a>>16)&0xff)<='9') || (((a>>16)&0xff)==' ') ) && \
-						( (((a>>8)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>8)&0xff)>='A'&&((a>>8)&0xff)<='Z') || (((a>>8)&0xff)>='0'&&((a>>8)&0xff)<='9') || (((a>>8)&0xff)==' ') ) && \
-						( (((a>>0)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>0)&0xff)>='A'&&((a>>0)&0xff)<='Z') || (((a>>0)&0xff)>='0'&&((a>>0)&0xff)<='9') || (((a>>0)&0xff)==' ') )) 
+						( (((a>>16)&0xff)>='a'&&((a>>16)&0xff)<='z') || (((a>>16)&0xff)>='A'&&((a>>16)&0xff)<='Z') || (((a>>16)&0xff)>='0'&&((a>>16)&0xff)<='9') || (((a>>16)&0xff)==' ') ) && \
+						( (((a>>8)&0xff)>='a'&&((a>>8)&0xff)<='z') || (((a>>8)&0xff)>='A'&&((a>>8)&0xff)<='Z') || (((a>>8)&0xff)>='0'&&((a>>8)&0xff)<='9') || (((a>>8)&0xff)==' ') ) && \
+						( (((a>>0)&0xff)>='a'&&((a>>0)&0xff)<='z') || (((a>>0)&0xff)>='A'&&((a>>0)&0xff)<='Z') || (((a>>0)&0xff)>='0'&&((a>>0)&0xff)<='9') || (((a>>0)&0xff)==' ') )) 
 
 size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t subtype);
 size_t OpenMP4SourceUDTA(char *filename);
