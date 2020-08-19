@@ -1039,10 +1039,13 @@ uint32_t GPMF_SizeOfComplexTYPE(char *type, uint32_t typestringlength)
 
 	for (i = 0; i < len; i++)
 	{
-		uint32_t typesize = GPMF_SizeofType((GPMF_SampleType)typearray[i]);
+		if (typearray[i])
+		{
+			uint32_t typesize = GPMF_SizeofType((GPMF_SampleType)typearray[i]);
 
-		if (typesize < 1) return 0;
-		size += typesize;
+			if (typesize < 1) return 0;
+			size += typesize;
+		}
 	}
 
 	return size;
