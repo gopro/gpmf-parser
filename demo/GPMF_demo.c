@@ -342,14 +342,20 @@ int main(int argc, char* argv[])
 
 								for (j = 0; j < elements; j++)
 								{
-									if (type_samples == 0) //no TYPE structure
+									if (type == GPMF_TYPE_STRING_ASCII)
+									{
+										printf("%c", rawdata[pos]);
+										pos++;
+										ptr++;
+									}
+									else if (type_samples == 0) //no TYPE structure
 										printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
 									else if (complextype[j] != 'F')
 									{
 										printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
 										pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
 									}
-									else if (type_samples && complextype[j] == 'F')
+									else if (type_samples && complextype[j] == GPMF_TYPE_FOURCC)
 									{
 										ptr++;
 										printf("%c%c%c%c, ", rawdata[pos], rawdata[pos + 1], rawdata[pos + 2], rawdata[pos + 3]);
