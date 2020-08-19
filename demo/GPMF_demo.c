@@ -279,6 +279,7 @@ int main(int argc, char* argv[])
 
 						char* rawdata = (char*)GPMF_RawData(ms);
 						uint32_t key = GPMF_Key(ms);
+						GPMF_SampleType type = GPMF_Type(ms);
 						uint32_t samples = GPMF_Repeat(ms);
 						uint32_t elements = GPMF_ElementsInStruct(ms);
 						uint32_t buffersize = samples * elements * sizeof(double);
