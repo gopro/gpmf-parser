@@ -1877,7 +1877,7 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 
 						last += delta * cb[currWord].bytes_stored;
 
-						if (channels * (pos + zeros + 1) * sizeoftype >= localbuf_size) 
+						if (channels * (pos + zeros) * sizeoftype > localbuf_size) 
 							return GPMF_ERROR_MEMORY;
 
 						switch ((int)sizeoftype * signed_type)
@@ -1911,7 +1911,7 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 					{
 						int zeros = (int)(uncompressed_size/(channels*sizeoftype) - pos);
 
-						if (channels * (pos + zeros + 1) * sizeoftype >= localbuf_size)
+						if (channels * (pos + zeros) * sizeoftype > localbuf_size)
 							return GPMF_ERROR_MEMORY;
 
 						switch ((int)sizeoftype*signed_type)
@@ -1959,7 +1959,7 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 							}
 						}
 
-						if((channels * (pos + 1) * sizeoftype) >= localbuf_size)
+						if((channels * pos * sizeoftype) >= localbuf_size)
 							return GPMF_ERROR_MEMORY;
 						
 						switch ((int)sizeoftype*signed_type)
