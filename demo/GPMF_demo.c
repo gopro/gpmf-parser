@@ -4,7 +4,7 @@
  *
  *  @version 2.0.0
  *
- *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
+ *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *
  *  Licensed under either:
  *  - Apache License, Version 2.0, http://www.apache.org/licenses/LICENSE-2.0
@@ -277,6 +277,7 @@ int main(int argc, char* argv[])
 							if (GPMF_OK != ret) break;
 						}
 
+						char* rawdata = (char*)GPMF_RawData(ms);
 						uint32_t key = GPMF_Key(ms);
 						uint32_t samples = GPMF_Repeat(ms);
 						uint32_t elements = GPMF_ElementsInStruct(ms);
@@ -288,6 +289,9 @@ int main(int argc, char* argv[])
 #define MAX_UNITLEN	8
 						char units[MAX_UNITS][MAX_UNITLEN] = { "" };
 						uint32_t unit_samples = 1;
+
+						char complextype[MAX_UNITS] = { "" };
+						uint32_t type_samples = 1;
 
 						if (tmpbuffer && samples)
 						{
@@ -311,15 +315,48 @@ int main(int argc, char* argv[])
 								}
 							}
 
+							//Search for TYPE if Complex
+							GPMF_CopyState(ms, &find_stream);
+							type_samples = 0;
+							if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
+							{
+								char* data = (char*)GPMF_RawData(&find_stream);
+								uint32_t ssize = GPMF_StructSize(&find_stream);
+								if (ssize > MAX_UNITLEN - 1) ssize = MAX_UNITLEN - 1;
+								type_samples = GPMF_Repeat(&find_stream);
+
+								for (i = 0; i < type_samples && i < MAX_UNITS; i++)
+								{
+									complextype[i] = data[i];
+								}
+							}
+
 							//GPMF_FormattedData(ms, tmpbuffer, buffersize, 0, samples); // Output data in LittleEnd, but no scale
 							GPMF_ScaledData(ms, tmpbuffer, buffersize, 0, samples, GPMF_TYPE_DOUBLE);  //Output scaled data as floats
 
 							ptr = tmpbuffer;
+							int pos = 0;
 							for (i = 0; i < samples; i++)
 							{
 								printf("  %c%c%c%c ", PRINTF_4CC(key));
+
 								for (j = 0; j < elements; j++)
-									printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
+								{
+									if (type_samples == 0) //no TYPE structure
+										printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
+									else if (complextype[j] != 'F')
+									{
+										printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
+										pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
+									}
+
+									else if (type_samples && complextype[j] == 'F')
+									{
+										printf("%c%c%c%c, ", rawdata[pos], rawdata[pos + 1], rawdata[pos + 2], rawdata[pos + 3]);
+										pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
+									}
+								}
+
 
 								printf("\n");
 							}

@@ -2,7 +2,7 @@
  *
  *  @brief Demo to output GPMF for debugging
  *
- *  @version 1.0.2
+ *  @version 1.1.0
  *
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
