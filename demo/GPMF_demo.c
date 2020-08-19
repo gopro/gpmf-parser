@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 						//if SHUT contains TMSP (timestamps) very more  precision sync with video data can be achieved
 						if (GPMF_OK == GPMF_FindPrev(&find, GPMF_KEY_TIME_STAMP, GPMF_CURRENT_LEVEL))
 						{
-							double rate = GetGPMFSampleRate(mp4, STR2FOURCC("SHUT"), GPMF_SAMPLE_RATE_PRECISE, &start, &end);// GPMF_SAMPLE_RATE_FAST);
+							/*double rate = */GetGPMFSampleRate(mp4, STR2FOURCC("SHUT"), GPMF_SAMPLE_RATE_PRECISE, &start, &end);// GPMF_SAMPLE_RATE_FAST);
 							start_offset = start - payload_in;
 						}
 					}
