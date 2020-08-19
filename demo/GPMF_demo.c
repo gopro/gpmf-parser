@@ -349,9 +349,9 @@ int main(int argc, char* argv[])
 										printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
 										pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
 									}
-
 									else if (type_samples && complextype[j] == 'F')
 									{
+										ptr++;
 										printf("%c%c%c%c, ", rawdata[pos], rawdata[pos + 1], rawdata[pos + 2], rawdata[pos + 3]);
 										pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
 									}
