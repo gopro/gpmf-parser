@@ -54,7 +54,6 @@ void printHelp(char* name)
 	printf("       -h - this help\n");
 	printf("       \n");
 	printf("       ver 2.0\n");
-	return -1;
 }
 
 int main(int argc, char *argv[])
