@@ -279,13 +279,14 @@ int main(int argc, char* argv[])
 
 						char* rawdata = (char*)GPMF_RawData(ms);
 						uint32_t key = GPMF_Key(ms);
+						GPMF_SampleType type = GPMF_Type(ms);
 						uint32_t samples = GPMF_Repeat(ms);
 						uint32_t elements = GPMF_ElementsInStruct(ms);
 						uint32_t buffersize = samples * elements * sizeof(double);
 						GPMF_stream find_stream;
 						double* ptr, * tmpbuffer = (double*)malloc(buffersize);
 
-#define MAX_UNITS	16
+#define MAX_UNITS	64
 #define MAX_UNITLEN	8
 						char units[MAX_UNITS][MAX_UNITLEN] = { "" };
 						uint32_t unit_samples = 1;
@@ -342,14 +343,20 @@ int main(int argc, char* argv[])
 
 								for (j = 0; j < elements; j++)
 								{
-									if (type_samples == 0) //no TYPE structure
+									if (type == GPMF_TYPE_STRING_ASCII)
+									{
+										printf("%c", rawdata[pos]);
+										pos++;
+										ptr++;
+									}
+									else if (type_samples == 0) //no TYPE structure
 										printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
 									else if (complextype[j] != 'F')
 									{
 										printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
 										pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
 									}
-									else if (type_samples && complextype[j] == 'F')
+									else if (type_samples && complextype[j] == GPMF_TYPE_FOURCC)
 									{
 										ptr++;
 										printf("%c%c%c%c, ", rawdata[pos], rawdata[pos + 1], rawdata[pos + 2], rawdata[pos + 3]);
