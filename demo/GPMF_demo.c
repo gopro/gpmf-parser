@@ -285,7 +285,7 @@ int main(int argc, char* argv[])
 						GPMF_stream find_stream;
 						double* ptr, * tmpbuffer = (double*)malloc(buffersize);
 
-#define MAX_UNITS	16
+#define MAX_UNITS	64
 #define MAX_UNITLEN	8
 						char units[MAX_UNITS][MAX_UNITLEN] = { "" };
 						uint32_t unit_samples = 1;
