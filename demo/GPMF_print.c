@@ -31,11 +31,12 @@
 
 
 #define VERBOSE_OUTPUT		0
+#define VERBOSE_LIMIT		6
 
 #if VERBOSE_OUTPUT
 #define LIMITOUTPUT		arraysize = structsize;
 #else
-#define LIMITOUTPUT		if (arraysize > 1 && repeat > 3) repeat = 3, dots = 1; else if (repeat > 6) repeat = 6, dots = 1;
+#define LIMITOUTPUT		if (arraysize > 1 && arraysize*repeat > VERBOSE_LIMIT) repeat = (VERBOSE_LIMIT/arraysize)+1, dots = 1; else if (repeat > VERBOSE_LIMIT) repeat = VERBOSE_LIMIT, dots = 1;
 #endif
 
 void printfData(uint32_t type, uint32_t structsize, uint32_t repeat, void *data)
@@ -441,31 +442,24 @@ void PrintGPMF(GPMF_stream *ms)
 
 						if (GPMF_OK == GPMF_ExpandComplexTYPE(srctype, typelen, typearray, &elements))
 						{
+							int dots = 0;
+							uint32_t arraysize = elements;
+
+							LIMITOUTPUT;
+
 							uint32_t j;
-#if !VERBOSE_OUTPUT
-							if (repeat > 3) repeat = 3;
-#endif
 							for (j = 0; j < repeat; j++)
 							{
-								if (repeat > 1) {
-									DBG_MSG("\n  "); 
-
-									indent = level;
-									while (indent > 0 && indent < 10)
-									{
-										DBG_MSG("  ");
-										indent--;
-									}
-								}
 								for (i = 0; i < elements; i++)
 								{
 									int elementsize = (int)GPMF_SizeofType((GPMF_SampleType)typearray[i]);
 									printfData(typearray[i], elementsize, 1, bdata);
 									bdata += elementsize;
 								}
+								if (j < repeat-1) DBG_MSG(" ");
 
 							}
-							if (repeat > 1)
+							if (dots)
 								DBG_MSG("...");
 						}
 					}

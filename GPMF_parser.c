@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.5.0
+ *  @version 1.5.1
  * 
  *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
  *	
@@ -824,6 +824,7 @@ uint32_t GPMF_SizeOfComplexTYPE(char *type, uint32_t typestringlength)
 	char *typearray = type;
 	uint32_t size = 0, expand = 0;
 	uint32_t i, len = typestringlength;
+	if (strlen(type) > len)
 
 
 	for (i = 0; i < len; i++)
@@ -847,10 +848,13 @@ uint32_t GPMF_SizeOfComplexTYPE(char *type, uint32_t typestringlength)
 
 	for (i = 0; i < len; i++)
 	{
-		uint32_t typesize = GPMF_SizeofType((GPMF_SampleType)typearray[i]);
+		if (typearray[i])
+		{
+			uint32_t typesize = GPMF_SizeofType((GPMF_SampleType)typearray[i]);
 
-		if (typesize < 1) return 0;
-		size += typesize;
+			if (typesize < 1) return 0;
+			size += typesize;
+		}
 	}
 
 	return size;
