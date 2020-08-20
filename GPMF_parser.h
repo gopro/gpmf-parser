@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library include
  * 
- *  @version 1.6.1
+ *  @version 2.0.0
  * 
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *
@@ -116,6 +116,7 @@ GPMF_ERR GPMF_AllocCodebook(size_t *cbhandle);
 GPMF_ERR GPMF_FreeCodebook(size_t cbhandle);
 GPMF_ERR GPMF_DecompressedSize(GPMF_stream *gs, uint32_t *neededsize);
 GPMF_ERR GPMF_Decompress(GPMF_stream *gs, uint32_t *localbuf, uint32_t localbuf_size);
+GPMF_ERR GPMF_Free(GPMF_stream* gs); 
 
 
 #ifdef __cplusplus
