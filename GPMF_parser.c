@@ -1448,7 +1448,7 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 
 					if (remaining_sample_size < sample_size * read_samples)
 					{
-						return GPMF_ERROR_MEMORY; 
+						ret = GPMF_ERROR_MEMORY;
 						goto cleanup;
 					}
 				}
