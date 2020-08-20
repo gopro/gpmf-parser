@@ -333,39 +333,41 @@ int main(int argc, char* argv[])
 							}
 
 							//GPMF_FormattedData(ms, tmpbuffer, buffersize, 0, samples); // Output data in LittleEnd, but no scale
-							GPMF_ScaledData(ms, tmpbuffer, buffersize, 0, samples, GPMF_TYPE_DOUBLE);  //Output scaled data as floats
-
-							ptr = tmpbuffer;
-							int pos = 0;
-							for (i = 0; i < samples; i++)
+							if (GPMF_OK == GPMF_ScaledData(ms, tmpbuffer, buffersize, 0, samples, GPMF_TYPE_DOUBLE))//Output scaled data as floats
 							{
-								printf("  %c%c%c%c ", PRINTF_4CC(key));
 
-								for (j = 0; j < elements; j++)
+								ptr = tmpbuffer;
+								int pos = 0;
+								for (i = 0; i < samples; i++)
 								{
-									if (type == GPMF_TYPE_STRING_ASCII)
+									printf("  %c%c%c%c ", PRINTF_4CC(key));
+
+									for (j = 0; j < elements; j++)
 									{
-										printf("%c", rawdata[pos]);
-										pos++;
-										ptr++;
+										if (type == GPMF_TYPE_STRING_ASCII)
+										{
+											printf("%c", rawdata[pos]);
+											pos++;
+											ptr++;
+										}
+										else if (type_samples == 0) //no TYPE structure
+											printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
+										else if (complextype[j] != 'F')
+										{
+											printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
+											pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
+										}
+										else if (type_samples && complextype[j] == GPMF_TYPE_FOURCC)
+										{
+											ptr++;
+											printf("%c%c%c%c, ", rawdata[pos], rawdata[pos + 1], rawdata[pos + 2], rawdata[pos + 3]);
+											pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
+										}
 									}
-									else if (type_samples == 0) //no TYPE structure
-										printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
-									else if (complextype[j] != 'F')
-									{
-										printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
-										pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
-									}
-									else if (type_samples && complextype[j] == GPMF_TYPE_FOURCC)
-									{
-										ptr++;
-										printf("%c%c%c%c, ", rawdata[pos], rawdata[pos + 1], rawdata[pos + 2], rawdata[pos + 3]);
-										pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
-									}
+
+
+									printf("\n");
 								}
-
-
-								printf("\n");
 							}
 							free(tmpbuffer);
 						}
