@@ -177,7 +177,6 @@ int main(int argc, char* argv[])
 				}
 			}
 
-
 			if (show_payload_index)
 			{
 				if (show_all_payloads || index == 0)
@@ -366,6 +365,8 @@ int main(int argc, char* argv[])
 					GPMF_ResetState(ms);
 				}
 			}
+
+			GPMF_Free(ms);
 		}
 
 		if (show_computed_samplerates)
@@ -385,6 +386,7 @@ int main(int argc, char* argv[])
 		}
 
 	cleanup:
+		if (ms) GPMF_Free(ms);
 		if (payload) FreePayload(payload); payload = NULL;
 		CloseSource(mp4);
 	}

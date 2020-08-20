@@ -2,9 +2,9 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 1.5.1
+ *  @version 2.0.0
  * 
- *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
+ *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *	
  *  Licensed under either:
  *  - Apache License, Version 2.0, http://www.apache.org/licenses/LICENSE-2.0  
@@ -58,7 +58,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 	if (ms)
 	{
 		uint32_t currpos = ms->pos;
-		int32_t nestsize = (int32_t)ms->nest_size[ms->nest_level];
+		uint32_t nestsize = ms->nest_size[ms->nest_level];
 		if (nestsize == 0 && ms->nest_level == 0)
 			nestsize = ms->buffer_size_longs;
 		
@@ -75,17 +75,23 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 			if (GPMF_VALID_FOURCC(key))
 			{
 				uint32_t type_size_repeat = ms->buffer[ms->pos + 1];
-				int32_t size = GPMF_DATA_SIZE(type_size_repeat) >> 2;
+				uint32_t size = GPMF_DATA_SIZE(type_size_repeat) >> 2;
 				uint8_t type = GPMF_SAMPLE_TYPE(type_size_repeat);
-				if (size + 2 > nestsize)
+				if(type != GPMF_TYPE_NEST && type != GPMF_TYPE_COMPLEX && type != GPMF_TYPE_COMPRESSED && GPMF_SizeofType(type) == 0)
 				{
-					DBG_MSG("ERROR: nest size too small within %c%c%c%c-- GPMF_ERROR_BAD_STRUCTURE\n", PRINTF_4CC(key));
+					DBG_MSG("ERROR: unknown datatype-- GPMF_ERROR_BAD_STRUCTURE\n");
 					return GPMF_ERROR_BAD_STRUCTURE;
 				}
 
-				if (!GPMF_VALID_FOURCC(key))
+				if (GPMF_SAMPLE_SIZE(type_size_repeat) == 0)
 				{
-					DBG_MSG("ERROR: invalid 4CC -- GPMF_ERROR_BAD_STRUCTURE\n");
+					DBG_MSG("ERROR: zero for datatype size-- GPMF_ERROR_BAD_STRUCTURE\n");
+					return GPMF_ERROR_BAD_STRUCTURE;
+				}
+
+				if (size + 2 > nestsize)
+				{
+					DBG_MSG("ERROR: nest size too small within %c%c%c%c-- GPMF_ERROR_BAD_STRUCTURE\n", PRINTF_4CC(key));
 					return GPMF_ERROR_BAD_STRUCTURE;
 				}
 
@@ -188,16 +194,20 @@ GPMF_ERR GPMF_ResetState(GPMF_stream *ms)
 }
 
 
-GPMF_ERR GPMF_Init(GPMF_stream *ms, uint32_t *buffer, int datasize)
+GPMF_ERR GPMF_Init(GPMF_stream *ms, uint32_t *buffer, uint32_t datasize)
 {
 	if(ms && buffer && datasize > 0)
 	{
-		int pos = 0;
+		uint32_t pos = 0;
 		//Validate DEVC GPMF
 		while((pos+1) * 4 < datasize && buffer[pos] == GPMF_KEY_DEVICE)
 		{
 			uint32_t size = GPMF_DATA_SIZE(buffer[pos+1]);
 			pos += 2 + (size >> 2);
+		}
+		if ((pos*4) < datasize && buffer[pos] == GPMF_KEY_END) // NULL terminated GPMF
+		{
+			datasize = pos * 4;
 		}
 		if (pos * 4 == datasize)
 		{
@@ -313,19 +323,41 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 					ms->nest_size[ms->nest_level]--;
 				}
 
-				key = ms->buffer[ms->pos];
-				if (!GPMF_VALID_FOURCC(key))
-					return GPMF_ERROR_BAD_STRUCTURE;
-
-				if (key == GPMF_KEY_DEVICE_ID)
-					ms->device_id = BYTESWAP32(ms->buffer[ms->pos + 2]);
-				if (key == GPMF_KEY_DEVICE_NAME)
+				if (ms->pos + 1 < ms->buffer_size_longs)
 				{
-					size = GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]); // in bytes
-					if (size > sizeof(ms->device_name) - 1)
-						size = sizeof(ms->device_name) - 1;
-					memcpy(ms->device_name, &ms->buffer[ms->pos + 2], size);
-					ms->device_name[size] = 0;
+					key = ms->buffer[ms->pos];
+					if (!GPMF_VALID_FOURCC(key))
+						return GPMF_ERROR_BAD_STRUCTURE;
+
+					if (GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 1]) == 0)
+						return GPMF_ERROR_BAD_STRUCTURE;
+
+					type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos+1]);
+					if (type != GPMF_TYPE_NEST && type != GPMF_TYPE_COMPLEX && type != GPMF_TYPE_COMPRESSED && GPMF_SizeofType(type) == 0)
+						return GPMF_ERROR_BAD_STRUCTURE;
+
+					if (key == GPMF_KEY_DEVICE_ID)
+						ms->device_id = BYTESWAP32(ms->buffer[ms->pos + 2]);
+					if (key == GPMF_KEY_DEVICE_NAME)
+					{
+						if (ms->pos + 1 >= ms->buffer_size_longs)
+							return GPMF_ERROR_BAD_STRUCTURE;
+
+						size = GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]); // in bytes
+						if (size > sizeof(ms->device_name) - 1)
+							size = sizeof(ms->device_name) - 1;
+
+						if ((ms->pos + 1 + ((size + 3) >> 2)) >= ms->buffer_size_longs)
+							return GPMF_ERROR_BAD_STRUCTURE;
+
+						memcpy(ms->device_name, &ms->buffer[ms->pos + 2], size);
+						ms->device_name[size] = 0;
+					}
+				}
+				else
+				{
+					// end of buffer
+					return GPMF_ERROR_BUFFER_END;
 				}
 			}
 			else
@@ -458,7 +490,7 @@ GPMF_ERR GPMF_SeekToSamples(GPMF_stream *ms)
 
 		if (ms->pos+1 < ms->buffer_size_longs)
 		{
-			uint32_t type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
+			uint32_t size, type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
 
 			memcpy(&prevstate, ms, sizeof(GPMF_stream));
 
@@ -467,7 +499,10 @@ GPMF_ERR GPMF_SeekToSamples(GPMF_stream *ms)
 
 			while (0 == GPMF_Next(ms, GPMF_CURRENT_LEVEL))
 			{
-				uint32_t size = (GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]) >> 2);
+				if(ms->pos + 1 >= ms->buffer_size_longs)
+					return GPMF_ERROR_BAD_STRUCTURE;
+
+				size = (GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]) >> 2);
 				if (GPMF_OK != IsValidSize(ms, size))
 				{
 					memcpy(ms, &prevstate, sizeof(GPMF_stream));
@@ -491,6 +526,9 @@ GPMF_ERR GPMF_SeekToSamples(GPMF_stream *ms)
 					
 					return GPMF_OK; //found match
 				}
+
+				if (ms->pos + size + 2 >= ms->buffer_size_longs)
+					return GPMF_ERROR_BAD_STRUCTURE;
 
 				if (ms->buffer[ms->pos] == ms->buffer[ms->pos + size + 2]) // Matching tags
 				{
@@ -598,11 +636,11 @@ uint32_t GPMF_ElementsInStruct(GPMF_stream *ms)
 	if (ms && ms->pos+1 < ms->buffer_size_longs)
 	{
 		uint32_t ssize = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 1]);
-		GPMF_SampleType type = (GPMF_SampleType) GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
+		uint32_t type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
 
 		if (type != GPMF_TYPE_NEST && type != GPMF_TYPE_COMPLEX && type != GPMF_TYPE_COMPRESSED)
 		{
-			int32_t tsize = GPMF_SizeofType(type);
+			uint32_t tsize = GPMF_SizeofType(type);
 			if (tsize > 0)
 				return ssize / tsize;
 			else
@@ -618,7 +656,7 @@ uint32_t GPMF_ElementsInStruct(GPMF_stream *ms)
 				char tmp[64] = "";
 				uint32_t tmpsize = sizeof(tmp);
 				char *data = (char *)GPMF_RawData(&find_stream);
-				int size = GPMF_RawDataSize(&find_stream);
+				uint32_t size = GPMF_RawDataSize(&find_stream);
 				
 				if (GPMF_OK == GPMF_ExpandComplexTYPE(data, size, tmp, &tmpsize))
 					return tmpsize;
@@ -628,7 +666,7 @@ uint32_t GPMF_ElementsInStruct(GPMF_stream *ms)
 		{
 			type = (GPMF_SampleType)GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 2]);
 			ssize = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 2]);
-			int32_t tsize = GPMF_SizeofType(type);
+			uint32_t tsize = GPMF_SizeofType(type);
 			if (tsize > 0)
 				return ssize / tsize;
 			else
@@ -739,6 +777,158 @@ void *GPMF_RawData(GPMF_stream *ms)
 
 
 
+int32_t GPMFTypeEndianSize(int type)
+{
+	int32_t ssize = -1;
+
+	switch ((int)type)
+	{
+	case GPMF_TYPE_STRING_ASCII:		ssize = 1; break;
+	case GPMF_TYPE_SIGNED_BYTE:			ssize = 1; break;
+	case GPMF_TYPE_UNSIGNED_BYTE:		ssize = 1; break;
+	case GPMF_TYPE_STRING_UTF8:			ssize = 1; break;
+
+		// These datatype can always be stored in Big-Endian
+	case GPMF_TYPE_SIGNED_SHORT:		ssize = 2; break;
+	case GPMF_TYPE_UNSIGNED_SHORT:		ssize = 2; break;
+	case GPMF_TYPE_FLOAT:				ssize = 4; break;
+	case GPMF_TYPE_FOURCC:				ssize = 1; break;
+	case GPMF_TYPE_SIGNED_LONG:			ssize = 4; break;
+	case GPMF_TYPE_UNSIGNED_LONG:		ssize = 4; break;
+	case GPMF_TYPE_Q15_16_FIXED_POINT:  ssize = 4; break;
+	case GPMF_TYPE_Q31_32_FIXED_POINT:  ssize = 8; break;
+	case GPMF_TYPE_DOUBLE:				ssize = 8; break;
+	case GPMF_TYPE_SIGNED_64BIT_INT:	ssize = 8; break;
+	case GPMF_TYPE_UNSIGNED_64BIT_INT:  ssize = 8; break;
+
+	case GPMF_TYPE_GUID:				ssize = 1; break; // Do not byte swap
+	case GPMF_TYPE_UTC_DATE_TIME:		ssize = 1; break; // Do not byte swap
+
+	//All unknown,complex or larger than 8-bytes store as is:
+	default:							ssize = -1;  // unsupported for structsize type
+	}
+
+	return ssize;
+}
+
+
+void ByteSwap2Buffer(uint32_t* input, uint32_t* output, GPMF_SampleType data_type, uint32_t structSize, uint32_t repeat)
+{
+	int32_t i, len = 0, endianSize = GPMFTypeEndianSize(data_type);
+	if (endianSize == 8) // 64-bit swap required
+	{
+		for (i = 0; i < (int32_t)((repeat * structSize + 3) / sizeof(int32_t)); i += 2)
+		{
+			output[len++] = BYTESWAP32(input[i + 1]); 
+			output[len++] = BYTESWAP32(input[i]);
+		}
+	}
+	else if (endianSize >= 1)
+	{
+		for (i = 0; i < (int32_t)((repeat * structSize + 3) / sizeof(int32_t)); i++)
+		{
+			switch (endianSize)
+			{
+			case 2:		output[len++] = BYTESWAP2x16(input[i]); break;
+			case 4:		output[len++] = BYTESWAP32(input[i]); break;
+			default:	output[len++] = input[i]; break;
+			}
+		}
+	}
+}
+
+
+
+//find and inplace overwrite a GPMF KLV with new KLV, if the lengths match.
+GPMF_ERR GPMF_Modify(GPMF_stream* ms, uint32_t origfourCC, uint32_t newfourCC, 
+	GPMF_SampleType newType, uint32_t newStructSize, uint32_t newRepeat, void* newData)
+{
+	uint32_t dataSizeLongs = (newStructSize * newRepeat + 3) >> 2;
+
+	if (ms && ms->pos + 1 + dataSizeLongs < ms->buffer_size_longs)
+	{
+		GPMF_stream fs;
+		GPMF_CopyState(ms, &fs);
+
+		uint32_t key = fs.buffer[fs.pos];
+		uint32_t tsr = fs.buffer[fs.pos + 1];
+		uint32_t ssize = GPMF_SAMPLE_SIZE(tsr);
+		uint32_t repeat = GPMF_SAMPLES(tsr);
+
+		if (key == origfourCC && (((ssize * repeat + 3) >> 2) == ((newStructSize * newRepeat + 3) >> 2)))  // no find required and data will fit
+		{
+			fs.buffer[fs.pos] = newfourCC;
+			fs.buffer[fs.pos + 1] = GPMF_MAKE_TYPE_SIZE_COUNT(newType, newStructSize, newRepeat);
+
+			ByteSwap2Buffer((uint32_t*)newData, (uint32_t*)&fs.buffer[fs.pos + 2], newType, newStructSize, newRepeat);
+			return GPMF_OK;
+		}
+		else
+		{
+			// search forward from the current position at this level
+			if (GPMF_OK == GPMF_FindNext(&fs, origfourCC, GPMF_CURRENT_LEVEL))
+			{
+				tsr = fs.buffer[fs.pos + 1];
+				ssize = GPMF_SAMPLE_SIZE(tsr);
+				repeat = GPMF_SAMPLES(tsr);
+
+				if (((ssize * repeat + 3) >> 2) == ((newStructSize * newRepeat + 3) >> 2))  //will the new data fit
+				{
+					fs.buffer[fs.pos] = newfourCC;
+					fs.buffer[fs.pos + 1] = GPMF_MAKE_TYPE_SIZE_COUNT(newType, newStructSize, newRepeat);
+
+					ByteSwap2Buffer((uint32_t*)newData, (uint32_t*)&fs.buffer[fs.pos + 2], newType, newStructSize, newRepeat);
+					return GPMF_OK;
+				}
+				return GPMF_ERROR_BAD_STRUCTURE;  // sizes don't match
+			}
+			// search backward from the current position at this level
+			else if (GPMF_OK == GPMF_FindPrev(&fs, origfourCC, GPMF_CURRENT_LEVEL))
+			{
+				tsr = fs.buffer[fs.pos + 1];
+				ssize = GPMF_SAMPLE_SIZE(tsr);
+				repeat = GPMF_SAMPLES(tsr);
+
+				if (((ssize * repeat + 3) >> 2) == ((newStructSize * newRepeat + 3) >> 2))  //will the new data fit
+				{
+					fs.buffer[fs.pos] = newfourCC;
+					fs.buffer[fs.pos + 1] = GPMF_MAKE_TYPE_SIZE_COUNT(newType, newStructSize, newRepeat);
+
+					ByteSwap2Buffer((uint32_t*)newData, (uint32_t*)&fs.buffer[fs.pos + 2], newType, newStructSize, newRepeat);
+					return GPMF_OK;
+				}
+				return GPMF_ERROR_BAD_STRUCTURE;  // sizes don't match
+			}
+			else 
+			{
+				// search from the beginning through all levels
+				GPMF_ResetState(&fs);
+				if (GPMF_OK == GPMF_FindNext(&fs, origfourCC, GPMF_RECURSE_LEVELS))
+				{ 
+					tsr = fs.buffer[fs.pos + 1];
+					ssize = GPMF_SAMPLE_SIZE(tsr);
+					repeat = GPMF_SAMPLES(tsr);
+
+					if (((ssize * repeat + 3) >> 2) == ((newStructSize * newRepeat + 3) >> 2))  //will the new data fit
+					{
+						fs.buffer[fs.pos] = newfourCC;
+						fs.buffer[fs.pos + 1] = GPMF_MAKE_TYPE_SIZE_COUNT(newType, newStructSize, newRepeat);
+
+						ByteSwap2Buffer((uint32_t*)newData, (uint32_t*)&fs.buffer[fs.pos + 2], newType, newStructSize, newRepeat);
+						return GPMF_OK;
+					}
+					return GPMF_ERROR_BAD_STRUCTURE;  // sizes don't match
+				}
+				else
+					return GPMF_ERROR_FIND; // if can't find the data to replace.
+			}
+		}
+	}
+	return GPMF_ERROR_BAD_STRUCTURE;  // sizes don't match
+}
+
+
+
 uint32_t GPMF_SizeofType(GPMF_SampleType type)
 {
 	uint32_t ssize = 0;
@@ -779,23 +969,25 @@ uint32_t GPMF_ExpandComplexTYPE(char *src, uint32_t srcsize, char *dst, uint32_t
 	{
 		if (src[i] == '[' && i>0)
 		{
-			int j = 1;
+			uint32_t j = 1;
 			count = 0;
 			while (src[i + j] >= '0' && src[i + j] <= '9')
 			{
 				count *= 10;
-				count += src[i + j] - '0';
+				count += (uint32_t) (src[i + j] - '0');
 				j++;
 			}
 
 			if (count > 1)
 			{
 				uint32_t l;
-				for (l = 1; l<count; l++)
+				for (l = 1; l<count && k < *dstsize; l++)
 				{
 					dst[k] = src[i - 1];
 					k++;
 				}
+				if (k >= *dstsize)
+					return GPMF_ERROR_MEMORY; // bad structure formed
 			}
 			i += j;
 			if (src[i] == ']') i++;
@@ -804,7 +996,8 @@ uint32_t GPMF_ExpandComplexTYPE(char *src, uint32_t srcsize, char *dst, uint32_t
 		{
 			dst[k] = src[i];
 			if (dst[k] == 0) break;
-			i++, k++;
+            i++;
+            k++;
 		}
 	}
 
@@ -824,8 +1017,7 @@ uint32_t GPMF_SizeOfComplexTYPE(char *type, uint32_t typestringlength)
 	char *typearray = type;
 	uint32_t size = 0, expand = 0;
 	uint32_t i, len = typestringlength;
-	if (strlen(type) > len)
-
+	char exptypearray[64];
 
 	for (i = 0; i < len; i++)
 		if (typearray[i] == '[')
@@ -833,7 +1025,6 @@ uint32_t GPMF_SizeOfComplexTYPE(char *type, uint32_t typestringlength)
 			
 	if (expand)
 	{
-		char exptypearray[64];
 		uint32_t dstsize = sizeof(exptypearray);
 
 		if (GPMF_OK == GPMF_ExpandComplexTYPE(typearray, len, exptypearray, &dstsize))
@@ -912,7 +1103,7 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_RECURSE_LEVELS))
 			{
 				char *data1 = (char *)GPMF_RawData(&find_stream);
-				int size = GPMF_RawDataSize(&find_stream);
+				uint32_t size = GPMF_RawDataSize(&find_stream);
 
 				typestringlength = sizeof(complextype);
 				if (GPMF_OK == GPMF_ExpandComplexTYPE(data1, size, complextype, &typestringlength))
@@ -1060,7 +1251,20 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 		case GPMF_TYPE_UNSIGNED_LONG:	MACRO_CAST_SCALE_UNSIGNED_TYPE(uint32_t)	break;	\
 		case GPMF_TYPE_DOUBLE:			MACRO_CAST_SCALE_SIGNED_TYPE(double)	break;		\
 		default: break;																		\
-		}																									
+		}		
+
+#define MACRO_CAST_UNSIGNED_SCALE															\
+		switch (outputType)	{																\
+		case GPMF_TYPE_SIGNED_BYTE: 	MACRO_CAST_SCALE_SIGNED_TYPE(int8_t)	break;		\
+		case GPMF_TYPE_UNSIGNED_BYTE:	MACRO_CAST_SCALE_SIGNED_TYPE(uint8_t)	break;		\
+		case GPMF_TYPE_SIGNED_SHORT: 	MACRO_CAST_SCALE_SIGNED_TYPE(int16_t)	break;		\
+		case GPMF_TYPE_UNSIGNED_SHORT:	MACRO_CAST_SCALE_SIGNED_TYPE(uint16_t)	break;		\
+		case GPMF_TYPE_FLOAT:			MACRO_CAST_SCALE_SIGNED_TYPE(float)		break;		\
+		case GPMF_TYPE_SIGNED_LONG:		MACRO_CAST_SCALE_SIGNED_TYPE(int32_t)	break;		\
+		case GPMF_TYPE_UNSIGNED_LONG:	MACRO_CAST_SCALE_SIGNED_TYPE(uint32_t)	break;		\
+		case GPMF_TYPE_DOUBLE:			MACRO_CAST_SCALE_SIGNED_TYPE(double)	break;		\
+		default: break;																		\
+		}						
 
 #define MACRO_BSWAP_CAST_SCALE(swap, inputcast, tempcast)	\
 {														\
@@ -1073,6 +1277,18 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 	data = (uint8_t *)datatemp;							\
 }
 
+
+#define MACRO_BSWAP_CAST_UNSIGNED_SCALE(swap, inputcast, tempcast)	\
+{														\
+	inputcast *val;										\
+	tempcast temp,  *datatemp = (tempcast *)data;		\
+	temp = swap(*datatemp);								\
+	val = (inputcast *)&temp;							\
+	MACRO_CAST_UNSIGNED_SCALE							\
+	datatemp++;											\
+	data = (uint8_t *)datatemp;							\
+}
+
 #define MACRO_NOSWAP_CAST_SCALE(inputcast)	\
 {														\
 	inputcast *val;										\
@@ -1080,6 +1296,18 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 	temp = *(inputcast *)data;							\
 	val = (inputcast *)&temp;							\
 	MACRO_CAST_SCALE									\
+	datatemp++;											\
+	data = (uint8_t *)datatemp;							\
+}
+
+
+#define MACRO_NOSWAP_CAST_UNSIGNED_SCALE(inputcast)	\
+{														\
+	inputcast *val;										\
+	inputcast temp,  *datatemp = (inputcast *)data;		\
+	temp = *(inputcast *)data;							\
+	val = (inputcast *)&temp;							\
+	MACRO_CAST_UNSIGNED_SCALE							\
 	datatemp++;											\
 	data = (uint8_t *)datatemp;							\
 }
@@ -1190,8 +1418,8 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 
 		if (type == GPMF_TYPE_COMPRESSED)
 		{
-			int neededunc = GPMF_FormattedDataSize(ms);
-			int samples = GPMF_Repeat(ms);
+			uint32_t neededunc = GPMF_FormattedDataSize(ms);
+			uint32_t samples = GPMF_Repeat(ms);
 
 			remaining_sample_size = GPMF_DATA_PACKEDSIZE(ms->buffer[ms->pos + 2]);
 
@@ -1219,8 +1447,10 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 					data += sample_offset * sample_size;
 
 					if (remaining_sample_size < sample_size * read_samples)
-						return GPMF_ERROR_MEMORY;
-
+					{
+						ret = GPMF_ERROR_MEMORY;
+						goto cleanup;
+					}
 				}
 			}
 		}
@@ -1239,7 +1469,7 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 			if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_RECURSE_LEVELS))
 			{
 				char *data1 = (char *)GPMF_RawData(&find_stream);
-				int size = GPMF_RawDataSize(&find_stream);
+				uint32_t size = GPMF_RawDataSize(&find_stream);
 				uint32_t typestringlength = sizeof(complextype);
 				if (GPMF_OK == GPMF_ExpandComplexTYPE(data1, size, complextype, &typestringlength))
 				{
@@ -1432,26 +1662,42 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 			}
 		}
 
+
+		size_t bufferlimt = (size_t)buffer;
+		bufferlimt += buffersize;
+
 		while (read_samples--)
 		{
 			uint32_t i;
 			uint8_t *scal_data8 = (uint8_t *)scal_data;
 
+			if((size_t)output > bufferlimt - output_sample_size*elements)
+			{
+				ret = GPMF_ERROR_MEMORY;
+				goto cleanup;
+			}
+
 			for (i = 0; i < elements; i++)
 			{
+				if (inputtypeelements == 0)
+				{
+					ret = GPMF_ERROR_MEMORY;
+					goto cleanup;
+				}
+
 				if (noswap)
 				{
 					switch (complextype[i % inputtypeelements])
 					{
 					case GPMF_TYPE_FLOAT:  MACRO_NOSWAP_CAST_SCALE(float) break;
 					case GPMF_TYPE_SIGNED_BYTE:  MACRO_NOSWAP_CAST_SCALE(int8_t) break;
-					case GPMF_TYPE_UNSIGNED_BYTE:  MACRO_NOSWAP_CAST_SCALE(uint8_t) break;
+					case GPMF_TYPE_UNSIGNED_BYTE:  MACRO_NOSWAP_CAST_UNSIGNED_SCALE(uint8_t) break;
 					case GPMF_TYPE_SIGNED_SHORT:  MACRO_NOSWAP_CAST_SCALE(int16_t) break;
-					case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_NOSWAP_CAST_SCALE(uint16_t) break;
+					case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_NOSWAP_CAST_UNSIGNED_SCALE(uint16_t) break;
 					case GPMF_TYPE_SIGNED_LONG:  MACRO_NOSWAP_CAST_SCALE(int32_t) break;
-					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_NOSWAP_CAST_SCALE(uint32_t) break;
+					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_NOSWAP_CAST_UNSIGNED_SCALE(uint32_t) break;
 					case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_NOSWAP_CAST_SCALE(int64_t) break;
-					case GPMF_TYPE_UNSIGNED_64BIT_INT:  MACRO_NOSWAP_CAST_SCALE(uint64_t) break;
+					case GPMF_TYPE_UNSIGNED_64BIT_INT:  MACRO_NOSWAP_CAST_UNSIGNED_SCALE(uint64_t) break;
 					default:
 						ret = GPMF_ERROR_TYPE_NOT_SUPPORTED;
 						goto cleanup;
@@ -1464,13 +1710,13 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 					{
 					case GPMF_TYPE_FLOAT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, float, uint32_t) break;
 					case GPMF_TYPE_SIGNED_BYTE:  MACRO_BSWAP_CAST_SCALE(NOSWAP8, int8_t, uint8_t) break;
-					case GPMF_TYPE_UNSIGNED_BYTE:  MACRO_BSWAP_CAST_SCALE(NOSWAP8, uint8_t, uint8_t) break;
+					case GPMF_TYPE_UNSIGNED_BYTE:  MACRO_BSWAP_CAST_UNSIGNED_SCALE(NOSWAP8, uint8_t, uint8_t) break;
 					case GPMF_TYPE_SIGNED_SHORT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, int16_t, uint16_t) break;
-					case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP16, uint16_t, uint16_t) break;
+					case GPMF_TYPE_UNSIGNED_SHORT:  MACRO_BSWAP_CAST_UNSIGNED_SCALE(BYTESWAP16, uint16_t, uint16_t) break;
 					case GPMF_TYPE_SIGNED_LONG:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, int32_t, uint32_t) break;
-					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_BSWAP_CAST_SCALE(BYTESWAP32, uint32_t, uint32_t) break;
+					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_BSWAP_CAST_UNSIGNED_SCALE(BYTESWAP32, uint32_t, uint32_t) break;
 					case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP64, int64_t, uint64_t) break;
-					case GPMF_TYPE_UNSIGNED_64BIT_INT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP64, uint64_t, uint64_t) break;
+					case GPMF_TYPE_UNSIGNED_64BIT_INT:  MACRO_BSWAP_CAST_UNSIGNED_SCALE(BYTESWAP64, uint64_t, uint64_t) break;
 					default:
 						ret = GPMF_ERROR_TYPE_NOT_SUPPORTED;
 						goto cleanup;
@@ -1551,13 +1797,13 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 		uint16_t *compressed_data;
 		uint32_t sample_size = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 2]);
 		uint32_t sizeoftype = GPMF_SizeofType(type);
+		if (sizeoftype == 0)
+			return GPMF_ERROR_MEMORY;
+
 		uint32_t chn = 0, channels = sample_size / sizeoftype;
 		//uint32_t compressed_size = GPMF_DATA_PACKEDSIZE(ms->buffer[ms->pos + 1]);
 		uint32_t uncompressed_size = GPMF_DATA_PACKEDSIZE(ms->buffer[ms->pos + 2]);
-		uint32_t maxsamples = uncompressed_size / sample_size;
 		int signed_type = 1;
-
-		memset(localbuf, 0, localbuf_size);
 
 		GPMF_codebook *cb = (GPMF_codebook *)ms->cbhandle;
 
@@ -1581,9 +1827,12 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 		int16_t *buf_s16 = (int16_t *)localbuf;
 		uint8_t *buf_u8 = (uint8_t *)localbuf;
 		int8_t *buf_s8 = (int8_t *)localbuf;
-		int last;
-		int pos, end = 0;
+		int32_t last;
+		uint32_t pos, end = 0;
 
+		if(sample_size > localbuf_size)
+			return GPMF_ERROR_MEMORY;
+			
 		memcpy(&buf_u8[0], start, sample_size);
 
 		sOffset += sample_size;
@@ -1592,16 +1841,23 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 		{
 			pos = 1;
 
-			switch (sizeoftype*signed_type)
+			if (sOffset >= localbuf_size)
+				return GPMF_ERROR_MEMORY;
+
+			switch ((int)sizeoftype * signed_type)
 			{
 			default:
 			case -2: last = BYTESWAP16(buf_s16[chn]); quant = *((uint16_t *)&start[sOffset]); quant = BYTESWAP16(quant); sOffset += 2; break;
-			case -1: last = buf_s8[chn]; quant = *((uint8_t *)&start[sOffset]); sOffset++; break;
+			case -1: last = (int8_t)buf_s8[chn]; quant = *((uint8_t *)&start[sOffset]); sOffset++; break;
 			case 1: last = buf_u8[chn]; quant = *((uint8_t *)&start[sOffset]); sOffset++; break;
 			case 2: last = BYTESWAP16(buf_u16[chn]); quant = *((uint16_t *)&start[sOffset]); quant = BYTESWAP16(quant); sOffset += 2;  break;
 			}
 						
-			sOffset = ((sOffset + 1) & ~1); //16-bit aligned compressed data
+			sOffset = ((sOffset + 1) & (uint32_t)~1); //16-bit aligned compressed data
+
+			if (sOffset >= localbuf_size)
+				return GPMF_ERROR_MEMORY;
+
 			compressed_data = (uint16_t *)&start[sOffset];
 
 			uint16_t currWord = BYTESWAP16(*compressed_data); compressed_data++;
@@ -1616,22 +1872,20 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 				case 0:  // store zeros and/or a value
 					{
 						int usedbits = cb[currWord].bits_used;
-						int zeros = cb[currWord].offset;
+						uint32_t zeros = cb[currWord].offset;
 						int delta = (int)cb[currWord].value * quant;
 
 						last += delta * cb[currWord].bytes_stored;
 
-						if (pos + zeros >= (int)maxsamples)
-						{
-							end = 1;
+						if (channels * (pos + zeros) * sizeoftype > localbuf_size) 
 							return GPMF_ERROR_MEMORY;
-						}
-						switch (sizeoftype*signed_type)
+
+						switch ((int)sizeoftype * signed_type)
 						{
 						default:
 						case -2:
-							while (zeros) { buf_s16[channels*pos++ + chn] = BYTESWAP16(last); zeros--; }
-							buf_s16[channels*pos + chn] = BYTESWAP16(last);
+							while (zeros) { buf_s16[channels*pos++ + chn] = (int16_t) BYTESWAP16(last); zeros--; }
+							buf_s16[channels*pos + chn] = (int16_t) BYTESWAP16(last);
 							break;
 						case -1:
 							while (zeros) { buf_s8[channels*pos++ + chn] = (int8_t)last; zeros--; }
@@ -1647,7 +1901,7 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 							break;
 						}
 										
-						pos += cb[currWord].bytes_stored;
+						pos += (uint32_t) cb[currWord].bytes_stored;
 						currWord <<= usedbits;
 						currBits -= usedbits;
 					}
@@ -1655,12 +1909,16 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 
 				case 1: //channel END code detected, store the remaining zero deltas
 					{
-						int zeros = ((int)uncompressed_size/(channels*sizeoftype) - pos);
-						switch (sizeoftype*signed_type)
+						int zeros = (int)(uncompressed_size/(channels*sizeoftype) - pos);
+
+						if (channels * (pos + zeros) * sizeoftype > localbuf_size)
+							return GPMF_ERROR_MEMORY;
+
+						switch ((int)sizeoftype*signed_type)
 						{
 						default:
 						case -2:
-							while (zeros) { buf_s16[channels*pos++ + chn] = BYTESWAP16(last); zeros--; }
+							while (zeros) { buf_s16[channels*pos++ + chn] = (int16_t) BYTESWAP16(last); zeros--; }
 							break;
 						case -1:
 							while (zeros) { buf_s8[channels*pos++ + chn] = (int8_t)last; zeros--; }
@@ -1669,7 +1927,7 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 							while (zeros) { buf_u8[channels*pos++ + chn] = (uint8_t)last; zeros--; }
 							break;
 						case 2:
-							while (zeros) { buf_u16[channels*pos++ + chn] = BYTESWAP16(last); zeros--; }
+							while (zeros) { buf_u16[channels*pos++ + chn] = (uint16_t) BYTESWAP16(last); zeros--; }
 							break;
 						}
 					}
@@ -1693,20 +1951,25 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 							nextBits -= needed;
 							if (nextBits <= 0)
 							{
+								if(((size_t)compressed_data - (size_t)start) >= localbuf_size) 
+									return GPMF_ERROR_MEMORY;
 								nextWord = BYTESWAP16(*compressed_data);
 								compressed_data++;
 								nextBits = 16;
 							}
 						}
+
+						if((channels * pos * sizeoftype) >= localbuf_size)
+							return GPMF_ERROR_MEMORY;
 						
-						switch (sizeoftype*signed_type)
+						switch ((int)sizeoftype*signed_type)
 						{
 						default:
 						case -2:
 							delta = (int16_t)(currWord);
 							delta *= quant;
 							last += delta;
-							buf_s16[channels*pos++ + chn] = BYTESWAP16(last);
+							buf_s16[channels*pos++ + chn] = (int16_t) BYTESWAP16(last);
 							break;
 						case -1:
 							delta = (int8_t)(currWord >> 8);
@@ -1748,6 +2011,8 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 					nextBits -= needed;
 					if (nextBits <= 0)
 					{
+						if (((size_t)compressed_data - (size_t)start) >= localbuf_size)
+							return GPMF_ERROR_MEMORY;
 						nextWord = BYTESWAP16(*compressed_data);
 						compressed_data++;
 						nextBits = 16;
@@ -1874,3 +2139,16 @@ GPMF_ERR GPMF_FreeCodebook(size_t cbhandle)
 	return GPMF_ERROR_MEMORY;
 }
 
+GPMF_ERR GPMF_Free(GPMF_stream* ms)
+{
+	if (ms)
+	{
+		if (ms->cbhandle != 0)
+		{
+			GPMF_FreeCodebook(ms->cbhandle);
+			ms->cbhandle = 0;
+		}
+		return GPMF_OK;
+	}
+	return GPMF_ERROR_MEMORY;
+}

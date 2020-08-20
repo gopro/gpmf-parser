@@ -2,9 +2,9 @@
  * 
  *  @brief GPMF Parser library include
  * 
- *  @version 1.5.0
+ *  @version 2.0.0
  * 
- *  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
+ *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *
  *  Licensed under either:
  *  - Apache License, Version 2.0, http://www.apache.org/licenses/LICENSE-2.0  
@@ -58,7 +58,7 @@ typedef enum GPMF_LEVELS
  
 
 // Prepare GPMF data 
-GPMF_ERR GPMF_Init(GPMF_stream *gs, uint32_t *buffer, int datasize);							//Initialize a GPMF_stream for parsing a particular buffer.
+GPMF_ERR GPMF_Init(GPMF_stream *gs, uint32_t *buffer, uint32_t datasize);							//Initialize a GPMF_stream for parsing a particular buffer.
 GPMF_ERR GPMF_ResetState(GPMF_stream *gs);														//Read from beginning of the buffer again
 GPMF_ERR GPMF_CopyState(GPMF_stream *src, GPMF_stream *dst);									//Copy state, 
 GPMF_ERR GPMF_Validate(GPMF_stream *gs, GPMF_LEVELS recurse);									//Is the nest structure valid GPMF? 
@@ -78,6 +78,10 @@ uint32_t GPMF_PayloadSampleCount(GPMF_stream *gs);														//return the cur
 uint32_t GPMF_ElementsInStruct(GPMF_stream *gs);												//return the current number elements within the structure (e.g. 3-axis gyro)
 uint32_t GPMF_RawDataSize(GPMF_stream *gs);														//return the data size for the current GPMF KLV 
 void *   GPMF_RawData(GPMF_stream *gs);															//return a pointer the KLV data (which is Bigendian if the type is known.)
+
+
+GPMF_ERR GPMF_Modify(GPMF_stream* gs,                                                           //find and inplace overwrite a GPMF KLV with new KLV, if the lengths match.
+    uint32_t origfourCC, uint32_t newfourCC, GPMF_SampleType newType, uint32_t newStructSize, uint32_t newRepeat, void* newData);
 
 // Get information about where the GPMF KLV is nested
 uint32_t GPMF_NestLevel(GPMF_stream *gs);														//return the current nest level
@@ -112,6 +116,7 @@ GPMF_ERR GPMF_AllocCodebook(size_t *cbhandle);
 GPMF_ERR GPMF_FreeCodebook(size_t cbhandle);
 GPMF_ERR GPMF_DecompressedSize(GPMF_stream *gs, uint32_t *neededsize);
 GPMF_ERR GPMF_Decompress(GPMF_stream *gs, uint32_t *localbuf, uint32_t localbuf_size);
+GPMF_ERR GPMF_Free(GPMF_stream* gs); 
 
 
 #ifdef __cplusplus

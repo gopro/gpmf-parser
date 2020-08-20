@@ -2,9 +2,9 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.7.0
+*  @version 1.8.0
 *
-*  (C) Copyright 2017 GoPro Inc (http://gopro.com/).
+*  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
 *
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
@@ -73,6 +73,8 @@ typedef struct mp4object
 	FILE *mediafp;
 	uint64_t filesize;
 	uint64_t filepos;
+
+	uint32_t timeBaseFourCC;
 } mp4object;
 
 #define MAKEID(a,b,c,d)			(((d&0xff)<<24)|((c&0xff)<<16)|((b&0xff)<<8)|(a&0xff))
@@ -97,12 +99,12 @@ typedef struct mp4object
 #define AVI_VIDS_TRAK_TYPE		MAKEID('v', 'i', 'd', 's')		// track is the type for video
 #define AVI_CFHD_SUBTYPE		MAKEID('c', 'f', 'h', 'd')		// subtype is CineForm HD
 
-#define NESTSIZE(x) { int i = nest; while (i > 0 && nestsize[i] > 0) { nestsize[i] -= x; if(nestsize[i]>=0 && nestsize[i] <= 8) { nestsize[i]=0; nest--; } i--; } }
+#define NESTSIZE(x) { int _i = nest; while (_i > 0 && nestsize[_i] > 0) { (nestsize[_i] >= x) ? (nestsize[_i]-=x) : (nestsize[_i]=0); if(nestsize[_i] <= 8) { nestsize[_i]=0; nest--; } _i--; } }
 
 #define VALID_FOURCC(a)	(((((a>>24)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>24)&0xff)>='A'&&((a>>24)&0xff)<='Z') || (((a>>24)&0xff)>='0'&&((a>>24)&0xff)<='9') || (((a>>24)&0xff)==' ') ) && \
-						( (((a>>16)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>16)&0xff)>='A'&&((a>>16)&0xff)<='Z') || (((a>>16)&0xff)>='0'&&((a>>16)&0xff)<='9') || (((a>>16)&0xff)==' ') ) && \
-						( (((a>>8)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>8)&0xff)>='A'&&((a>>8)&0xff)<='Z') || (((a>>8)&0xff)>='0'&&((a>>8)&0xff)<='9') || (((a>>8)&0xff)==' ') ) && \
-						( (((a>>0)&0xff)>='a'&&((a>>24)&0xff)<='z') || (((a>>0)&0xff)>='A'&&((a>>0)&0xff)<='Z') || (((a>>0)&0xff)>='0'&&((a>>0)&0xff)<='9') || (((a>>0)&0xff)==' ') )) 
+						( (((a>>16)&0xff)>='a'&&((a>>16)&0xff)<='z') || (((a>>16)&0xff)>='A'&&((a>>16)&0xff)<='Z') || (((a>>16)&0xff)>='0'&&((a>>16)&0xff)<='9') || (((a>>16)&0xff)==' ') ) && \
+						( (((a>>8)&0xff)>='a'&&((a>>8)&0xff)<='z') || (((a>>8)&0xff)>='A'&&((a>>8)&0xff)<='Z') || (((a>>8)&0xff)>='0'&&((a>>8)&0xff)<='9') || (((a>>8)&0xff)==' ') ) && \
+						( (((a>>0)&0xff)>='a'&&((a>>0)&0xff)<='z') || (((a>>0)&0xff)>='A'&&((a>>0)&0xff)<='Z') || (((a>>0)&0xff)>='0'&&((a>>0)&0xff)<='9') || (((a>>0)&0xff)==' ') )) 
 
 size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t subtype);
 size_t OpenMP4SourceUDTA(char *filename);
@@ -111,6 +113,7 @@ float GetDuration(size_t handle);
 uint32_t GetVideoFrameRateAndCount(size_t handle, uint32_t *numer, uint32_t *demon);
 uint32_t GetNumberPayloads(size_t handle);
 uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index);
+uint32_t WritePayload(size_t handle, uint32_t* payload, uint32_t payloadsize, uint32_t index);
 void FreePayload(uint32_t *lastpayload);
 uint32_t GetPayloadSize(size_t handle, uint32_t index);
 uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out); //MP4 timestamps for the payload
@@ -121,6 +124,7 @@ uint32_t GetEditListOffsetRationalTime(size_t handle, int32_t *offset_numerator,
 #define GPMF_SAMPLE_RATE_FAST		0
 #define GPMF_SAMPLE_RATE_PRECISE	1
 
+void SetTimeBaseStream(size_t handle, uint32_t fourcc); // Called before GetGPMFSampleRate if you what the returned in/out times to be relative to a particular stream (like GPS5 or SHUT etc.), rather than the earliest time
 double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double *in, double *out);
 
 #ifdef __cplusplus
