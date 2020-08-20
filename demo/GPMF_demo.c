@@ -159,15 +159,6 @@ int main(int argc, char* argv[])
 				if (show_all_payloads || index == 0)
 				{
 					printf("GPMF STRUCTURE:\n");
-					payloadsize = GetPayloadSize(mp4, 0);
-					payload = GetPayload(mp4, payload, 0);
-					if (payload == NULL)
-						goto cleanup;
-
-					ret = GPMF_Init(ms, payload, payloadsize);
-					if (ret != GPMF_OK)
-						goto cleanup;
-
 					// Output (printf) all the contained GPMF data within this payload
 					ret = GPMF_Validate(ms, GPMF_RECURSE_LEVELS); // optional
 					if (GPMF_OK != ret)
