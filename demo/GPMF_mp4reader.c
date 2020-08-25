@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.8.0
+*  @version 1.8.1
 *
 *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
 *
@@ -230,14 +230,15 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 				if (qtsize < 8) break;
 				if (nest >= MAX_NEST_LEVEL) break;
+				if (nest > 1 && qtsize > nestsize[nest - 1]) break;
 
 				nestsize[nest] = qtsize;
 				lastsize = qtsize;
 
 #if PRINT_MP4_STRUCTURE	
 
-				for (int i = 1; i < nest; i++) printf("    ");
-				printf("%c%c%c%c (%lld)\n", (qttag & 0xff), ((qttag >> 8) & 0xff), ((qttag >> 16) & 0xff), ((qttag >> 24) & 0xff), qtsize);
+				for (int i = 1; i < nest; i++) printf("%5d ", nestsize[i]); //printf("    ");
+				printf(" %c%c%c%c (%lld)\n", (qttag & 0xff), ((qttag >> 8) & 0xff), ((qttag >> 16) & 0xff), ((qttag >> 24) & 0xff), qtsize);
 
 				if (qttag == MAKEID('m', 'd', 'a', 't') ||
 					qttag == MAKEID('f', 't', 'y', 'p') ||
@@ -275,6 +276,8 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					NESTSIZE(qtsize);
 				}
 				else
+				{
+					
 					if (qttag == MAKEID('m', 'v', 'h', 'd')) //mvhd  movie header
 					{
 						len = fread(&skip, 1, 4, mp4->mediafp);
@@ -294,7 +297,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 						if (mp4->trak_num+1 < MAX_TRACKS)
 							mp4->trak_num++;
 
-						NESTSIZE(qtsize);
+						NESTSIZE(8);
 					}
 					else if (qttag == MAKEID('m', 'd', 'h', 'd')) //mdhd  media header
 					{
@@ -571,7 +574,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 														}
 														else
 														{
-															fileoffset += (uint64_t)mp4->metasizes[num - 1];
+															if(mp4->metasizes && mp4->metasize_count >= num) fileoffset += (uint64_t)mp4->metasizes[num - 1];
 														}
 														if ((uint32_t)stsc_pos + 1 < mp4->metastsc_count)
 															if (mp4->metastsc[stsc_pos + 1].chunk_num == (uint32_t)stco_pos + 1)
@@ -581,7 +584,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 													}
 													else
 													{
-														fileoffset += (uint64_t)mp4->metasizes[num - 1];
+														if(mp4->metasizes && mp4->metasize_count >= num) fileoffset += (uint64_t)mp4->metasizes[num - 1];
 														repeat++;
 													}
 
@@ -863,6 +866,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					{
 						NESTSIZE(8);
 					}
+				}
 			}
 			else
 			{

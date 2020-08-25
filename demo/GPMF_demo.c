@@ -2,7 +2,7 @@
  *
  *  @brief Demo to extract GPMF from an MP4
  *
- *  @version 2.0.0
+ *  @version 2.0.1
  *
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *
