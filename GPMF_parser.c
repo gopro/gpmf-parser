@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 2.0.1
+ *  @version 2.0.2
  * 
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *	
@@ -1638,6 +1638,8 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 				if (orio_len == orin_len && orin_len > 1 && orio_len == elements)
 				{
 					uint32_t x, y, pos = 0;
+
+					mtrx_data = (uint32_t*)mtrx_buffer;
 					mtrx_type = outputType;
 
 					for (y = 0; y < elements; y++)
@@ -1797,6 +1799,8 @@ GPMF_ERR GPMF_Decompress(GPMF_stream *ms, uint32_t *localbuf, uint32_t localbuf_
 		uint16_t *compressed_data;
 		uint32_t sample_size = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 2]);
 		uint32_t sizeoftype = GPMF_SizeofType(type);
+		if(sizeoftype == 0) 
+			return GPMF_ERROR_MEMORY;
 		uint32_t chn = 0, channels = sample_size / sizeoftype;
 		uint32_t compressed_size = GPMF_DATA_PACKEDSIZE(ms->buffer[ms->pos + 1]);
 		uint32_t uncompressed_size = GPMF_DATA_PACKEDSIZE(ms->buffer[ms->pos + 2]);
