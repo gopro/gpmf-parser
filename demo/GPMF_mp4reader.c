@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.8.1
+*  @version 1.8.2
 *
 *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
 *
@@ -1070,7 +1070,7 @@ size_t OpenMP4SourceUDTA(char *filename)
 			len += fread(&qttag, 1, 4, mp4->mediafp);
 			if (len == 8)
 			{
-				if (!GPMF_VALID_FOURCC(qttag))
+				if (!GPMF_VALID_FOURCC(qttag) && qttag != 0x7a7978a9)
 				{
 					mp4->filepos += len;
 					LongSeek(mp4, lastsize - 8 - len);
@@ -1094,6 +1094,7 @@ size_t OpenMP4SourceUDTA(char *filename)
 
 				if (qtsize < 8) break;
 				if (nest >= MAX_NEST_LEVEL) break;
+				if (nest > 1 && qtsize > nestsize[nest - 1]) break;
 
 				nestsize[nest] = qtsize;
 				lastsize = qtsize;
@@ -1115,6 +1116,9 @@ size_t OpenMP4SourceUDTA(char *filename)
 
 					mp4->metasizes = (uint32_t *)malloc(mp4->indexcount * 4 + 4);  memset(mp4->metasizes, 0, mp4->indexcount * 4 + 4);
 					mp4->metaoffsets = (uint64_t *)malloc(mp4->indexcount * 8 + 8);  memset(mp4->metaoffsets, 0, mp4->indexcount * 8 + 8);
+
+					mp4->basemetadataduration = 1.0;
+					mp4->meta_clockdemon = 1;
 
 					mp4->metasizes[0] = (uint32_t)qtsize - 8;
 					mp4->metaoffsets[0] = (uint64_t) LONGTELL(mp4->mediafp);
