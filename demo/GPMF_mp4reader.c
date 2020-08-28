@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.8.2
+*  @version 1.8.3
 *
 *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
 *
@@ -359,7 +359,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 							{
 								len += fread(&readnum, 1, 4, mp4->mediafp);
 								readnum = BYTESWAP32(readnum);
-								if (readnum <= (qtsize / 12))
+								if (readnum <= (qtsize / 12) && mp4->trak_clockdemon)
 								{
 									uint32_t segment_duration; //integer that specifies the duration of this edit segment in units of the movie’s time scale.
 									uint32_t segment_mediaTime; //integer containing the starting time within the media of this edit segment(in media timescale units).If this field is set to –1, it is an empty edit.The last edit in a track should never be an empty edit.Any difference between the movie’s duration and the track’s duration is expressed as an implicit empty edit.
