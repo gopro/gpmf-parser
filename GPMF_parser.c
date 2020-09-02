@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 2.0.2
+ *  @version 2.0.3
  * 
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *	
@@ -205,14 +205,11 @@ GPMF_ERR GPMF_Init(GPMF_stream *ms, uint32_t *buffer, uint32_t datasize)
 			uint32_t size = GPMF_DATA_SIZE(buffer[pos+1]);
 			pos += 2 + (size >> 2);
 		}
-		if ((pos*4) < datasize && buffer[pos] == GPMF_KEY_END) // NULL terminated GPMF
-		{
-			datasize = pos * 4;
-		}
-		if (pos * 4 == datasize)
+
+		if (pos > 0 && pos * 4 <= datasize)
 		{
 			ms->buffer = buffer;
-			ms->buffer_size_longs = (datasize + 3) >> 2;
+			ms->buffer_size_longs = pos;
 			ms->cbhandle = 0;
 
 			GPMF_ResetState(ms);
