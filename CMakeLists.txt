@@ -14,10 +14,11 @@ add_library(GPMF_PARSER_LIB ${LIB_SOURCES})
 set_target_properties(GPMF_PARSER_LIB PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
 
 set(PC_LINK_FLAGS "-l${PROJECT_NAME}")
-configure_file("${PROJECT_NAME}.pc.in" "${PROJECT_NAME}.pc" @ONLY)
+configure_file("${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.pc.in" "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc" @ONLY)
 
 install(TARGETS GPMF_PARSER_BIN DESTINATION "bin")
 install(TARGETS GPMF_PARSER_LIB DESTINATION "lib")
-install(FILES "${PROJECT_NAME}.pc" DESTINATION "lib/pkgconfig")
+install(FILES "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc" DESTINATION "lib/pkgconfig")
+
 install(FILES "GPMF_parser.h" "GPMF_common.h" DESTINATION "include/gpmf-parser")
 install(FILES "demo/GPMF_mp4reader.h" DESTINATION "include/gpmf-parser/demo")
