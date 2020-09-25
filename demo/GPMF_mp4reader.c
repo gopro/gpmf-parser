@@ -201,7 +201,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					break;
 				}
 
-				if (!GPMF_VALID_FOURCC(qttag))
+				if (!GPMF_VALID_FOURCC(qttag) && qttag != 0x7a7978a9) // ©xyz is allowed
 				{
 					CloseSource((size_t)mp4);
 					mp4 = NULL;
