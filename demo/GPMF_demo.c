@@ -163,8 +163,16 @@ int main(int argc, char* argv[])
 					ret = GPMF_Validate(ms, GPMF_RECURSE_LEVELS); // optional
 					if (GPMF_OK != ret)
 					{
-						printf("Invalid GPMF Structure\n");
-						goto cleanup;
+						if (GPMF_ERROR_UNKNOWN_TYPE == ret)
+						{
+							printf("Unknown GPMF Type within, ignoring\n");
+							ret = GPMF_OK;
+						}
+						else
+							printf("Invalid GPMF Structure\n");
+						//GPMF_ResetState(ms);
+						//ret = GPMF_Validate(ms, GPMF_RECURSE_LEVELS); // optional
+						//goto cleanup;
 					}
 
 					GPMF_ResetState(ms);
@@ -264,7 +272,8 @@ int main(int argc, char* argv[])
 						else
 						{
 							ret = GPMF_SeekToSamples(ms);
-							if (GPMF_OK != ret) break;
+							if (GPMF_OK != ret) 
+								break;
 						}
 
 						char* rawdata = (char*)GPMF_RawData(ms);
@@ -392,7 +401,12 @@ int main(int argc, char* argv[])
 	}
 
 	if (ret != 0)
-		printf("GPMF data has corruption\n");
+	{
+		if (GPMF_ERROR_UNKNOWN_TYPE == ret)
+			printf("Unknown GPMF Type within\n");
+		else
+			printf("GPMF data has corruption\n");
+	}
 
 	return (int)ret;
 }

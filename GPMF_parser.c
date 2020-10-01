@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 2.0.3
+ *  @version 2.0.4
  * 
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *	
@@ -57,6 +57,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 {
 	if (ms)
 	{
+		GPMF_ERROR ret = GPMF_OK;
 		uint32_t currpos = ms->pos;
 		uint32_t nestsize = ms->nest_size[ms->nest_level];
 		if (nestsize == 0 && ms->nest_level == 0)
@@ -79,8 +80,9 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 				uint8_t type = GPMF_SAMPLE_TYPE(type_size_repeat);
 				if(type != GPMF_TYPE_NEST && type != GPMF_TYPE_COMPLEX && type != GPMF_TYPE_COMPRESSED && GPMF_SizeofType(type) == 0)
 				{
-					DBG_MSG("ERROR: unknown datatype-- GPMF_ERROR_BAD_STRUCTURE\n");
-					return GPMF_ERROR_BAD_STRUCTURE;
+					ret = GPMF_ERROR_UNKNOWN_TYPE;
+					DBG_MSG("MINOR ERROR: unknown datatype-- GPMF_ERROR_UNKNOWN_TYPE\n");
+					//continue looking for structural errors
 				}
 
 				if (GPMF_SAMPLE_SIZE(type_size_repeat) == 0)
@@ -108,13 +110,16 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 					ms->nest_size[ms->nest_level] = size;
 					validnest = GPMF_Validate(ms, recurse);
 					ms->nest_level--;
-					if (GPMF_OK != validnest)
+					if (GPMF_ERROR_BAD_STRUCTURE == validnest)
 					{
 						DBG_MSG("ERROR: invalid nest within %c%c%c%c -- GPMF_ERROR_BAD_STRUCTURE\n", PRINTF_4CC(key));
 						return GPMF_ERROR_BAD_STRUCTURE;
 					}
 					else
 					{
+						if (GPMF_ERROR_UNKNOWN_TYPE == validnest)
+							ret = GPMF_ERROR_UNKNOWN_TYPE;
+
 						if (ms->nest_level == 0)
 							ms->device_count++;
 					}
@@ -137,7 +142,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 				if (ms->pos == ms->buffer_size_longs)
 				{
 					ms->pos = currpos;
-					return GPMF_OK;
+					return ret;
 				}
 			}
 			else
@@ -153,7 +158,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 				else if (ms->nest_level == 0 && ms->device_count > 0)
 				{
 					ms->pos = currpos;
-					return GPMF_OK;
+					return ret;
 				}
 				else
 				{
@@ -164,7 +169,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 		}
 
 		ms->pos = currpos;
-		return GPMF_OK;
+		return ret;
 	}
 	else
 	{
@@ -331,7 +336,10 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 
 					type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos+1]);
 					if (type != GPMF_TYPE_NEST && type != GPMF_TYPE_COMPLEX && type != GPMF_TYPE_COMPRESSED && GPMF_SizeofType(type) == 0)
-						return GPMF_ERROR_BAD_STRUCTURE;
+					{
+						//this GMPF Tuple is not of a know type, the ones that follow might be.
+						return GPMF_Next(ms, recurse);
+					}
 
 					if (key == GPMF_KEY_DEVICE_ID && ms->pos + 2 < ms->buffer_size_longs)
 						ms->device_id = BYTESWAP32(ms->buffer[ms->pos + 2]);

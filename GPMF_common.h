@@ -2,9 +2,9 @@
  * 
  *  @brief GPMF Parser library include
  * 
- *  @version 1.3.0
+ *  @version 2.0.0
  * 
- *  (C) Copyright 2017-2019 GoPro Inc (http://gopro.com/).
+ *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *
  *  Licensed under either:
  *  - Apache License, Version 2.0, http://www.apache.org/licenses/LICENSE-2.0  
@@ -37,6 +37,7 @@ typedef enum GPMF_ERROR
 	GPMF_ERROR_TYPE_NOT_SUPPORTED,
 	GPMF_ERROR_SCALE_NOT_SUPPORTED,
 	GPMF_ERROR_SCALE_COUNT,
+	GPMF_ERROR_UNKNOWN_TYPE,
 	GPMF_ERROR_RESERVED
 } GPMF_ERROR;
 
