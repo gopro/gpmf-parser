@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 2.0.4
+ *  @version 2.0.5
  * 
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *	
@@ -78,7 +78,7 @@ GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 				uint32_t type_size_repeat = ms->buffer[ms->pos + 1];
 				uint32_t size = GPMF_DATA_SIZE(type_size_repeat) >> 2;
 				uint8_t type = GPMF_SAMPLE_TYPE(type_size_repeat);
-				if(type != GPMF_TYPE_NEST && type != GPMF_TYPE_COMPLEX && type != GPMF_TYPE_COMPRESSED && GPMF_SizeofType(type) == 0)
+				if(type != GPMF_TYPE_NEST && type != GPMF_TYPE_COMPLEX && type != GPMF_TYPE_COMPRESSED && GPMF_SizeofType((GPMF_SampleType)type) == 0)
 				{
 					ret = GPMF_ERROR_UNKNOWN_TYPE;
 					DBG_MSG("MINOR ERROR: unknown datatype-- GPMF_ERROR_UNKNOWN_TYPE\n");
@@ -335,7 +335,7 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 						return GPMF_ERROR_BAD_STRUCTURE;
 
 					type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos+1]);
-					if (type != GPMF_TYPE_NEST && type != GPMF_TYPE_COMPLEX && type != GPMF_TYPE_COMPRESSED && GPMF_SizeofType(type) == 0)
+					if (type != GPMF_TYPE_NEST && type != GPMF_TYPE_COMPLEX && type != GPMF_TYPE_COMPRESSED && GPMF_SizeofType((GPMF_SampleType)type) == 0)
 					{
 						//this GMPF Tuple is not of a know type, the ones that follow might be.
 						return GPMF_Next(ms, recurse);
@@ -645,7 +645,7 @@ uint32_t GPMF_ElementsInStruct(GPMF_stream *ms)
 
 		if (type != GPMF_TYPE_NEST && type != GPMF_TYPE_COMPLEX && type != GPMF_TYPE_COMPRESSED)
 		{
-			uint32_t tsize = GPMF_SizeofType(type);
+			uint32_t tsize = GPMF_SizeofType((GPMF_SampleType)type);
 			if (tsize > 0)
 				return ssize / tsize;
 			else
@@ -671,7 +671,7 @@ uint32_t GPMF_ElementsInStruct(GPMF_stream *ms)
 		{
 			type = (GPMF_SampleType)GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 2]);
 			ssize = GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 2]);
-			uint32_t tsize = GPMF_SizeofType(type);
+			uint32_t tsize = GPMF_SizeofType((GPMF_SampleType)type);
 			if (tsize > 0)
 				return ssize / tsize;
 			else
@@ -731,7 +731,7 @@ uint32_t GPMF_ScaledDataSize(GPMF_stream *ms, GPMF_SampleType type)
 	{
 		uint32_t elements = GPMF_ElementsInStruct(ms);
 		uint32_t samples = GPMF_Repeat(ms);
-		return GPMF_SizeofType(type) * elements * samples;
+		return GPMF_SizeofType((GPMF_SampleType)type) * elements * samples;
 	}
 	return 0;
 }
@@ -1501,7 +1501,7 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 				return GPMF_ERROR_MEMORY;
 
 			complextype[0] = type;
-			inputtypesize = GPMF_SizeofType((GPMF_SampleType) type);
+			inputtypesize = GPMF_SizeofType((GPMF_SampleType)type);
 			if (inputtypesize == 0)
 				return GPMF_ERROR_MEMORY;
 			inputtypeelements = 1;
