@@ -395,7 +395,7 @@ GPMF_ERR GPMF_FindNext(GPMF_stream *ms, uint32_t fourcc, GPMF_LEVELS recurse)
 
 		if (ms->pos < ms->buffer_size_longs)
 		{
-			GPMF_ERROR ret = GPMF_OK;
+			GPMF_ERR ret = GPMF_OK;
 			do
 			{
 				ret = GPMF_Next(ms, recurse);
@@ -591,7 +591,7 @@ GPMF_ERR GPMF_FindPrev(GPMF_stream *ms, uint32_t fourcc, GPMF_LEVELS recurse)
 
 						return GPMF_OK; //found match
 					}
-				} while (ms->last_seek[curr_level] > ms->pos && 0 == GPMF_Next(ms, GPMF_CURRENT_LEVEL|(recurse&GPMF_TOLERANT)));
+				} while (ms->last_seek[curr_level] > ms->pos && GPMF_OK == GPMF_Next(ms, GPMF_CURRENT_LEVEL|(recurse&GPMF_TOLERANT)));
 
 				curr_level--;
 			} while (recurse & GPMF_RECURSE_LEVELS && curr_level > 0);
