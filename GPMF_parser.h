@@ -51,8 +51,9 @@ typedef struct GPMF_stream
 
 typedef enum GPMF_LEVELS
 {
-	GPMF_CURRENT_LEVEL = 0,
-	GPMF_RECURSE_LEVELS
+	GPMF_CURRENT_LEVEL = 0,  // search or validate within the current GPMF next level
+	GPMF_RECURSE_LEVELS = 1, // search or validate recursing all levels
+	GPMF_TOLERANT = 2		 // Ignore minor errors like unknown datatypes if the structure is otherwise valid. 
 } GPMF_LEVELS;
 
  

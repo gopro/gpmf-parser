@@ -2,7 +2,7 @@
  *
  *  @brief Demo to extract GPMF from an MP4
  *
- *  @version 2.0.1
+ *  @version 2.1.0
  *
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *
@@ -176,11 +176,19 @@ int main(int argc, char* argv[])
 					}
 
 					GPMF_ResetState(ms);
+
+					GPMF_ERR nextret;
 					do
 					{
 						printf("  ");
 						PrintGPMF(ms);  // printf current GPMF KLV
-					} while (GPMF_OK == GPMF_Next(ms, GPMF_RECURSE_LEVELS));
+
+						nextret = GPMF_Next(ms, GPMF_RECURSE_LEVELS);
+
+						while(nextret == GPMF_ERROR_UNKNOWN_TYPE) // or just using GPMF_Next(ms, GPMF_RECURSE_LEVELS|GPMF_TOLERANT) to ignore and skip unknown types
+ 							nextret = GPMF_Next(ms, GPMF_RECURSE_LEVELS);
+
+					} while (GPMF_OK == nextret);
 					GPMF_ResetState(ms);
 				}
 			}
@@ -190,7 +198,7 @@ int main(int argc, char* argv[])
 				if (show_all_payloads || index == 0)
 				{
 					printf("PAYLOAD INDEX:\n");
-					ret = GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS);
+					ret = GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS|GPMF_TOLERANT);
 					while (GPMF_OK == ret)
 					{
 						ret = GPMF_SeekToSamples(ms);
@@ -211,7 +219,7 @@ int main(int argc, char* argv[])
 									GPMF_stream find_stream;
 									GPMF_CopyState(ms, &find_stream);
 
-									if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
+									if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL|GPMF_TOLERANT))
 									{
 										char tmp[64];
 										char* data = (char*)GPMF_RawData(&find_stream);
@@ -239,7 +247,7 @@ int main(int argc, char* argv[])
 								printf("\n");
 							}
 
-							ret = GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS);
+							ret = GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS|GPMF_TOLERANT);
 						}
 						else
 						{
@@ -262,18 +270,18 @@ int main(int argc, char* argv[])
 				if (show_all_payloads || index == 0)
 				{
 					printf("SCALED DATA:\n");
-					while (GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("STRM"), GPMF_RECURSE_LEVELS)) //GoPro Hero5/6/7 Accelerometer)
+					while (GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("STRM"), GPMF_RECURSE_LEVELS|GPMF_TOLERANT)) //GoPro Hero5/6/7 Accelerometer)
 					{
 						if (GPMF_VALID_FOURCC(show_this_four_cc))
 						{
-							if (GPMF_OK != GPMF_FindNext(ms, show_this_four_cc, GPMF_RECURSE_LEVELS))
+							if (GPMF_OK != GPMF_FindNext(ms, show_this_four_cc, GPMF_RECURSE_LEVELS|GPMF_TOLERANT))
 								continue;
 						}
 						else
 						{
 							ret = GPMF_SeekToSamples(ms);
 							if (GPMF_OK != ret) 
-								break;
+								continue;
 						}
 
 						char* rawdata = (char*)GPMF_RawData(ms);
@@ -299,8 +307,8 @@ int main(int argc, char* argv[])
 
 							//Search for any units to display
 							GPMF_CopyState(ms, &find_stream);
-							if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_SI_UNITS, GPMF_CURRENT_LEVEL) ||
-								GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_UNITS, GPMF_CURRENT_LEVEL))
+							if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_SI_UNITS, GPMF_CURRENT_LEVEL|GPMF_TOLERANT) ||
+								GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_UNITS, GPMF_CURRENT_LEVEL|GPMF_TOLERANT))
 							{
 								char* data = (char*)GPMF_RawData(&find_stream);
 								uint32_t ssize = GPMF_StructSize(&find_stream);
@@ -318,7 +326,7 @@ int main(int argc, char* argv[])
 							//Search for TYPE if Complex
 							GPMF_CopyState(ms, &find_stream);
 							type_samples = 0;
-							if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL))
+							if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL|GPMF_TOLERANT))
 							{
 								char* data = (char*)GPMF_RawData(&find_stream);
 								uint32_t ssize = GPMF_StructSize(&find_stream);
@@ -382,7 +390,7 @@ int main(int argc, char* argv[])
 		{
 			printf("COMPUTED SAMPLERATES:\n");
 			// Find all the available Streams and compute they sample rates
-			while (GPMF_OK == GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS))
+			while (GPMF_OK == GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS|GPMF_TOLERANT))
 			{
 				if (GPMF_OK == GPMF_SeekToSamples(ms)) //find the last FOURCC within the stream
 				{
