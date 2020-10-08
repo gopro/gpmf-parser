@@ -52,6 +52,24 @@ GPMF_ERR IsValidSize(GPMF_stream *ms, uint32_t size) // size is in longs not byt
 	return GPMF_ERROR_BAD_STRUCTURE;
 }
 
+GPMF_ERR SkipLevel(GPMF_stream* ms)
+{
+	if (ms)
+	{
+		ms->pos += ms->nest_size[ms->nest_level];
+		ms->nest_size[ms->nest_level] = 0;
+		while (ms->nest_level > 0 && ms->nest_size[ms->nest_level] == 0)
+			ms->nest_level--;
+
+		uint32_t size = (GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]) >> 2);
+		if (GPMF_OK != IsValidSize(ms, size))
+			return GPMF_ERROR_BAD_STRUCTURE;
+		else
+			return GPMF_OK;
+	}
+	return GPMF_ERROR_BAD_STRUCTURE;
+}
+
 
 GPMF_ERR GPMF_Validate(GPMF_stream *ms, GPMF_LEVELS recurse)
 {
@@ -252,7 +270,13 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 			uint32_t key, type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
 			uint32_t size = (GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]) >> 2);
 
-			if (GPMF_OK != IsValidSize(ms, size)) return GPMF_ERROR_BAD_STRUCTURE;
+			if (GPMF_OK != IsValidSize(ms, size))
+			{
+				if (recurse & GPMF_TOLERANT && recurse & GPMF_RECURSE_LEVELS) // Skip this nest level as the sizes within this level are corrupt.
+					return SkipLevel(ms);
+				else
+					return GPMF_ERROR_BAD_STRUCTURE;
+			}
 
 			if (GPMF_TYPE_NEST == type && GPMF_KEY_DEVICE == ms->buffer[ms->pos] && ms->nest_level == 0)
 			{
@@ -329,10 +353,20 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 				{
 					key = ms->buffer[ms->pos];
 					if (!GPMF_VALID_FOURCC(key))
-						return GPMF_ERROR_BAD_STRUCTURE;
+					{
+						if (recurse & GPMF_TOLERANT && recurse & GPMF_RECURSE_LEVELS) // Skip this nest level as the sizes within this level are corrupt.
+							return SkipLevel(ms);
+						else
+							return GPMF_ERROR_BAD_STRUCTURE;
+					}
 
 					if (GPMF_SAMPLE_SIZE(ms->buffer[ms->pos + 1]) == 0)
-						return GPMF_ERROR_BAD_STRUCTURE;
+					{
+						if (recurse & GPMF_TOLERANT && recurse & GPMF_RECURSE_LEVELS) // Skip this nest level as the sizes within this level are corrupt.
+							return SkipLevel(ms);
+						else
+							return GPMF_ERROR_BAD_STRUCTURE;
+					}
 
 					type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos+1]);
 					if (type != GPMF_TYPE_NEST && type != GPMF_TYPE_COMPLEX && type != GPMF_TYPE_COMPRESSED && GPMF_SizeofType((GPMF_SampleType)type) == 0)
@@ -371,7 +405,16 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 				// end of buffer
 				return GPMF_ERROR_BUFFER_END;
 			}
+			
 
+			size = (GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]) >> 2);
+			if (GPMF_OK != IsValidSize(ms, size))
+			{
+				if (recurse & GPMF_TOLERANT && recurse & GPMF_RECURSE_LEVELS) // Skip this nest level as the sizes within this level are corrupt.
+					return SkipLevel(ms);
+				else
+					return GPMF_ERROR_BAD_STRUCTURE;
+			}
 			return GPMF_OK;
 		}
 		else
