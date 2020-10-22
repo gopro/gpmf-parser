@@ -2,7 +2,7 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 1.8.0
+*  @version 2.0.0
 *
 *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
 *
@@ -22,8 +22,6 @@
 
 #ifndef _GPMF_MP4READER_H
 #define _GPMF_MP4READER_H
-
-#include "../GPMF_parser.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,6 +72,9 @@ typedef struct mp4object
 	uint64_t filesize;
 	uint64_t filepos;
 
+	uint32_t *payloadBuffer;
+	uint32_t payloadBufferSize;
+
 	uint32_t timeBaseFourCC;
 } mp4object;
 
@@ -86,6 +87,11 @@ typedef struct mp4object
 #define NOSWAP8(a)				(a)
 
 
+typedef enum MP4READER_ERROR
+{
+	MP4_ERROR_OK = 0,
+	MP4_ERROR_MEMORY
+} MP4READER_ERROR;
 
 
 #define MOV_GPMF_TRAK_TYPE		MAKEID('m', 'e', 't', 'a')		// track is the type for metadata
@@ -112,7 +118,7 @@ void CloseSource(size_t handle);
 float GetDuration(size_t handle);
 uint32_t GetVideoFrameRateAndCount(size_t handle, uint32_t *numer, uint32_t *demon);
 uint32_t GetNumberPayloads(size_t handle);
-uint32_t *GetPayload(size_t handle, uint32_t *lastpayload, uint32_t index);
+uint32_t *GetPayload(size_t handle, uint32_t index);
 uint32_t WritePayload(size_t handle, uint32_t* payload, uint32_t payloadsize, uint32_t index);
 void FreePayload(uint32_t *lastpayload);
 uint32_t GetPayloadSize(size_t handle, uint32_t index);
@@ -120,12 +126,6 @@ uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out);
 uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, int32_t *in_numerator, int32_t *out_numerator, uint32_t *denominator);
 uint32_t GetEditListOffset(size_t handle, double *offset);
 uint32_t GetEditListOffsetRationalTime(size_t handle, int32_t *offset_numerator, uint32_t *denominator);
-
-#define GPMF_SAMPLE_RATE_FAST		0
-#define GPMF_SAMPLE_RATE_PRECISE	1
-
-void SetTimeBaseStream(size_t handle, uint32_t fourcc); // Called before GetGPMFSampleRate if you what the returned in/out times to be relative to a particular stream (like GPS5 or SHUT etc.), rather than the earliest time
-double GetGPMFSampleRate(size_t handle, uint32_t fourcc, uint32_t flags, double *in, double *out);
 
 #ifdef __cplusplus
 }

@@ -26,6 +26,7 @@
 
 #include "../GPMF_parser.h"
 #include "GPMF_mp4reader.h"
+#include "GPMF_utils.h"
 
 #define	SHOW_VIDEO_FRAMERATE		1
 #define	SHOW_PAYLOAD_TIME			1
@@ -115,9 +116,6 @@ int main(int argc, char* argv[])
 
 	metadatalength = GetDuration(mp4);
 
-	//If the GPMF streams are using (non-zero) timestamps, which stream should time zero be relative to. 
-	//SetTimeBaseStream(mp4, STR2FOURCC("SHUT"));
-
 	if (metadatalength > 0.0)
 	{
 		uint32_t index, payloads = GetNumberPayloads(mp4);
@@ -137,7 +135,7 @@ int main(int argc, char* argv[])
 		{
 			double in = 0.0, out = 0.0; //times
 			payloadsize = GetPayloadSize(mp4, index);
-			payload = GetPayload(mp4, payload, index);
+			payload = GetPayload(mp4, index);
 			if (payload == NULL)
 				goto cleanup;
 
@@ -388,6 +386,13 @@ int main(int argc, char* argv[])
 
 		if (show_computed_samplerates)
 		{
+			mp4callbacks cbobject;
+			cbobject.mp4handle = mp4;
+			cbobject.cbGetNumberPayloads = GetNumberPayloads;
+			cbobject.cbGetPayload = GetPayload;
+			cbobject.cbGetPayloadSize = GetPayloadSize;
+			cbobject.cbGetEditListOffsetRationalTime = GetEditListOffsetRationalTime;
+
 			printf("COMPUTED SAMPLERATES:\n");
 			// Find all the available Streams and compute they sample rates
 			while (GPMF_OK == GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS|GPMF_TOLERANT))
@@ -396,7 +401,9 @@ int main(int argc, char* argv[])
 				{
 					double start, end;
 					uint32_t fourcc = GPMF_Key(ms);
-					double rate = GetGPMFSampleRate(mp4, fourcc, GPMF_SAMPLE_RATE_PRECISE, &start, &end);// GPMF_SAMPLE_RATE_FAST);
+
+
+					double rate = GetGPMFSampleRate(cbobject, fourcc, 0, GPMF_SAMPLE_RATE_PRECISE, &start, &end);// GPMF_SAMPLE_RATE_FAST);
 					printf("  %c%c%c%c sampling rate = %fHz (time %f to %f)\",\n", PRINTF_4CC(fourcc), rate, start, end);
 				}
 			}
@@ -404,7 +411,6 @@ int main(int argc, char* argv[])
 
 	cleanup:
 		if (ms) GPMF_Free(ms);
-		if (payload) FreePayload(payload); payload = NULL;
 		CloseSource(mp4);
 	}
 
