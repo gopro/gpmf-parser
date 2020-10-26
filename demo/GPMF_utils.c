@@ -66,7 +66,7 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 
 
 
-		while (teststart < indexcount && ret == GPMF_OK && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS))
+		while (teststart < indexcount && ret == GPMF_OK && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS | GPMF_TOLERANT))
 		{
 			teststart++;
 			payload = cb.cbGetPayload(cb.mp4handle, teststart); // second last payload
@@ -98,7 +98,7 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 
 					if (timeBaseFourCC)
 					{
-						if (GPMF_OK == GPMF_FindNext(&any_stream, timeBaseFourCC, GPMF_RECURSE_LEVELS))
+						if (GPMF_OK == GPMF_FindNext(&any_stream, timeBaseFourCC, GPMF_RECURSE_LEVELS | GPMF_TOLERANT))
 						{
 							if (GPMF_OK == GPMF_FindPrev(&any_stream, GPMF_KEY_TIME_STAMP, GPMF_CURRENT_LEVEL))
 							{
@@ -108,7 +108,7 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 					}
 					else
 					{
-						while (GPMF_OK == GPMF_FindNext(&any_stream, GPMF_KEY_TIME_STAMP, GPMF_RECURSE_LEVELS))
+						while (GPMF_OK == GPMF_FindNext(&any_stream, GPMF_KEY_TIME_STAMP, GPMF_RECURSE_LEVELS | GPMF_TOLERANT))
 						{
 							uint64_t timestamp = BYTESWAP64(*(uint64_t*)GPMF_RawData(&any_stream));
 							if (timestamp < basetimestamp)
@@ -129,7 +129,7 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 				payload = cb.cbGetPayload(cb.mp4handle, testend);
 				payloadsize = cb.cbGetPayloadSize(cb.mp4handle, testend);
 				ret = GPMF_Init(ms, payload, payloadsize);
-			} while (testend > 0 && ret == GPMF_OK &&  GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS));
+			} while (testend > 0 && ret == GPMF_OK &&  GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS | GPMF_TOLERANT));
 
 			GetPayloadTime(cb.mp4handle, teststart, &startin, &startout);
 			GetPayloadTime(cb.mp4handle, testend, &endin, &endout);
@@ -145,7 +145,7 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 					payload = cb.cbGetPayload(cb.mp4handle, i); // second last payload
 					payloadsize = cb.cbGetPayloadSize(cb.mp4handle, i);
 					if (GPMF_OK == GPMF_Init(ms, payload, payloadsize))
-						if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS))
+						if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS | GPMF_TOLERANT))
 							endsamples += GPMF_PayloadSampleCount(ms);
 				}
 			}
@@ -214,7 +214,7 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 						if (ret != GPMF_OK)
 							goto cleanup;
 
-						if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS))
+						if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS | GPMF_TOLERANT))
 						{
 							GPMF_stream find_stream2;
 							GPMF_CopyState(ms, &find_stream2);
@@ -308,7 +308,7 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 					payload = cb.cbGetPayload(cb.mp4handle, endpayload);
 					payloadsize = cb.cbGetPayloadSize(cb.mp4handle, endpayload);
 					ret = GPMF_Init(ms, payload, payloadsize);
-				} while (endpayload > 0 && ret == GPMF_OK && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS));
+				} while (endpayload > 0 && ret == GPMF_OK && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS | GPMF_TOLERANT));
 
 				if (endpayload > 0 && ret == GPMF_OK)
 				{

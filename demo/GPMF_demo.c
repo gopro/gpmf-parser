@@ -2,7 +2,7 @@
  *
  *  @brief Demo to extract GPMF from an MP4
  *
- *  @version 2.1.0
+ *  @version 2.2.0
  *
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *
@@ -403,7 +403,7 @@ int main(int argc, char* argv[])
 					uint32_t fourcc = GPMF_Key(ms);
 
 
-					double rate = GetGPMFSampleRate(cbobject, fourcc, 0, GPMF_SAMPLE_RATE_PRECISE, &start, &end);// GPMF_SAMPLE_RATE_FAST);
+					double rate = GetGPMFSampleRate(cbobject, fourcc, STR2FOURCC("SHUT"), GPMF_SAMPLE_RATE_PRECISE, &start, &end);// GPMF_SAMPLE_RATE_FAST);
 					printf("  %c%c%c%c sampling rate = %fHz (time %f to %f)\",\n", PRINTF_4CC(fourcc), rate, start, end);
 				}
 			}
