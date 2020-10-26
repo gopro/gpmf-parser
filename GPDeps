@@ -1,0 +1,10 @@
+{
+    "version": "1.0.0",
+
+    "info": {
+        "type": "lib",
+        "visibility": "public",
+        "platforms": ["android", "ios", "linux", "macos", "win"]
+    }
+}
+
