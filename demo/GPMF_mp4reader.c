@@ -201,7 +201,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 					break;
 				}
 
-				if (!GPMF_VALID_FOURCC(qttag) && (qttag & 0xff) != 0xa9) // ©xyz and ©swr are allowed
+				if (!GPMF_VALID_FOURCC(qttag) && (qttag & 0xff) != 0xa9) // Â©xyz and Â©swr are allowed
 				{
 					CloseSource((size_t)mp4);
 					mp4 = NULL;
@@ -361,8 +361,8 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 								readnum = BYTESWAP32(readnum);
 								if (readnum <= (qtsize / 12) && mp4->trak_clockdemon)
 								{
-									uint32_t segment_duration; //integer that specifies the duration of this edit segment in units of the movie’s time scale.
-									uint32_t segment_mediaTime; //integer containing the starting time within the media of this edit segment(in media timescale units).If this field is set to –1, it is an empty edit.The last edit in a track should never be an empty edit.Any difference between the movie’s duration and the track’s duration is expressed as an implicit empty edit.
+									uint32_t segment_duration; //integer that specifies the duration of this edit segment in units of the movieÂ’s time scale.
+									uint32_t segment_mediaTime; //integer containing the starting time within the media of this edit segment(in media timescale units).If this field is set to Â–1, it is an empty edit.The last edit in a track should never be an empty edit.Any difference between the movieÂ’s duration and the trackÂ’s duration is expressed as an implicit empty edit.
 									uint32_t segment_mediaRate; //point number that specifies the relative rate at which to play the media corresponding to this edit segment.This rate value cannot be 0 or negative.
 									for (i = 0; i < readnum; i++)
 									{
@@ -481,7 +481,8 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 									free(mp4->metasizes);
 									mp4->metasizes = 0;
 								}
-								if(num > 0 && qtsize > (num * 4))
+								//either the samples are different sizes or they are all the same size
+								if(num > 0 && ((qtsize > (num * 4)) || (equalsamplesize != 0 && qtsize == 20)))
 								{
 									mp4->metasize_count = num;
 									mp4->metasizes = (uint32_t *)malloc(num * 4);
