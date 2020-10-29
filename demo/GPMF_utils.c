@@ -2,7 +2,7 @@
  *
  *  @brief Utilities GPMF and MP4 handling
  *
- *  @version 1.0.0
+ *  @version 1.1.0
  *
  *  (C) Copyright 2020 GoPro Inc (http://gopro.com/).
  *	
@@ -43,14 +43,17 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 
 	uint32_t *payload;
 	uint32_t payloadsize;
+	size_t payloadres = 0;
+
 	GPMF_ERR ret;
 
 	if (indexcount < 1)
 		return 0.0;
 
-
-	payload = cb.cbGetPayload(cb.mp4handle, teststart);
 	payloadsize = cb.cbGetPayloadSize(cb.mp4handle, teststart);
+	payloadres = cb.cbGetPayloadResource(payloadres, payloadsize);
+	payload = cb.cbGetPayload(cb.mp4handle, payloadres, teststart);
+
 	ret = GPMF_Init(ms, payload, payloadsize);
 
 	if (ret != GPMF_OK)
@@ -69,8 +72,8 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 		while (teststart < indexcount && ret == GPMF_OK && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS | GPMF_TOLERANT))
 		{
 			teststart++;
-			payload = cb.cbGetPayload(cb.mp4handle, teststart); // second last payload
 			payloadsize = cb.cbGetPayloadSize(cb.mp4handle, teststart);
+			payload = cb.cbGetPayload(cb.mp4handle, payloadres, teststart); // second last payload
 			ret = GPMF_Init(ms, payload, payloadsize);
 		}
 
@@ -126,8 +129,8 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 			do
 			{
 				testend--;// last payload with the fourcc needed
-				payload = cb.cbGetPayload(cb.mp4handle, testend);
-				payloadsize = cb.cbGetPayloadSize(cb.mp4handle, testend);
+				payloadsize = cb.cbGetPayloadSize(cb.mp4handle, teststart);
+				payload = cb.cbGetPayload(cb.mp4handle, payloadres, teststart); // second last payload
 				ret = GPMF_Init(ms, payload, payloadsize);
 			} while (testend > 0 && ret == GPMF_OK &&  GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS | GPMF_TOLERANT));
 
@@ -142,8 +145,8 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 				uint32_t i;
 				for (i = teststart; i <= testend; i++)
 				{
-					payload = cb.cbGetPayload(cb.mp4handle, i); // second last payload
-					payloadsize = cb.cbGetPayloadSize(cb.mp4handle, i);
+					payloadsize = cb.cbGetPayloadSize(cb.mp4handle, teststart);
+					payload = cb.cbGetPayload(cb.mp4handle, payloadres, teststart); 
 					if (GPMF_OK == GPMF_Init(ms, payload, payloadsize))
 						if (GPMF_OK == GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS | GPMF_TOLERANT))
 							endsamples += GPMF_PayloadSampleCount(ms);
@@ -207,8 +210,9 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 
 					for (payloadpos = teststart; payloadpos <= testend; payloadpos++)
 					{
-						payload = cb.cbGetPayload(cb.mp4handle, payloadpos); // second last payload
-						payloadsize = cb.cbGetPayloadSize(cb.mp4handle, payloadpos);
+
+						payloadsize = cb.cbGetPayloadSize(cb.mp4handle, teststart);
+						payload = cb.cbGetPayload(cb.mp4handle, payloadres, teststart); // second last payload
 						ret = GPMF_Init(ms, payload, payloadsize);
 
 						if (ret != GPMF_OK)
@@ -305,8 +309,8 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 				do
 				{
 					endpayload--;// last payload with the fourcc needed
-					payload = cb.cbGetPayload(cb.mp4handle, endpayload);
-					payloadsize = cb.cbGetPayloadSize(cb.mp4handle, endpayload);
+					payloadsize = cb.cbGetPayloadSize(cb.mp4handle, teststart);
+					payload = cb.cbGetPayload(cb.mp4handle, payloadres, teststart);
 					ret = GPMF_Init(ms, payload, payloadsize);
 				} while (endpayload > 0 && ret == GPMF_OK && GPMF_OK != GPMF_FindNext(ms, fourcc, GPMF_RECURSE_LEVELS | GPMF_TOLERANT));
 
@@ -347,6 +351,7 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 	}
 
 cleanup:
+	if (payloadres) cb.cbFreePayloadResource(payloadres);
 	return rate;
 }
 

@@ -2,7 +2,7 @@
 *
 *  @brief Utilities GPMF and MP4 handling
 *
-*  @version 1.0.0
+*  @version 1.1.0
 *
 *  (C) Copyright 2020 GoPro Inc (http://gopro.com/).
 *
@@ -33,11 +33,13 @@ extern "C" {
 typedef struct mp4callbacks
 {
 	size_t mp4handle;
-	uint32_t (*cbGetNumberPayloads)(size_t handle);					// number of indexed GPMF payloads
-	uint32_t (*cbGetPayloadSize)(size_t handle, uint32_t index);	// get payload size for a particular index
-	uint32_t* (*cbGetPayload)(size_t handle, uint32_t index);		// get payload data for a particular index
-	uint32_t (*cbGetEditListOffsetRationalTime)(size_t handle,		// get any time offset for GPMF track
-	int32_t* offset_numerator, uint32_t* denominator);
+	uint32_t (*cbGetNumberPayloads)(size_t handle);									// number of indexed GPMF payloads
+	uint32_t (*cbGetPayloadSize)(size_t handle, uint32_t index);					// get payload size for a particular index
+	uint32_t *(*cbGetPayload)(size_t handle, size_t res, uint32_t index);			// get payload data for a particular index
+	size_t	 (*cbGetPayloadResource)(size_t reshandle, uint32_t initialMemorySize);	// get payload memory handler
+	void	 (*cbFreePayloadResource)(size_t reshandle);								// free payload memory handler
+	uint32_t (*cbGetEditListOffsetRationalTime)(size_t handle,						// get any time offset for GPMF track
+	int32_t	 *offset_numerator, uint32_t* denominator);
 } mp4callbacks;
 
 double GetGPMFSampleRate(mp4callbacks cbobject, uint32_t fourcc, uint32_t timeBaseFourCC, uint32_t flags, double* in, double* out);

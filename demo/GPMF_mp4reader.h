@@ -71,10 +71,14 @@ typedef struct mp4object
 	FILE *mediafp;
 	uint64_t filesize;
 	uint64_t filepos;
-
-	uint32_t *payloadBuffer;
-	uint32_t payloadBufferSize;
 } mp4object;
+
+typedef struct resObject
+{
+	uint32_t* buffer;
+	uint32_t bufferSize;
+} resObject;
+
 
 #define MAKEID(a,b,c,d)			(((d&0xff)<<24)|((c&0xff)<<16)|((b&0xff)<<8)|(a&0xff))
 #define STR2FOURCC(s)			((s[0]<<0)|(s[1]<<8)|(s[2]<<16)|(s[3]<<24))
@@ -116,12 +120,13 @@ void CloseSource(size_t handle);
 float GetDuration(size_t handle);
 uint32_t GetVideoFrameRateAndCount(size_t handle, uint32_t *numer, uint32_t *demon);
 uint32_t GetNumberPayloads(size_t handle);
-uint32_t *GetPayload(size_t handle, uint32_t index);
 uint32_t WritePayload(size_t handle, uint32_t* payload, uint32_t payloadsize, uint32_t index);
-void FreePayload(uint32_t *lastpayload);
-uint32_t GetPayloadSize(size_t handle, uint32_t index);
-uint32_t GetPayloadTime(size_t handle, uint32_t index, double *in, double *out); //MP4 timestamps for the payload
-uint32_t GetPayloadRationalTime(size_t handle, uint32_t index, int32_t *in_numerator, int32_t *out_numerator, uint32_t *denominator);
+size_t GetPayloadResource(size_t resHandle, uint32_t payloadBufferSize);
+void FreePayloadResource(size_t resHandle);
+uint32_t* GetPayload(size_t mp4Handle, size_t resHandle, uint32_t index);
+uint32_t GetPayloadSize(size_t mp4Handle, uint32_t index);
+uint32_t GetPayloadTime(size_t mp4Handle, uint32_t index, double *in, double *out); //MP4 timestamps for the payload
+uint32_t GetPayloadRationalTime(size_t mp4Handle, uint32_t index, int32_t *in_numerator, int32_t *out_numerator, uint32_t *denominator);
 uint32_t GetEditListOffset(size_t handle, double *offset);
 uint32_t GetEditListOffsetRationalTime(size_t handle, int32_t *offset_numerator, uint32_t *denominator);
 

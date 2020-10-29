@@ -2,7 +2,7 @@
  *
  *  @brief Demo to extract GPMF from an MP4
  *
- *  @version 2.2.0
+ *  @version 2.3.0
  *
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *
@@ -62,8 +62,9 @@ int main(int argc, char* argv[])
 	GPMF_ERR ret = GPMF_OK;
 	GPMF_stream metadata_stream, * ms = &metadata_stream;
 	double metadatalength;
-	uint32_t payloadsize;
-	uint32_t* payload = NULL; //buffer to store GPMF samples from the MP4.
+	uint32_t* payload = NULL;
+	uint32_t payloadsize = 0;
+	size_t payloadres = 0;
 
 	uint32_t show_all_payloads = SHOW_ALL_PAYLOADS;
 	uint32_t show_gpmf_structure = SHOW_GPMF_STRUCTURE;
@@ -135,7 +136,8 @@ int main(int argc, char* argv[])
 		{
 			double in = 0.0, out = 0.0; //times
 			payloadsize = GetPayloadSize(mp4, index);
-			payload = GetPayload(mp4, index);
+			payloadres = GetPayloadResource(payloadres, payloadsize);
+			payload = GetPayload(mp4, payloadres, index);
 			if (payload == NULL)
 				goto cleanup;
 
@@ -181,7 +183,7 @@ int main(int argc, char* argv[])
 						printf("  ");
 						PrintGPMF(ms);  // printf current GPMF KLV
 
-						nextret = GPMF_Next(ms, GPMF_RECURSE_LEVELS);
+						nextret = GPMF_Next(ms, GPMF_RECURSE_LEVELS | GPMF_TOLERANT);
 
 						while(nextret == GPMF_ERROR_UNKNOWN_TYPE) // or just using GPMF_Next(ms, GPMF_RECURSE_LEVELS|GPMF_TOLERANT) to ignore and skip unknown types
  							nextret = GPMF_Next(ms, GPMF_RECURSE_LEVELS);
@@ -380,9 +382,8 @@ int main(int argc, char* argv[])
 					GPMF_ResetState(ms);
 				}
 			}
-
-			GPMF_Free(ms);
 		}
+
 
 		if (show_computed_samplerates)
 		{
@@ -391,11 +392,13 @@ int main(int argc, char* argv[])
 			cbobject.cbGetNumberPayloads = GetNumberPayloads;
 			cbobject.cbGetPayload = GetPayload;
 			cbobject.cbGetPayloadSize = GetPayloadSize;
+			cbobject.cbGetPayloadResource = GetPayloadResource;
+			cbobject.cbFreePayloadResource = FreePayloadResource;
 			cbobject.cbGetEditListOffsetRationalTime = GetEditListOffsetRationalTime;
 
 			printf("COMPUTED SAMPLERATES:\n");
 			// Find all the available Streams and compute they sample rates
-			while (GPMF_OK == GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS|GPMF_TOLERANT))
+			while (GPMF_OK == GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS | GPMF_TOLERANT))
 			{
 				if (GPMF_OK == GPMF_SeekToSamples(ms)) //find the last FOURCC within the stream
 				{
@@ -410,6 +413,7 @@ int main(int argc, char* argv[])
 		}
 
 	cleanup:
+		if (payloadres) FreePayloadResource(payloadres);
 		if (ms) GPMF_Free(ms);
 		CloseSource(mp4);
 	}

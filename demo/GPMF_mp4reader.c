@@ -51,37 +51,92 @@ uint32_t GetNumberPayloads(size_t handle)
 	return 0;
 }
 
-uint32_t *GetPayload(size_t handle, uint32_t index)
+
+size_t GetPayloadResource(size_t resHandle, uint32_t payloadsize)
+{
+	resObject* res = (resObject*)resHandle;
+
+	if (res == NULL)
+	{
+		res = (resObject*)malloc(sizeof(resObject));
+		if (res)
+		{
+			memset(res, 0, sizeof(resObject));
+			resHandle = (size_t)res;
+		}
+	}
+
+	if(res)
+	{
+		uint32_t myBufferSize = payloadsize + 256;
+
+		if (res->buffer == NULL)
+		{
+			res->buffer = malloc(myBufferSize);
+			if (res->buffer)
+			{
+				res->bufferSize = myBufferSize;
+			}
+			else
+			{
+				free(res);
+				resHandle = 0;
+			}
+		}
+		else if (payloadsize > res->bufferSize)
+		{
+			res->buffer = realloc(res->buffer, myBufferSize);
+			res->bufferSize = myBufferSize;
+			if (res->buffer == NULL)
+			{
+				free(res);
+				resHandle = 0;
+			}
+		}
+	}
+
+	return resHandle;
+}
+
+
+
+void FreePayloadResource(size_t resHandle)
+{
+	resObject* res = (resObject*)resHandle;
+
+	if (res)
+	{
+		if (res->buffer) free(res->buffer);
+		free(res);
+	}
+}
+
+
+uint32_t *GetPayload(size_t handle, size_t resHandle, uint32_t index)
 {
 	mp4object *mp4 = (mp4object *)handle;
+	resObject *res = (resObject *)resHandle;
+
 	if (mp4 == NULL) return NULL;
+	if (res == NULL) return NULL;
 
 	if (index < mp4->indexcount && mp4->mediafp)
 	{
 		if ((mp4->filesize >= mp4->metaoffsets[index]+mp4->metasizes[index]) && (mp4->metasizes[index] > 0))
 		{
-			uint32_t buffsizeneeded = mp4->metasizes[index] + 256;  // Add a little more to limit reallocations
-			if (mp4->payloadBuffer == NULL)
-			{
-				mp4->payloadBuffer = (uint32_t*)malloc(buffsizeneeded);
-				mp4->payloadBufferSize = buffsizeneeded;
-			}
-			else if (mp4->payloadBufferSize < mp4->metasizes[index])
-			{
-				mp4->payloadBuffer = (uint32_t*)realloc((void*)mp4->payloadBuffer, buffsizeneeded);
-				mp4->payloadBufferSize = buffsizeneeded;
-			}
+			uint32_t buffsizeneeded = mp4->metasizes[index];  // Add a little more to limit reallocations
 
-			if (mp4->payloadBuffer)
+			resHandle = GetPayloadResource(resHandle, buffsizeneeded);
+			if(resHandle)
 			{
 #ifdef _WINDOWS
 				_fseeki64(mp4->mediafp, (__int64) mp4->metaoffsets[index], SEEK_SET);
 #else
 				fseeko(mp4->mediafp, (off_t) mp4->metaoffsets[index], SEEK_SET);
 #endif
-				fread(mp4->payloadBuffer, 1, mp4->metasizes[index], mp4->mediafp);
+				fread(res->buffer, 1, mp4->metasizes[index], mp4->mediafp);
 				mp4->filepos = mp4->metaoffsets[index] + mp4->metasizes[index];
-				return mp4->payloadBuffer;
+				return res->buffer;
 			}
 		}
 	}
@@ -133,12 +188,6 @@ void LongSeek(mp4object *mp4, int64_t offset)
 			mp4->filepos = mp4->filesize;
 		}
 	}
-}
-
-void FreePayload(uint32_t *lastpayload)
-{
-	if (lastpayload)
-		free(lastpayload);
 }
 
 
@@ -942,11 +991,6 @@ void CloseSource(size_t handle)
 	{
 		free(mp4->metastsc);
 		mp4->metastsc = 0;
-	}
-	if (mp4->payloadBuffer)
-	{
-		free(mp4->payloadBuffer);
-		mp4->payloadBuffer = 0;
 	}
  
  	free(mp4);
