@@ -74,8 +74,6 @@ typedef struct mp4object
 
 	uint32_t *payloadBuffer;
 	uint32_t payloadBufferSize;
-
-	uint32_t timeBaseFourCC;
 } mp4object;
 
 #define MAKEID(a,b,c,d)			(((d&0xff)<<24)|((c&0xff)<<16)|((b&0xff)<<8)|(a&0xff))

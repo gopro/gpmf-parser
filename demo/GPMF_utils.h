@@ -37,7 +37,7 @@ typedef struct mp4callbacks
 	uint32_t (*cbGetPayloadSize)(size_t handle, uint32_t index);	// get payload size for a particular index
 	uint32_t* (*cbGetPayload)(size_t handle, uint32_t index);		// get payload data for a particular index
 	uint32_t (*cbGetEditListOffsetRationalTime)(size_t handle,		// get any time offset for GPMF track
-		int32_t* offset_numerator, uint32_t* denominator);	
+	int32_t* offset_numerator, uint32_t* denominator);
 } mp4callbacks;
 
 double GetGPMFSampleRate(mp4callbacks cbobject, uint32_t fourcc, uint32_t timeBaseFourCC, uint32_t flags, double* in, double* out);
