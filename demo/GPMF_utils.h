@@ -2,7 +2,7 @@
 *
 *  @brief Utilities GPMF and MP4 handling
 *
-*  @version 1.1.0
+*  @version 1.2.0
 *
 *  (C) Copyright 2020 GoPro Inc (http://gopro.com/).
 *
@@ -37,7 +37,8 @@ typedef struct mp4callbacks
 	uint32_t (*cbGetPayloadSize)(size_t handle, uint32_t index);					// get payload size for a particular index
 	uint32_t *(*cbGetPayload)(size_t handle, size_t res, uint32_t index);			// get payload data for a particular index
 	size_t	 (*cbGetPayloadResource)(size_t reshandle, uint32_t initialMemorySize);	// get payload memory handler
-	void	 (*cbFreePayloadResource)(size_t reshandle);								// free payload memory handler
+	void	 (*cbFreePayloadResource)(size_t reshandle);							// free payload memory handler
+	uint32_t (*cbGetPayloadTime)(size_t mp4Handle, uint32_t index, double* in, double* out); //MP4 timestamps for the payload
 	uint32_t (*cbGetEditListOffsetRationalTime)(size_t handle,						// get any time offset for GPMF track
 	int32_t	 *offset_numerator, uint32_t* denominator);
 } mp4callbacks;

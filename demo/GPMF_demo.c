@@ -2,7 +2,7 @@
  *
  *  @brief Demo to extract GPMF from an MP4
  *
- *  @version 2.3.0
+ *  @version 2.4.0
  *
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *
@@ -136,7 +136,8 @@ int main(int argc, char* argv[])
 		{
 			double in = 0.0, out = 0.0; //times
 			payloadsize = GetPayloadSize(mp4, index);
-			payloadres = GetPayloadResource(payloadres, payloadsize);
+			payloadres = GetPayloadResource(payloadres,
+				payloadsize);
 			payload = GetPayload(mp4, payloadres, index);
 			if (payload == NULL)
 				goto cleanup;
@@ -393,6 +394,7 @@ int main(int argc, char* argv[])
 			cbobject.cbGetPayload = GetPayload;
 			cbobject.cbGetPayloadSize = GetPayloadSize;
 			cbobject.cbGetPayloadResource = GetPayloadResource;
+			cbobject.cbGetPayloadTime = GetPayloadTime;
 			cbobject.cbFreePayloadResource = FreePayloadResource;
 			cbobject.cbGetEditListOffsetRationalTime = GetEditListOffsetRationalTime;
 
