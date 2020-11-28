@@ -290,94 +290,98 @@ int main(int argc, char* argv[])
 						GPMF_SampleType type = GPMF_Type(ms);
 						uint32_t samples = GPMF_Repeat(ms);
 						uint32_t elements = GPMF_ElementsInStruct(ms);
-						uint32_t buffersize = samples * elements * sizeof(double);
-						GPMF_stream find_stream;
-						double* ptr, * tmpbuffer = (double*)malloc(buffersize);
+
+						if (samples)
+						{
+							uint32_t buffersize = samples * elements * sizeof(double);
+							GPMF_stream find_stream;
+							double* ptr, * tmpbuffer = (double*)malloc(buffersize);
 
 #define MAX_UNITS	64
 #define MAX_UNITLEN	8
-						char units[MAX_UNITS][MAX_UNITLEN] = { "" };
-						uint32_t unit_samples = 1;
+							char units[MAX_UNITS][MAX_UNITLEN] = { "" };
+							uint32_t unit_samples = 1;
 
-						char complextype[MAX_UNITS] = { "" };
-						uint32_t type_samples = 1;
+							char complextype[MAX_UNITS] = { "" };
+							uint32_t type_samples = 1;
 
-						if (tmpbuffer && samples)
-						{
-							uint32_t i, j;
-
-							//Search for any units to display
-							GPMF_CopyState(ms, &find_stream);
-							if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_SI_UNITS, GPMF_CURRENT_LEVEL|GPMF_TOLERANT) ||
-								GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_UNITS, GPMF_CURRENT_LEVEL|GPMF_TOLERANT))
+							if (tmpbuffer)
 							{
-								char* data = (char*)GPMF_RawData(&find_stream);
-								uint32_t ssize = GPMF_StructSize(&find_stream);
-								if (ssize > MAX_UNITLEN - 1) ssize = MAX_UNITLEN - 1;
-								unit_samples = GPMF_Repeat(&find_stream);
+								uint32_t i, j;
 
-								for (i = 0; i < unit_samples && i < MAX_UNITS; i++)
+								//Search for any units to display
+								GPMF_CopyState(ms, &find_stream);
+								if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_SI_UNITS, GPMF_CURRENT_LEVEL | GPMF_TOLERANT) ||
+									GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_UNITS, GPMF_CURRENT_LEVEL | GPMF_TOLERANT))
 								{
-									memcpy(units[i], data, ssize);
-									units[i][ssize] = 0;
-									data += ssize;
-								}
-							}
+									char* data = (char*)GPMF_RawData(&find_stream);
+									uint32_t ssize = GPMF_StructSize(&find_stream);
+									if (ssize > MAX_UNITLEN - 1) ssize = MAX_UNITLEN - 1;
+									unit_samples = GPMF_Repeat(&find_stream);
 
-							//Search for TYPE if Complex
-							GPMF_CopyState(ms, &find_stream);
-							type_samples = 0;
-							if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL|GPMF_TOLERANT))
-							{
-								char* data = (char*)GPMF_RawData(&find_stream);
-								uint32_t ssize = GPMF_StructSize(&find_stream);
-								if (ssize > MAX_UNITLEN - 1) ssize = MAX_UNITLEN - 1;
-								type_samples = GPMF_Repeat(&find_stream);
-
-								for (i = 0; i < type_samples && i < MAX_UNITS; i++)
-								{
-									complextype[i] = data[i];
-								}
-							}
-
-							//GPMF_FormattedData(ms, tmpbuffer, buffersize, 0, samples); // Output data in LittleEnd, but no scale
-							if (GPMF_OK == GPMF_ScaledData(ms, tmpbuffer, buffersize, 0, samples, GPMF_TYPE_DOUBLE))//Output scaled data as floats
-							{
-
-								ptr = tmpbuffer;
-								int pos = 0;
-								for (i = 0; i < samples; i++)
-								{
-									printf("  %c%c%c%c ", PRINTF_4CC(key));
-
-									for (j = 0; j < elements; j++)
+									for (i = 0; i < unit_samples && i < MAX_UNITS; i++)
 									{
-										if (type == GPMF_TYPE_STRING_ASCII)
-										{
-											printf("%c", rawdata[pos]);
-											pos++;
-											ptr++;
-										}
-										else if (type_samples == 0) //no TYPE structure
-											printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
-										else if (complextype[j] != 'F')
-										{
-											printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
-											pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
-										}
-										else if (type_samples && complextype[j] == GPMF_TYPE_FOURCC)
-										{
-											ptr++;
-											printf("%c%c%c%c, ", rawdata[pos], rawdata[pos + 1], rawdata[pos + 2], rawdata[pos + 3]);
-											pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
-										}
+										memcpy(units[i], data, ssize);
+										units[i][ssize] = 0;
+										data += ssize;
 									}
-
-
-									printf("\n");
 								}
+
+								//Search for TYPE if Complex
+								GPMF_CopyState(ms, &find_stream);
+								type_samples = 0;
+								if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL | GPMF_TOLERANT))
+								{
+									char* data = (char*)GPMF_RawData(&find_stream);
+									uint32_t ssize = GPMF_StructSize(&find_stream);
+									if (ssize > MAX_UNITLEN - 1) ssize = MAX_UNITLEN - 1;
+									type_samples = GPMF_Repeat(&find_stream);
+
+									for (i = 0; i < type_samples && i < MAX_UNITS; i++)
+									{
+										complextype[i] = data[i];
+									}
+								}
+
+								//GPMF_FormattedData(ms, tmpbuffer, buffersize, 0, samples); // Output data in LittleEnd, but no scale
+								if (GPMF_OK == GPMF_ScaledData(ms, tmpbuffer, buffersize, 0, samples, GPMF_TYPE_DOUBLE))//Output scaled data as floats
+								{
+
+									ptr = tmpbuffer;
+									int pos = 0;
+									for (i = 0; i < samples; i++)
+									{
+										printf("  %c%c%c%c ", PRINTF_4CC(key));
+
+										for (j = 0; j < elements; j++)
+										{
+											if (type == GPMF_TYPE_STRING_ASCII)
+											{
+												printf("%c", rawdata[pos]);
+												pos++;
+												ptr++;
+											}
+											else if (type_samples == 0) //no TYPE structure
+												printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
+											else if (complextype[j] != 'F')
+											{
+												printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
+												pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
+											}
+											else if (type_samples && complextype[j] == GPMF_TYPE_FOURCC)
+											{
+												ptr++;
+												printf("%c%c%c%c, ", rawdata[pos], rawdata[pos + 1], rawdata[pos + 2], rawdata[pos + 3]);
+												pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
+											}
+										}
+
+
+										printf("\n");
+									}
+								}
+								free(tmpbuffer);
 							}
-							free(tmpbuffer);
 						}
 					}
 					GPMF_ResetState(ms);
