@@ -205,7 +205,7 @@ uint32_t GetPayloadSize(size_t handle, uint32_t index)
 
 #define MAX_NEST_LEVEL	20
 
-size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  //RAW or within MP4
+size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, int32_t flags)  //RAW or within MP4
 {
 	mp4object *mp4 = (mp4object *)malloc(sizeof(mp4object));
 	if (mp4 == NULL) return 0;
@@ -227,10 +227,11 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 		return 0;
 	}
 
+	const char *mode = (flags & MP4_FLAG_READ_WRITE_MODE) ? "rb+" : "rb";
 #ifdef _WINDOWS
-	fopen_s(&mp4->mediafp, filename, "rb+");
+	fopen_s(&mp4->mediafp, filename, mode);
 #else
-	mp4->mediafp = fopen(filename, "rb+");
+	mp4->mediafp = fopen(filename, mode);
 #endif
 
 	if (mp4->mediafp)
@@ -1067,7 +1068,7 @@ uint32_t GetEditListOffsetRationalTime(size_t handle, int32_t *offset_numerator,
 
 
 
-size_t OpenMP4SourceUDTA(char *filename)
+size_t OpenMP4SourceUDTA(char *filename, int32_t flags)
 {
 	mp4object *mp4 = (mp4object *)malloc(sizeof(mp4object));
 	if (mp4 == NULL) return 0;
@@ -1088,10 +1089,11 @@ size_t OpenMP4SourceUDTA(char *filename)
 		return 0;
 	}
 
+	const char *mode = (flags & MP4_FLAG_READ_WRITE_MODE) ? "rb+" : "rb";
 #ifdef _WINDOWS
-	fopen_s(&mp4->mediafp, filename, "rb+");
+	fopen_s(&mp4->mediafp, filename, mode);
 #else
-	mp4->mediafp = fopen(filename, "rb+");
+	mp4->mediafp = fopen(filename, mode);
 #endif
 
 	if (mp4->mediafp)
