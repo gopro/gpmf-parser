@@ -560,8 +560,8 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| CORI | Camera ORIentation | frame rate | n/a | Quaterions for the camera orientation since capture start |
-| IORI | Image ORIentation | frame rate | n/a | Quaterions for the image orientation relative to the camera body |
+| CORI | Camera ORIentation | frame rate | n/a | Quaternions for the camera orientation since capture start |
+| IORI | Image ORIentation | frame rate | n/a | Quaternions for the image orientation relative to the camera body |
 | GRAV | GRAvity Vector | frame rate | n/a | Vector for the direction for gravitiy |
 | WNDM | Wind Processing | 10Hz | n/a | marks whether wind processing is active |
 | MWET | Microphone is WET | 10Hz | n/a | marks whether some of the microphones are wet |
@@ -571,8 +571,8 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| CORI | Camera ORIentation | frame rate | n/a | Quaterions for the camera orientation since capture start |
-| IORI | Image ORIentation | frame rate | n/a | Quaterions for the image orientation relative to the camera body |
+| CORI | Camera ORIentation | frame rate | n/a | Quaternions for the camera orientation since capture start |
+| IORI | Image ORIentation | frame rate | n/a | Quaternions for the image orientation relative to the camera body |
 | GRAV | GRAvity Vector | frame rate | n/a | Vector for the direction for gravity |
 | DISP | Disparity track (360 modes) | frame rate | n/a | 1-D depth map for the objects seen by the two lenses |
 
