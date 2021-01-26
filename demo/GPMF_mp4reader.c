@@ -39,9 +39,9 @@
 #endif
 
 
-uint32_t GetNumberPayloads(size_t handle)
+uint32_t GetNumberPayloads(size_t mp4handle)
 {
-	mp4object *mp4 = (mp4object *)handle;
+	mp4object *mp4 = (mp4object *)mp4handle;
 
 	if (mp4)
 	{
@@ -52,7 +52,7 @@ uint32_t GetNumberPayloads(size_t handle)
 }
 
 
-size_t GetPayloadResource(size_t resHandle, uint32_t payloadsize)
+size_t GetPayloadResource(size_t mp4handle, size_t resHandle, uint32_t payloadsize)
 {
 	resObject* res = (resObject*)resHandle;
 
@@ -100,7 +100,7 @@ size_t GetPayloadResource(size_t resHandle, uint32_t payloadsize)
 
 
 
-void FreePayloadResource(size_t resHandle)
+void FreePayloadResource(size_t mp4handle, size_t resHandle)
 {
 	resObject* res = (resObject*)resHandle;
 
@@ -112,9 +112,9 @@ void FreePayloadResource(size_t resHandle)
 }
 
 
-uint32_t *GetPayload(size_t handle, size_t resHandle, uint32_t index)
+uint32_t *GetPayload(size_t mp4handle, size_t resHandle, uint32_t index)
 {
-	mp4object *mp4 = (mp4object *)handle;
+	mp4object *mp4 = (mp4object *)mp4handle;
 	resObject *res = (resObject *)resHandle;
 
 	if (mp4 == NULL) return NULL;
@@ -126,7 +126,7 @@ uint32_t *GetPayload(size_t handle, size_t resHandle, uint32_t index)
 		{
 			uint32_t buffsizeneeded = mp4->metasizes[index];  // Add a little more to limit reallocations
 
-			resHandle = GetPayloadResource(resHandle, buffsizeneeded);
+			resHandle = GetPayloadResource(mp4handle, resHandle, buffsizeneeded);
 			if(resHandle)
 			{
 #ifdef _WINDOWS

@@ -83,11 +83,11 @@ int main(int argc, char* argv[])
 	}
 
 #if 1 // Search for GPMF Track
-	size_t mp4 = OpenMP4Source(argv[1], MOV_GPMF_TRAK_TYPE, MOV_GPMF_TRAK_SUBTYPE);
+	size_t mp4handle = OpenMP4Source(argv[1], MOV_GPMF_TRAK_TYPE, MOV_GPMF_TRAK_SUBTYPE);
 #else // look for a global GPMF payload in the moov header, within 'udta'
-	size_t mp4 = OpenMP4SourceUDTA(argv[1]);  //Search for GPMF payload with MP4's udta 
+	size_t mp4handle = OpenMP4SourceUDTA(argv[1]);  //Search for GPMF payload with MP4's udta 
 #endif
-	if (mp4 == 0)
+	if (mp4handle == 0)
 	{
 		printf("error: %s is an invalid MP4/MOV or it has no GPMF data\n\n", argv[1]);
 
@@ -115,15 +115,15 @@ int main(int argc, char* argv[])
 	}
 
 
-	metadatalength = GetDuration(mp4);
+	metadatalength = GetDuration(mp4handle);
 
 	if (metadatalength > 0.0)
 	{
-		uint32_t index, payloads = GetNumberPayloads(mp4);
+		uint32_t index, payloads = GetNumberPayloads(mp4handle);
 		//		printf("found %.2fs of metadata, from %d payloads, within %s\n", metadatalength, payloads, argv[1]);
 
 		uint32_t fr_num, fr_dem;
-		uint32_t frames = GetVideoFrameRateAndCount(mp4, &fr_num, &fr_dem);
+		uint32_t frames = GetVideoFrameRateAndCount(mp4handle, &fr_num, &fr_dem);
 		if (show_video_framerate)
 		{
 			if (frames)
@@ -135,14 +135,13 @@ int main(int argc, char* argv[])
 		for (index = 0; index < payloads; index++)
 		{
 			double in = 0.0, out = 0.0; //times
-			payloadsize = GetPayloadSize(mp4, index);
-			payloadres = GetPayloadResource(payloadres,
-				payloadsize);
-			payload = GetPayload(mp4, payloadres, index);
+			payloadsize = GetPayloadSize(mp4handle, index);
+			payloadres = GetPayloadResource(mp4handle, payloadres, payloadsize);
+			payload = GetPayload(mp4handle, payloadres, index);
 			if (payload == NULL)
 				goto cleanup;
 
-			ret = GetPayloadTime(mp4, index, &in, &out);
+			ret = GetPayloadTime(mp4handle, index, &in, &out);
 			if (ret != GPMF_OK)
 				goto cleanup;
 
@@ -393,7 +392,7 @@ int main(int argc, char* argv[])
 		if (show_computed_samplerates)
 		{
 			mp4callbacks cbobject;
-			cbobject.mp4handle = mp4;
+			cbobject.mp4handle = mp4handle;
 			cbobject.cbGetNumberPayloads = GetNumberPayloads;
 			cbobject.cbGetPayload = GetPayload;
 			cbobject.cbGetPayloadSize = GetPayloadSize;
@@ -419,9 +418,9 @@ int main(int argc, char* argv[])
 		}
 
 	cleanup:
-		if (payloadres) FreePayloadResource(payloadres);
+		if (payloadres) FreePayloadResource(mp4handle, payloadres);
 		if (ms) GPMF_Free(ms);
-		CloseSource(mp4);
+		CloseSource(mp4handle);
 	}
 
 	if (ret != 0)

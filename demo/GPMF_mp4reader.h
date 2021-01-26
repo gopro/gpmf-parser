@@ -116,19 +116,19 @@ typedef enum MP4READER_ERROR
 
 size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t subtype);
 size_t OpenMP4SourceUDTA(char *filename);
-void CloseSource(size_t handle);
-float GetDuration(size_t handle);
-uint32_t GetVideoFrameRateAndCount(size_t handle, uint32_t *numer, uint32_t *demon);
-uint32_t GetNumberPayloads(size_t handle);
-uint32_t WritePayload(size_t handle, uint32_t* payload, uint32_t payloadsize, uint32_t index);
-size_t GetPayloadResource(size_t resHandle, uint32_t payloadBufferSize);
-void FreePayloadResource(size_t resHandle);
+void CloseSource(size_t mp4Handle);
+float GetDuration(size_t mp4Handle);
+uint32_t GetVideoFrameRateAndCount(size_t mp4Handle, uint32_t *numer, uint32_t *demon);
+uint32_t GetNumberPayloads(size_t mp4Handle);
+uint32_t WritePayload(size_t mp4Handle, uint32_t* payload, uint32_t payloadsize, uint32_t index);
+size_t GetPayloadResource(size_t mp4Handle, size_t resHandle, uint32_t payloadBufferSize);
+void FreePayloadResource(size_t mp4Handle, size_t resHandle);
 uint32_t* GetPayload(size_t mp4Handle, size_t resHandle, uint32_t index);
 uint32_t GetPayloadSize(size_t mp4Handle, uint32_t index);
 uint32_t GetPayloadTime(size_t mp4Handle, uint32_t index, double *in, double *out); //MP4 timestamps for the payload
 uint32_t GetPayloadRationalTime(size_t mp4Handle, uint32_t index, int32_t *in_numerator, int32_t *out_numerator, uint32_t *denominator);
-uint32_t GetEditListOffset(size_t handle, double *offset);
-uint32_t GetEditListOffsetRationalTime(size_t handle, int32_t *offset_numerator, uint32_t *denominator);
+uint32_t GetEditListOffset(size_t mp4Handle, double *offset);
+uint32_t GetEditListOffsetRationalTime(size_t mp4Handle, int32_t *offset_numerator, uint32_t *denominator);
 
 #ifdef __cplusplus
 }

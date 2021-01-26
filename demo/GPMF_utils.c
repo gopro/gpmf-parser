@@ -51,7 +51,7 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 		return 0.0;
 
 	payloadsize = cb.cbGetPayloadSize(cb.mp4handle, teststart);
-	payloadres = cb.cbGetPayloadResource(0, payloadsize);
+	payloadres = cb.cbGetPayloadResource(cb.mp4handle, 0, payloadsize);
 	payload = cb.cbGetPayload(cb.mp4handle, payloadres, teststart);
 
 	ret = GPMF_Init(ms, payload, payloadsize);
@@ -351,7 +351,7 @@ double GetGPMFSampleRate(mp4callbacks cb, uint32_t fourcc, uint32_t timeBaseFour
 	}
 
 cleanup:
-	if (payloadres) cb.cbFreePayloadResource(payloadres);
+	if (payloadres) cb.cbFreePayloadResource(cb.mp4handle, payloadres);
 	return rate;
 }
 
