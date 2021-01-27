@@ -83,15 +83,9 @@ int main(int argc, char* argv[])
 	}
 
 #if 1 // Search for GPMF Track
-<<<<<<< HEAD
-	size_t mp4handle = OpenMP4Source(argv[1], MOV_GPMF_TRAK_TYPE, MOV_GPMF_TRAK_SUBTYPE);
+	size_t mp4handle = OpenMP4Source(argv[1], MOV_GPMF_TRAK_TYPE, MOV_GPMF_TRAK_SUBTYPE, 0);
 #else // look for a global GPMF payload in the moov header, within 'udta'
-	size_t mp4handle = OpenMP4SourceUDTA(argv[1]);  //Search for GPMF payload with MP4's udta 
-=======
-	size_t mp4 = OpenMP4Source(argv[1], MOV_GPMF_TRAK_TYPE, MOV_GPMF_TRAK_SUBTYPE, 0);
-#else // look for a global GPMF payload in the moov header, within 'udta'
-	size_t mp4 = OpenMP4SourceUDTA(argv[1], 0);  //Search for GPMF payload with MP4's udta
->>>>>>> 6c2c6350e02ea1f9af399927e1520e9ffe95e312
+	size_t mp4handle = OpenMP4SourceUDTA(argv[1], 0);  //Search for GPMF payload with MP4's udta
 #endif
 	if (mp4handle == 0)
 	{
