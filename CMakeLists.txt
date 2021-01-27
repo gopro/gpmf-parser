@@ -6,7 +6,7 @@ set(CMAKE_SUPPRESS_REGENERATION true)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 
 file(GLOB LIB_SOURCES "GPMF_parser.c" "demo/GPMF_mp4reader.c")
-file(GLOB SOURCES ${LIB_SOURCES} "demo/GPMF_demo.c" "demo/GPMF_print.c")
+file(GLOB SOURCES ${LIB_SOURCES} "demo/GPMF_demo.c" "demo/GPMF_print.c" "demo/GPMF_utils.c")
 
 add_executable(GPMF_PARSER_BIN ${SOURCES})
 set_target_properties(GPMF_PARSER_BIN PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
@@ -21,4 +21,4 @@ install(TARGETS GPMF_PARSER_LIB DESTINATION "lib")
 install(FILES "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc" DESTINATION "lib/pkgconfig")
 
 install(FILES "GPMF_parser.h" "GPMF_common.h" DESTINATION "include/gpmf-parser")
-install(FILES "demo/GPMF_mp4reader.h" DESTINATION "include/gpmf-parser/demo")
+install(FILES "demo/GPMF_mp4reader.h" "demo/GPMF_utils.h" DESTINATION "include/gpmf-parser/demo")
