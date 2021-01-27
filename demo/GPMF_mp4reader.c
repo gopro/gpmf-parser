@@ -474,7 +474,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 
 							num = BYTESWAP32(num);
 							// if equalsamplesize != 0, it is the size of all the samples and the length should be 20 (size,fourcc,flags,samplesize,samplecount)
-							if ((num <= (qtsize/sizeof(uint32_t))) || (equalsamplesize != 0 && qtsize == 20))
+                            if (qtsize >= (20 + (num * sizeof(uint32_t))) || (equalsamplesize != 0 && qtsize == 20))
 							{
 								if (mp4->metasizes)
 								{
@@ -482,7 +482,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype)  /
 									mp4->metasizes = 0;
 								}
 								//either the samples are different sizes or they are all the same size
-								if(num > 0 && ((qtsize > (num * 4)) || (equalsamplesize != 0 && qtsize == 20)))
+								if(num > 0)
 								{
 									mp4->metasize_count = num;
 									mp4->metasizes = (uint32_t *)malloc(num * 4);
