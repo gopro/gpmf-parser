@@ -567,7 +567,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | MWET | Microphone is WET | 10Hz | n/a | marks whether some of the microphones are wet |
 | AALP | Audio Levels | 10Hz | dBFS | RMS and peak audio levels in dBFS |
 
-### GoPro MAX (v1.3) Adds, Removes, Changes, Otherwise Supports All HERO7 metadata
+### GoPro MAX (v2.0) Adds, Removes, Changes, Otherwise Supports All HERO7 metadata
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
@@ -575,6 +575,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | IORI | Image ORIentation | frame rate | n/a | Quaternions for the image orientation relative to the camera body |
 | GRAV | GRAvity Vector | frame rate | n/a | Vector for the direction for gravity |
 | DISP | Disparity track (360 modes) | frame rate | n/a | 1-D depth map for the objects seen by the two lenses |
+| MAGN | MAGNnetometer | 24 | µT | Camera pointing direction x,y,z (valid in v2.0 firmware.) |
 
 ### HERO9 Black (v1.5) Adds, Removes, Changes, Otherwise Supports All HERO8 metadata
 
