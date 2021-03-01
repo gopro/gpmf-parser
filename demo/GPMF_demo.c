@@ -26,7 +26,7 @@
 
 #include "../GPMF_parser.h"
 #include "GPMF_mp4reader.h"
-#include "GPMF_utils.h"
+#include "../GPMF_utils.h"
 
 #define	SHOW_VIDEO_FRAMERATE		1
 #define	SHOW_PAYLOAD_TIME			1
