@@ -240,7 +240,7 @@ STRM null <size><repeat>
 
 The second data stream is almost half the size of the first (1216 vs 628 bytes) for the same resulting precision.
 
-When adding units, the SCAL doesn&#39;t apply to SUIN, but only the ACCL the latest KLV in the stream&#39;s (STRM) nest.
+When adding units, the SCAL doesn&#39;t apply to SIUN, but only the ACCL the latest KLV in the stream&#39;s (STRM) nest.
 
 ```
 STRM null <size><repeat> 
@@ -320,7 +320,7 @@ DEVC null <size0><repeat0>
 
 As the CV processing in this example can take time, it will be common for the processing to begin before the payload frame it which it is written. The first FACE samples begin their processing at 10023, yet the payload for normal sample data began at 10140 (within the top DEVC structure).
 
-## Standard Units for physical properties supported by SUIN
+## Standard Units for physical properties supported by SIUN
 
 ### Base Units
 
@@ -424,11 +424,11 @@ TYPE 'c' 1 5 "f[8]L"
 
 ## Sticky Metadata
 
-The metadata writing API should have a mechanism for creating and writing &quot;sticky&quot; metadata. Data of type sticky doesn&#39;t need to be re-transmitted if it is not changing, and it will only store the last value it is does change.  Sticky data is good for slow changing properties like the sensor&#39;s temperature, or any data that is sampled near the payload frequency or slower. Any metadata the modifies the meaning of sensor data should be written as sticky data: all TYPEs, SUINs, SCALs, naming fields (DVNM, STNM) and comments that are not changing over time.  This data needs to be within each payload in the event that the file is cut in to smaller segments, each segment must contain all relevant metadata so that no meaning is lost in the extracted clip.
+The metadata writing API should have a mechanism for creating and writing &quot;sticky&quot; metadata. Data of type sticky doesn&#39;t need to be re-transmitted if it is not changing, and it will only store the last value it is does change.  Sticky data is good for slow changing properties like the sensor&#39;s temperature, or any data that is sampled near the payload frequency or slower. Any metadata the modifies the meaning of sensor data should be written as sticky data: all TYPEs, SIUNs, SCALs, naming fields (DVNM, STNM) and comments that are not changing over time.  This data needs to be within each payload in the event that the file is cut in to smaller segments, each segment must contain all relevant metadata so that no meaning is lost in the extracted clip.
 
 ## Style Guide
 
-The addition of structure is not to make device vendor&#39;s life more difficult, but to communicate the meaning of data to a future reader, that may not even be aware of the device used in the original capture. The first useful metadata is a human readable name of the device. While DVNM (DeviceName) &quot;Camera&quot; is in the current metadata, saying &quot;GoPro Hero5 Black&quot; would be much better. Having a stream (STRM) with ACCL data, doesn&#39;t communicate what it contains, when adding a STNM or RMRK with &quot;Accelerometer (up/down, right/left, forward/back)&quot; adds a lot of clarity to the future data reader. SUIN, UNIT, SCAL and even TYPE is completely optional if you don&#39;t intend anyone other than for your own tools to process this data, but it is so much better to allow many tools to extract and process all data. Use of a standard unit (SIUN) allows downstream tools to convert accurately from m/s to MPH or kmH etc. under the end users control.
+The addition of structure is not to make device vendor&#39;s life more difficult, but to communicate the meaning of data to a future reader, that may not even be aware of the device used in the original capture. The first useful metadata is a human readable name of the device. While DVNM (DeviceName) &quot;Camera&quot; is in the current metadata, saying &quot;GoPro Hero5 Black&quot; would be much better. Having a stream (STRM) with ACCL data, doesn&#39;t communicate what it contains, when adding a STNM or RMRK with &quot;Accelerometer (up/down, right/left, forward/back)&quot; adds a lot of clarity to the future data reader. SIUN, UNIT, SCAL and even TYPE is completely optional if you don&#39;t intend anyone other than for your own tools to process this data, but it is so much better to allow many tools to extract and process all data. Use of a standard unit (SIUN) allows downstream tools to convert accurately from m/s to MPH or kmH etc. under the end users control.
 
 ## MP4 Implementation
 
