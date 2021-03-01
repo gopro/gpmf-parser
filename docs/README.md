@@ -576,6 +576,12 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | GRAV | GRAvity Vector | frame rate | n/a | Vector for the direction for gravity |
 | DISP | Disparity track (360 modes) | frame rate | n/a | 1-D depth map for the objects seen by the two lenses |
 
+### HERO9 Black (v1.5) Adds, Removes, Changes, Otherwise Supports All HERO8 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| MSKP | Main video frame SKiP | frame rate | n/a | GoPro internal usage. Number frames skips or duplicated from sensor image captured to encoded frame. Normally 0. This is used for visual effects when precision timing of the video frame is required. |
+| LSKP | Low res video frame SKiP | frame rate | n/a | GoPro internal usage. Same as MSKP for the LRV video file (when present.) This improves sync with the main video when using the LRV as a proxy. |
 
 ```
 GoPro is trademark of GoPro, Inc.
