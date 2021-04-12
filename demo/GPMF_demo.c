@@ -2,7 +2,7 @@
  *
  *  @brief Demo to extract GPMF from an MP4
  *
- *  @version 2.1.0
+ *  @version 2.4.0
  *
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *
@@ -26,6 +26,7 @@
 
 #include "../GPMF_parser.h"
 #include "GPMF_mp4reader.h"
+#include "../GPMF_utils.h"
 
 #define	SHOW_VIDEO_FRAMERATE		1
 #define	SHOW_PAYLOAD_TIME			1
@@ -61,8 +62,9 @@ int main(int argc, char* argv[])
 	GPMF_ERR ret = GPMF_OK;
 	GPMF_stream metadata_stream, * ms = &metadata_stream;
 	double metadatalength;
-	uint32_t payloadsize;
-	uint32_t* payload = NULL; //buffer to store GPMF samples from the MP4.
+	uint32_t* payload = NULL;
+	uint32_t payloadsize = 0;
+	size_t payloadres = 0;
 
 	uint32_t show_all_payloads = SHOW_ALL_PAYLOADS;
 	uint32_t show_gpmf_structure = SHOW_GPMF_STRUCTURE;
@@ -81,11 +83,11 @@ int main(int argc, char* argv[])
 	}
 
 #if 1 // Search for GPMF Track
-	size_t mp4 = OpenMP4Source(argv[1], MOV_GPMF_TRAK_TYPE, MOV_GPMF_TRAK_SUBTYPE);
+	size_t mp4handle = OpenMP4Source(argv[1], MOV_GPMF_TRAK_TYPE, MOV_GPMF_TRAK_SUBTYPE, 0);
 #else // look for a global GPMF payload in the moov header, within 'udta'
-	size_t mp4 = OpenMP4SourceUDTA(argv[1]);  //Search for GPMF payload with MP4's udta 
+	size_t mp4handle = OpenMP4SourceUDTA(argv[1], 0);  //Search for GPMF payload with MP4's udta
 #endif
-	if (mp4 == 0)
+	if (mp4handle == 0)
 	{
 		printf("error: %s is an invalid MP4/MOV or it has no GPMF data\n\n", argv[1]);
 
@@ -113,18 +115,15 @@ int main(int argc, char* argv[])
 	}
 
 
-	metadatalength = GetDuration(mp4);
-
-	//If the GPMF streams are using (non-zero) timestamps, which stream should time zero be relative to. 
-	//SetTimeBaseStream(mp4, STR2FOURCC("SHUT"));
+	metadatalength = GetDuration(mp4handle);
 
 	if (metadatalength > 0.0)
 	{
-		uint32_t index, payloads = GetNumberPayloads(mp4);
+		uint32_t index, payloads = GetNumberPayloads(mp4handle);
 		//		printf("found %.2fs of metadata, from %d payloads, within %s\n", metadatalength, payloads, argv[1]);
 
 		uint32_t fr_num, fr_dem;
-		uint32_t frames = GetVideoFrameRateAndCount(mp4, &fr_num, &fr_dem);
+		uint32_t frames = GetVideoFrameRateAndCount(mp4handle, &fr_num, &fr_dem);
 		if (show_video_framerate)
 		{
 			if (frames)
@@ -136,12 +135,13 @@ int main(int argc, char* argv[])
 		for (index = 0; index < payloads; index++)
 		{
 			double in = 0.0, out = 0.0; //times
-			payloadsize = GetPayloadSize(mp4, index);
-			payload = GetPayload(mp4, payload, index);
+			payloadsize = GetPayloadSize(mp4handle, index);
+			payloadres = GetPayloadResource(mp4handle, payloadres, payloadsize);
+			payload = GetPayload(mp4handle, payloadres, index);
 			if (payload == NULL)
 				goto cleanup;
 
-			ret = GetPayloadTime(mp4, index, &in, &out);
+			ret = GetPayloadTime(mp4handle, index, &in, &out);
 			if (ret != GPMF_OK)
 				goto cleanup;
 
@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
 						printf("  ");
 						PrintGPMF(ms);  // printf current GPMF KLV
 
-						nextret = GPMF_Next(ms, GPMF_RECURSE_LEVELS);
+						nextret = GPMF_Next(ms, GPMF_RECURSE_LEVELS | GPMF_TOLERANT);
 
 						while(nextret == GPMF_ERROR_UNKNOWN_TYPE) // or just using GPMF_Next(ms, GPMF_RECURSE_LEVELS|GPMF_TOLERANT) to ignore and skip unknown types
  							nextret = GPMF_Next(ms, GPMF_RECURSE_LEVELS);
@@ -289,123 +289,138 @@ int main(int argc, char* argv[])
 						GPMF_SampleType type = GPMF_Type(ms);
 						uint32_t samples = GPMF_Repeat(ms);
 						uint32_t elements = GPMF_ElementsInStruct(ms);
-						uint32_t buffersize = samples * elements * sizeof(double);
-						GPMF_stream find_stream;
-						double* ptr, * tmpbuffer = (double*)malloc(buffersize);
+
+						if (samples)
+						{
+							uint32_t buffersize = samples * elements * sizeof(double);
+							GPMF_stream find_stream;
+							double* ptr, * tmpbuffer = (double*)malloc(buffersize);
 
 #define MAX_UNITS	64
 #define MAX_UNITLEN	8
-						char units[MAX_UNITS][MAX_UNITLEN] = { "" };
-						uint32_t unit_samples = 1;
+							char units[MAX_UNITS][MAX_UNITLEN] = { "" };
+							uint32_t unit_samples = 1;
 
-						char complextype[MAX_UNITS] = { "" };
-						uint32_t type_samples = 1;
+							char complextype[MAX_UNITS] = { "" };
+							uint32_t type_samples = 1;
 
-						if (tmpbuffer && samples)
-						{
-							uint32_t i, j;
-
-							//Search for any units to display
-							GPMF_CopyState(ms, &find_stream);
-							if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_SI_UNITS, GPMF_CURRENT_LEVEL|GPMF_TOLERANT) ||
-								GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_UNITS, GPMF_CURRENT_LEVEL|GPMF_TOLERANT))
+							if (tmpbuffer)
 							{
-								char* data = (char*)GPMF_RawData(&find_stream);
-								uint32_t ssize = GPMF_StructSize(&find_stream);
-								if (ssize > MAX_UNITLEN - 1) ssize = MAX_UNITLEN - 1;
-								unit_samples = GPMF_Repeat(&find_stream);
+								uint32_t i, j;
 
-								for (i = 0; i < unit_samples && i < MAX_UNITS; i++)
+								//Search for any units to display
+								GPMF_CopyState(ms, &find_stream);
+								if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_SI_UNITS, GPMF_CURRENT_LEVEL | GPMF_TOLERANT) ||
+									GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_UNITS, GPMF_CURRENT_LEVEL | GPMF_TOLERANT))
 								{
-									memcpy(units[i], data, ssize);
-									units[i][ssize] = 0;
-									data += ssize;
-								}
-							}
+									char* data = (char*)GPMF_RawData(&find_stream);
+									uint32_t ssize = GPMF_StructSize(&find_stream);
+									if (ssize > MAX_UNITLEN - 1) ssize = MAX_UNITLEN - 1;
+									unit_samples = GPMF_Repeat(&find_stream);
 
-							//Search for TYPE if Complex
-							GPMF_CopyState(ms, &find_stream);
-							type_samples = 0;
-							if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL|GPMF_TOLERANT))
-							{
-								char* data = (char*)GPMF_RawData(&find_stream);
-								uint32_t ssize = GPMF_StructSize(&find_stream);
-								if (ssize > MAX_UNITLEN - 1) ssize = MAX_UNITLEN - 1;
-								type_samples = GPMF_Repeat(&find_stream);
-
-								for (i = 0; i < type_samples && i < MAX_UNITS; i++)
-								{
-									complextype[i] = data[i];
-								}
-							}
-
-							//GPMF_FormattedData(ms, tmpbuffer, buffersize, 0, samples); // Output data in LittleEnd, but no scale
-							if (GPMF_OK == GPMF_ScaledData(ms, tmpbuffer, buffersize, 0, samples, GPMF_TYPE_DOUBLE))//Output scaled data as floats
-							{
-
-								ptr = tmpbuffer;
-								int pos = 0;
-								for (i = 0; i < samples; i++)
-								{
-									printf("  %c%c%c%c ", PRINTF_4CC(key));
-
-									for (j = 0; j < elements; j++)
+									for (i = 0; i < unit_samples && i < MAX_UNITS; i++)
 									{
-										if (type == GPMF_TYPE_STRING_ASCII)
-										{
-											printf("%c", rawdata[pos]);
-											pos++;
-											ptr++;
-										}
-										else if (type_samples == 0) //no TYPE structure
-											printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
-										else if (complextype[j] != 'F')
-										{
-											printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
-											pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
-										}
-										else if (type_samples && complextype[j] == GPMF_TYPE_FOURCC)
-										{
-											ptr++;
-											printf("%c%c%c%c, ", rawdata[pos], rawdata[pos + 1], rawdata[pos + 2], rawdata[pos + 3]);
-											pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
-										}
+										memcpy(units[i], data, ssize);
+										units[i][ssize] = 0;
+										data += ssize;
 									}
-
-
-									printf("\n");
 								}
+
+								//Search for TYPE if Complex
+								GPMF_CopyState(ms, &find_stream);
+								type_samples = 0;
+								if (GPMF_OK == GPMF_FindPrev(&find_stream, GPMF_KEY_TYPE, GPMF_CURRENT_LEVEL | GPMF_TOLERANT))
+								{
+									char* data = (char*)GPMF_RawData(&find_stream);
+									uint32_t ssize = GPMF_StructSize(&find_stream);
+									if (ssize > MAX_UNITLEN - 1) ssize = MAX_UNITLEN - 1;
+									type_samples = GPMF_Repeat(&find_stream);
+
+									for (i = 0; i < type_samples && i < MAX_UNITS; i++)
+									{
+										complextype[i] = data[i];
+									}
+								}
+
+								//GPMF_FormattedData(ms, tmpbuffer, buffersize, 0, samples); // Output data in LittleEnd, but no scale
+								if (GPMF_OK == GPMF_ScaledData(ms, tmpbuffer, buffersize, 0, samples, GPMF_TYPE_DOUBLE))//Output scaled data as floats
+								{
+
+									ptr = tmpbuffer;
+									int pos = 0;
+									for (i = 0; i < samples; i++)
+									{
+										printf("  %c%c%c%c ", PRINTF_4CC(key));
+
+										for (j = 0; j < elements; j++)
+										{
+											if (type == GPMF_TYPE_STRING_ASCII)
+											{
+												printf("%c", rawdata[pos]);
+												pos++;
+												ptr++;
+											}
+											else if (type_samples == 0) //no TYPE structure
+												printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
+											else if (complextype[j] != 'F')
+											{
+												printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
+												pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
+											}
+											else if (type_samples && complextype[j] == GPMF_TYPE_FOURCC)
+											{
+												ptr++;
+												printf("%c%c%c%c, ", rawdata[pos], rawdata[pos + 1], rawdata[pos + 2], rawdata[pos + 3]);
+												pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
+											}
+										}
+
+
+										printf("\n");
+									}
+								}
+								free(tmpbuffer);
 							}
-							free(tmpbuffer);
 						}
 					}
 					GPMF_ResetState(ms);
 				}
 			}
-
-			GPMF_Free(ms);
 		}
+
 
 		if (show_computed_samplerates)
 		{
+			mp4callbacks cbobject;
+			cbobject.mp4handle = mp4handle;
+			cbobject.cbGetNumberPayloads = GetNumberPayloads;
+			cbobject.cbGetPayload = GetPayload;
+			cbobject.cbGetPayloadSize = GetPayloadSize;
+			cbobject.cbGetPayloadResource = GetPayloadResource;
+			cbobject.cbGetPayloadTime = GetPayloadTime;
+			cbobject.cbFreePayloadResource = FreePayloadResource;
+			cbobject.cbGetEditListOffsetRationalTime = GetEditListOffsetRationalTime;
+
 			printf("COMPUTED SAMPLERATES:\n");
 			// Find all the available Streams and compute they sample rates
-			while (GPMF_OK == GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS|GPMF_TOLERANT))
+			while (GPMF_OK == GPMF_FindNext(ms, GPMF_KEY_STREAM, GPMF_RECURSE_LEVELS | GPMF_TOLERANT))
 			{
 				if (GPMF_OK == GPMF_SeekToSamples(ms)) //find the last FOURCC within the stream
 				{
 					double start, end;
 					uint32_t fourcc = GPMF_Key(ms);
-					double rate = GetGPMFSampleRate(mp4, fourcc, GPMF_SAMPLE_RATE_PRECISE, &start, &end);// GPMF_SAMPLE_RATE_FAST);
+
+
+					double rate = GetGPMFSampleRate(cbobject, fourcc, STR2FOURCC("SHUT"), GPMF_SAMPLE_RATE_PRECISE, &start, &end);// GPMF_SAMPLE_RATE_FAST);
 					printf("  %c%c%c%c sampling rate = %fHz (time %f to %f)\",\n", PRINTF_4CC(fourcc), rate, start, end);
 				}
 			}
 		}
 
 	cleanup:
+		if (payloadres) FreePayloadResource(mp4handle, payloadres);
 		if (ms) GPMF_Free(ms);
-		if (payload) FreePayload(payload); payload = NULL;
-		CloseSource(mp4);
+		CloseSource(mp4handle);
 	}
 
 	if (ret != 0)

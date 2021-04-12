@@ -1,4 +1,4 @@
-/*! @file GPMF_parser.h
+/*! @file GPMF_common.h
  * 
  *  @brief GPMF Parser library include
  * 
