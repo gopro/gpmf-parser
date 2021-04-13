@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 2.2.1
+ *  @version 2.2.2
  * 
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *	
@@ -222,6 +222,9 @@ GPMF_ERR GPMF_Init(GPMF_stream *ms, uint32_t *buffer, uint32_t datasize)
 	if(ms && buffer && datasize > 0)
 	{
 		uint32_t pos = 0;
+
+		memset(ms, 0, sizeof(GPMF_stream));
+
 		//Validate DEVC GPMF
 		while((pos+1) * 4 < datasize && buffer[pos] == GPMF_KEY_DEVICE)
 		{
