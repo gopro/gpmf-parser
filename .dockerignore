@@ -9,6 +9,8 @@
 !GPMF_common.h
 !GPMF_parser.c
 !GPMF_parser.h
+!GPMF_utils.h
+!GPMF_utils.c
 !LICENSE-APACHE
 !LICENSE-MIT
 !LICENSE.txt
