@@ -7,4 +7,4 @@ Name: @PROJECT_NAME@
 Description: A low level GPMF parser
 Version: 1.2.2
 Libs: -L${libdir} @PC_LINK_FLAGS@
-Cflags: -I${includedir} -I${includedir}/demo @PC_EXTRA_C_FLAGS@
+Cflags: -I${includedir} -I${includedir}/demo
