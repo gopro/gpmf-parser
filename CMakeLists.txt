@@ -34,5 +34,5 @@ install(TARGETS GPMF_PARSER_BIN DESTINATION "bin")
 install(TARGETS GPMF_PARSER_LIB DESTINATION "lib")
 install(FILES "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc" DESTINATION "lib/pkgconfig")
 
-install(FILES "GPMF_parser.h" "GPMF_common.h" DESTINATION "include/gpmf-parser")
+install(FILES "GPMF_parser.h" "GPMF_common.h" "GPMF_export.h" DESTINATION "include/gpmf-parser")
 install(FILES "demo/GPMF_mp4reader.h" DESTINATION "include/gpmf-parser/demo")
