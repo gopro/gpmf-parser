@@ -892,7 +892,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 
 									totaldur += duration;
 									mp4->metadatalength += (double)((double)samplecount * (double)duration / (double)mp4->meta_clockdemon);
-									if (samples > 1 || num == 1)
+									if (samplecount > 1 || num == 1 || mp4->basemetadataduration == 0.0)
 										mp4->basemetadataduration = mp4->metadatalength * (double)mp4->meta_clockdemon / (double)samples;
 								}
 							}
