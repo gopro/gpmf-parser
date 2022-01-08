@@ -8,11 +8,16 @@ ifneq ($(OS),Windows_NT)
 	endif
 endif
 
-gpmfdemo : GPMF_demo.o GPMF_parser.o GPMF_utils.o GPMF_mp4reader.o GPMF_print.o
-		gcc -o gpmfdemo GPMF_demo.o GPMF_parser.o GPMF_utils.o GPMF_mp4reader.o GPMF_print.o $(ASAN_FLAGS)
+# gpmfdemo : GPMF_demo.o GPMF_parser.o GPMF_utils.o GPMF_mp4reader.o GPMF_print.o
+# 		gcc -o gpmfdemo GPMF_demo.o GPMF_parser.o GPMF_utils.o GPMF_mp4reader.o GPMF_print.o $(ASAN_FLAGS)
 
-GPMF_demo.o : GPMF_demo.c
-		gcc -g -c GPMF_demo.c
+gpmfdemo : GPMF_demo_csv.o GPMF_parser.o GPMF_utils.o GPMF_mp4reader.o GPMF_print.o
+		gcc -o gpmfdemo GPMF_demo_csv.o GPMF_parser.o GPMF_utils.o GPMF_mp4reader.o GPMF_print.o $(ASAN_FLAGS)
+
+# GPMF_demo.o : GPMF_demo.c
+# 		gcc -g -c GPMF_demo.c
+GPMF_demo_csv.o : GPMF_demo_csv.c
+		gcc -g -c GPMF_demo_csv.c
 GPMF_mp4reader.o : GPMF_mp4reader.c ../GPMF_parser.h
 		gcc -g -c GPMF_mp4reader.c
 GPMF_print.o : GPMF_print.c ../GPMF_parser.h

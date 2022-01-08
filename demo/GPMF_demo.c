@@ -28,14 +28,14 @@
 #include "GPMF_mp4reader.h"
 #include "../GPMF_utils.h"
 
-#define	SHOW_VIDEO_FRAMERATE		1
-#define	SHOW_PAYLOAD_TIME			1
-#define	SHOW_ALL_PAYLOADS			0
+#define	SHOW_VIDEO_FRAMERATE		0
+#define	SHOW_PAYLOAD_TIME			0
+#define	SHOW_ALL_PAYLOADS			1
 #define SHOW_GPMF_STRUCTURE			0
 #define	SHOW_PAYLOAD_INDEX			0
 #define	SHOW_SCALED_DATA			1
-#define	SHOW_THIS_FOUR_CC			STR2FOURCC("ACCL")
-#define SHOW_COMPUTED_SAMPLERATES	1
+#define	SHOW_THIS_FOUR_CC			STR2FOURCC("CORI")
+#define SHOW_COMPUTED_SAMPLERATES	0
 
 
 
@@ -269,7 +269,7 @@ int main(int argc, char* argv[])
 			{
 				if (show_all_payloads || index == 0)
 				{
-					printf("SCALED DATA:\n");
+					// printf("SCALED DATA:\n");
 					while (GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("STRM"), GPMF_RECURSE_LEVELS|GPMF_TOLERANT)) //GoPro Hero5/6/7 Accelerometer)
 					{
 						if (GPMF_VALID_FOURCC(show_this_four_cc))
@@ -350,7 +350,7 @@ int main(int argc, char* argv[])
 									int pos = 0;
 									for (i = 0; i < samples; i++)
 									{
-										printf("  %c%c%c%c ", PRINTF_4CC(key));
+										// printf("  %c%c%c%c ", PRINTF_4CC(key));
 
 										for (j = 0; j < elements; j++)
 										{
@@ -364,13 +364,13 @@ int main(int argc, char* argv[])
 												printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
 											else if (complextype[j] != 'F')
 											{
-												printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
+												// printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
 												pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
 											}
 											else if (type_samples && complextype[j] == GPMF_TYPE_FOURCC)
 											{
 												ptr++;
-												printf("%c%c%c%c, ", rawdata[pos], rawdata[pos + 1], rawdata[pos + 2], rawdata[pos + 3]);
+												// printf("%c%c%c%c, ", rawdata[pos], rawdata[pos + 1], rawdata[pos + 2], rawdata[pos + 3]);
 												pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
 											}
 										}
