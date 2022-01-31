@@ -56,6 +56,20 @@ docker run -v "/path/to/my/movie.mp4:/input.mp4" runsascoded/gpmf-parser
 
 Clone the project from Github (git clone https://github.com/gopro/gpmf-parser).
 
+Now you can run a quick demo on the sample data by compiling the demo:
+
+```bash
+cd gpmf-parser/demo/
+make
+./gpmfdemo ../samples/Fusion.mp4
+```
+
+This will return a brief overview of what metadata is stored in the given video file (Fusion.mp4). The following command will show the first few samples of the recorded payload (i.e. accelerometer, gyroscope, magnetometer, GPS, etc.):
+
+```bash
+./gpmfdemo ../samples/Fusion.mp4 -g
+```
+
 ### Sample Code
 
 GPMF-parser.c and .h provide a payload decoder for any raw stream stored in compliant GPMF. Extraction of the RAW GPMF from a video or image file is not covered by this tool.
