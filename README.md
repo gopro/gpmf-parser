@@ -580,7 +580,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | SCEN | Scene classifier in probabilities | 8 - 10 | n/a | FourCC scenes: SNOW, URBAn, INDOor, WATR, VEGEtation, BEACh |
 | SROT | Sensor Read Out Time | at base frame rate 24/25/30  | n/a | this moves to a global value in HERO8 |
 
-### HERO8 Black (v1.2) Adds, Removes, Changes, Otherwise Supports All HERO7 metadata
+### HERO8 Black (v2.5) Adds, Removes, Changes, Otherwise Supports All HERO7 metadata
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
@@ -601,7 +601,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | DISP | Disparity track (360 modes) | frame rate | n/a | 1-D depth map for the objects seen by the two lenses |
 | MAGN | MAGNnetometer | 24 | µT | Camera pointing direction x,y,z (valid in v2.0 firmware.) |
 
-### HERO9 Black (v1.5) Adds, Removes, Changes, Otherwise Supports All HERO8 metadata
+### HERO9 & HERO10 Black Adds, Removes, Changes, Otherwise Supports All HERO8 metadata
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
