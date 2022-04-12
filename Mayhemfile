@@ -1,0 +1,7 @@
+image: pedbap/gpmf-parser:5
+duration: 90
+project: gpmf-parser
+target: gpmf-parser
+cmds:
+  - cmd: /gpmfdemo @@
+    afl: true
