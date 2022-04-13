@@ -601,7 +601,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | DISP | Disparity track (360 modes) | frame rate | n/a | 1-D depth map for the objects seen by the two lenses |
 | MAGN | MAGNnetometer | 24 | µT | Camera pointing direction x,y,z (valid in v2.0 firmware.) |
 
-### HERO9 & HERO10 Black Adds, Removes, Changes, Otherwise Supports All HERO8 metadata
+### HERO9, HERO10 and BONES Adds, Removes, Changes, Otherwise Supports All HERO8 metadata
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
