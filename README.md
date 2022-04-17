@@ -608,7 +608,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | MSKP | Main video frame SKiP | frame rate | n/a | GoPro internal usage. Number frames skips or duplicated from sensor image captured to encoded frame. Normally 0. This is used for visual effects when precision timing of the video frame is required. |
 | LSKP | Low res video frame SKiP | frame rate | n/a | GoPro internal usage. Same as MSKP for the LRV video file (when present.) This improves sync with the main video when using the LRV as a proxy. |
 
-### BONES is and HERO10, but has no GPS board, so GPS5 will be missing
+### BONES is a HERO10, but has no GPS board, so GPS5 will be missing
 
 
 ```
