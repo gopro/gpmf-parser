@@ -417,8 +417,8 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 								readnum = BYTESWAP32(readnum);
 								if (readnum <= (qtsize / 12) && mp4->trak_clockdemon)
 								{
-									uint32_t segment_duration; //integer that specifies the duration of this edit segment in units of the movieÂ’s time scale.
-									uint32_t segment_mediaTime; //integer containing the starting time within the media of this edit segment(in media timescale units).If this field is set to Â–1, it is an empty edit.The last edit in a track should never be an empty edit.Any difference between the movieÂ’s duration and the trackÂ’s duration is expressed as an implicit empty edit.
+									uint32_t segment_duration; //integer that specifies the duration of this edit segment in units of the movie’s time scale.
+									uint32_t segment_mediaTime; //integer containing the starting time within the media of this edit segment(in media timescale units).If this field is set to –1, it is an empty edit.The last edit in a track should never be an empty edit.Any difference between the movie’s duration and the track’s duration is expressed as an implicit empty edit.
 									uint32_t segment_mediaRate; //point number that specifies the relative rate at which to play the media corresponding to this edit segment.This rate value cannot be 0 or negative.
 									for (i = 0; i < readnum; i++)
 									{
@@ -892,7 +892,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 
 									totaldur += duration;
 									mp4->metadatalength += (double)((double)samplecount * (double)duration / (double)mp4->meta_clockdemon);
-									if (samplecount > 1 || num == 1)
+									if (samplecount > 1 || num == 1 || mp4->basemetadataduration == 0.0)
 										mp4->basemetadataduration = mp4->metadatalength * (double)mp4->meta_clockdemon / (double)samples;
 								}
 							}
