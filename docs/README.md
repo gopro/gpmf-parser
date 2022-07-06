@@ -584,6 +584,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
+| FACE | Face boxes, confidence and smile | 10Hz | n/a | struct ID,x,y,w,h,confidence %,smile % |
 | CORI | Camera ORIentation | frame rate | n/a | Quaternions for the camera orientation since capture start |
 | IORI | Image ORIentation | frame rate | n/a | Quaternions for the image orientation relative to the camera body |
 | GRAV | GRAvity Vector | frame rate | n/a | Vector for the direction for gravitiy |
@@ -605,6 +606,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
+| FACE | version 4, face boxes, confidence and smile | at half base frame rate 12/12.5/15Hz | n/a | struct ver,ID,x,y,w,h,confidence %,smile % |
 | MSKP | Main video frame SKiP | frame rate | n/a | GoPro internal usage. Number frames skips or duplicated from sensor image captured to encoded frame. Normally 0. This is used for visual effects when precision timing of the video frame is required. |
 | LSKP | Low res video frame SKiP | frame rate | n/a | GoPro internal usage. Same as MSKP for the LRV video file (when present.) This improves sync with the main video when using the LRV as a proxy. |
 
