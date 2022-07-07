@@ -584,7 +584,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| FACE | Face boxes, confidence and smile | 10Hz | n/a | struct ID,x,y,w,h,confidence %,smile % |
+| FACE | Face boxes, confidence and smile | 8-10 | n/a | struct ID,x,y,w,h,confidence %,smile % |
 | CORI | Camera ORIentation | frame rate | n/a | Quaternions for the camera orientation since capture start |
 | IORI | Image ORIentation | frame rate | n/a | Quaternions for the image orientation relative to the camera body |
 | GRAV | GRAvity Vector | frame rate | n/a | Vector for the direction for gravitiy |
