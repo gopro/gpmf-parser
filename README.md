@@ -614,7 +614,6 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
 | FACE | version 4, confidence, ID, face boxes, smile and blink | at half base frame rate 12/12.5/15Hz | n/a | struct ver,confidence %,ID,x,y,w,h,smile %, blink % |
-  |
 
 ### BONES is a HERO10, but has no GPS board, so GPS5 will be missing
 
