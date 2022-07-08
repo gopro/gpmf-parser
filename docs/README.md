@@ -602,13 +602,19 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | DISP | Disparity track (360 modes) | frame rate | n/a | 1-D depth map for the objects seen by the two lenses |
 | MAGN | MAGNnetometer | 24 | µT | Camera pointing direction x,y,z (valid in v2.0 firmware.) |
 
-### HERO9 and HERO10, Removes, Changes, Otherwise Supports All HERO8 metadata
+### HERO9 Changes, Otherwise Supports All HERO8 metadata
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| FACE | version 4, face boxes, confidence and smile | at half base frame rate 12/12.5/15Hz | n/a | struct ver,ID,x,y,w,h,confidence %,smile % |
 | MSKP | Main video frame SKiP | frame rate | n/a | GoPro internal usage. Number frames skips or duplicated from sensor image captured to encoded frame. Normally 0. This is used for visual effects when precision timing of the video frame is required. |
 | LSKP | Low res video frame SKiP | frame rate | n/a | GoPro internal usage. Same as MSKP for the LRV video file (when present.) This improves sync with the main video when using the LRV as a proxy. |
+
+### HERO10 changes, otherwise supports All HERO9 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| FACE | version 4, confidence, ID, face boxes, smile and blink | at half base frame rate 12/12.5/15Hz | n/a | struct ver,confidence %,ID,x,y,w,h,smile %, blink % |
+
 
 ### BONES is a HERO10, but has no GPS board, so GPS5 will be missing
 
