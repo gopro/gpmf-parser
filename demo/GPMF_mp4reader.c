@@ -1124,11 +1124,19 @@ size_t OpenMP4SourceUDTA(char *filename, int32_t flags)
 		int32_t nest = 0;
 		uint64_t nestsize[MAX_NEST_LEVEL] = { 0 };
 		uint64_t lastsize = 0, qtsize;
+		uint64_t maxfilesize = 0;
+		uint32_t required_tags = 0;
+
 
 		do
 		{
 			len = fread(&qtsize32, 1, 4, mp4->mediafp);
 			len += fread(&qttag, 1, 4, mp4->mediafp);
+			mp4->filepos += len;
+			
+			if (maxfilesize && mp4->filepos >= maxfilesize)
+				break;
+
 			if (len == 8)
 			{
 				if (!VALID_FOURCC(qttag) && qttag != 0x7a7978a9)
@@ -1160,8 +1168,18 @@ size_t OpenMP4SourceUDTA(char *filename, int32_t flags)
 				nestsize[nest] = qtsize;
 				lastsize = qtsize;
 
-				if (qttag == MAKEID('m', 'd', 'a', 't') ||
-					qttag == MAKEID('f', 't', 'y', 'p'))
+				if (qttag == MAKEID('m', 'd', 'a', 't'))
+				{
+					required_tags++;
+					if (required_tags >= 2)
+						maxfilesize = mp4->filepos + qtsize;
+
+					LongSeek(mp4, qtsize - 8);
+					NESTSIZE(qtsize);
+					continue;
+				}
+
+				if(qttag == MAKEID('f', 't', 'y', 'p'))
 				{
 					LongSeek(mp4, qtsize - 8);
 					NESTSIZE(qtsize);
@@ -1196,6 +1214,12 @@ size_t OpenMP4SourceUDTA(char *filename, int32_t flags)
 				}
 				else
 				{
+					if (qttag == MAKEID('m', 'o', 'o', 'v')) //moov
+					{
+						required_tags++;
+						if (required_tags >= 2)
+							maxfilesize = mp4->filepos + qtsize;
+					}
 					NESTSIZE(8);
 				}
 			}
