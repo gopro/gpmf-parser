@@ -241,6 +241,8 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 		int32_t nest = 0;
 		uint64_t nestsize[MAX_NEST_LEVEL] = { 0 };
 		uint64_t lastsize = 0, qtsize;
+		uint64_t maxfilesize = 0;
+		uint32_t required_tags = 0;
 
 
 		do
@@ -248,6 +250,10 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 			len = fread(&qtsize32, 1, 4, mp4->mediafp);
 			len += fread(&qttag, 1, 4, mp4->mediafp);
 			mp4->filepos += len;
+
+			if (maxfilesize && mp4->filepos >= maxfilesize) 
+				break;
+
 			if (len == 8 && mp4->filepos < mp4->filesize)
 			{
 				if (mp4->filepos == 8 && qttag != MAKEID('f', 't', 'y', 'p'))
@@ -327,14 +333,28 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 					qttag != MAKEID('h', 'd', 'l', 'r') &&
 					qttag != MAKEID('e', 'd', 't', 's'))
 				{
+
+					if (qttag == MAKEID('m', 'd', 'a', 't')) //mdat
+					{
+						required_tags++;
+						if(required_tags>=2)
+							maxfilesize = mp4->filepos + qtsize;
+					}
+
 					LongSeek(mp4, qtsize - 8);
 
 					NESTSIZE(qtsize);
 				}
 				else
 				{
-					
-					if (qttag == MAKEID('m', 'v', 'h', 'd')) //mvhd  movie header
+					if (qttag == MAKEID('m', 'o', 'o', 'v')) //moov
+					{
+						required_tags++;
+						if (required_tags >= 2)
+							maxfilesize = mp4->filepos + qtsize;
+						NESTSIZE(8);
+					}
+					else if (qttag == MAKEID('m', 'v', 'h', 'd')) //mvhd  movie header
 					{
 						len = fread(&skip, 1, 4, mp4->mediafp);
 						len += fread(&skip, 1, 4, mp4->mediafp);
