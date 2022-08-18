@@ -469,24 +469,52 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 					}
 					else if (qttag == MAKEID('s', 't', 's', 'd')) //read the sample decription to determine the type of metadata
 					{
-						if (type == traktype) //like meta
+						len = fread(&skip, 1, 4, mp4->mediafp);
+						len += fread(&skip, 1, 4, mp4->mediafp);
+						len += fread(&skip, 1, 4, mp4->mediafp);
+						len += fread(&subtype, 1, 4, mp4->mediafp);  // type will be 'meta' for the GPMF trak.
+						if (len == 16)
 						{
-							len = fread(&skip, 1, 4, mp4->mediafp);
-							len += fread(&skip, 1, 4, mp4->mediafp);
-							len += fread(&skip, 1, 4, mp4->mediafp);
-							len += fread(&subtype, 1, 4, mp4->mediafp);  // type will be 'meta' for the correct trak.
-							if (len == 16)
+							if (type == traktype && subtype != traksubtype) // if this is the correct track, but not the subtype we are looking for, skip.
 							{
-								if (subtype != traksubtype) // not MP4 metadata 
+								type = 0; // MP4
+							}
+							else if (type == MOV_VIDE_TRAK_TYPE && subtype == MOV_HVC1_SUBTYPE) // get hvcC data while we are here
+							{
+								if (qtsize < 512)
 								{
-									type = 0; // MP4
+									mp4->hvcC = (uint32_t*)malloc(qtsize - 8 - len);
+									if (mp4->hvcC)
+									{
+										uint64_t blob_size = qtsize - 8 - len;
+										len += fread(mp4->hvcC, 1, blob_size, mp4->mediafp);
+										
+										for (uint32_t i = 4; i < (uint32_t)blob_size - 8; i++)
+										{
+											if (MAKEID(mp4->hvcC[i+0], mp4->hvcC[i+1], mp4->hvcC[i+2], mp4->hvcC[i+3]) == MAKEID('h', 'v', 'c', 'C'))
+											{
+												uint32_t hvcC_size = (mp4->hvcC[i-4] << 24) + (mp4->hvcC[i-3] << 24) + (mp4->hvcC[i-2] << 24) + (mp4->hvcC[i-1]);
+												if (hvcC_size == blob_size - i + 4)
+												{
+													memcpy(mp4->hvcC, &mp4->hvcC[i + 4], hvcC_size - 8);
+													mp4->hvcC_size = hvcC_size - 8;
+													memset(&mp4->hvcC[mp4->hvcC_size], 0, blob_size-mp4->hvcC_size);
+													break;
+												}
+											}
+										}
+
+										if (mp4->hvcC_size == 0)
+										{
+											free(mp4->hvcC);
+											mp4->hvcC = 0;
+										}
+									}
 								}
 							}
-							mp4->filepos += len;
-							LongSeek(mp4, qtsize - 8 - len); // skip over stsd
 						}
-						else
-							LongSeek(mp4, qtsize - 8);
+						mp4->filepos += len;
+						LongSeek(mp4, qtsize - 8 - len); // skip over stsd
 
 						NESTSIZE(qtsize);
 					}

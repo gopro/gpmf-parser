@@ -71,6 +71,8 @@ typedef struct mp4object
 	FILE *mediafp;
 	uint64_t filesize;
 	uint64_t filepos;
+	uint8_t* hvcC;
+	uint32_t hvcC_size;
 } mp4object;
 
 enum mp4flag
