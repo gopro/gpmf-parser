@@ -621,8 +621,8 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| GPS5 | latitude, longitude, altitude, 2D ground speed, and 3D speed | 18 | deg, deg, m, m/s, m/s | unchanged but deprecated, might not be in future cameras |  
-| GPS9 | lat, long, alt, 2D speed, 3D speed, days since 2000, secs since midnight (ms precision), DOP, fix (0, 2D or 3D) | 32 | deg, deg, m, m/s, m/s,-,s,-,- | improved precision over GPS5 for time and fix information |
+| GPS5 | latitude, longitude, altitude, 2D ground speed, and 3D speed | 10 | deg, deg, m, m/s, m/s | unchanged but deprecated, might not be in future cameras |  
+| GPS9 | lat, long, alt, 2D speed, 3D speed, days since 2000, secs since midnight (ms precision), DOP, fix (0, 2D or 3D) | 10 | deg, deg, m, m/s, m/s,-,s,-,- | improved precision over GPS5 for time and fix information |
 
 ```
 GoPro is trademark of GoPro, Inc.
