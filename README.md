@@ -617,6 +617,12 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 
 ### BONES is a HERO10, but has no GPS board, so GPS5 will be missing
 
+### HERO11 changes, otherwise supports All HERO10 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| GPS5 | latitude, longitude, altitude, 2D ground speed, and 3D speed | 18 | deg, deg, m, m/s, m/s | unchanged but deprecated, might not be in future cameras |  
+| GPS9 | lat, long, alt, 2D speed, 3D speed, days since 2000, secs since midnight (ms precision), DOP, fix (0, 2D or 3D) | 32 | deg, deg, m, m/s, m/s, ,s, , | improved precision over GPS5 |
 
 ```
 GoPro is trademark of GoPro, Inc.
