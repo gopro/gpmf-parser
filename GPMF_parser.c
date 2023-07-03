@@ -222,6 +222,9 @@ GPMF_ERR GPMF_Init(GPMF_stream *ms, uint32_t *buffer, uint32_t datasize)
 	if(ms && buffer && datasize > 0)
 	{
 		uint32_t pos = 0;
+		
+		memset(ms, 0, sizeof(GPMF_stream));
+
 		//Validate DEVC GPMF
 		while((pos+1) * 4 < datasize && buffer[pos] == GPMF_KEY_DEVICE)
 		{
@@ -1815,6 +1818,29 @@ GPMF_ERR GPMF_ScaledData(GPMF_stream *ms, void *buffer, uint32_t buffersize, uin
 					case GPMF_TYPE_UNSIGNED_LONG:  MACRO_BSWAP_CAST_UNSIGNED_SCALE(BYTESWAP32, uint32_t, uint32_t) break;
 					case GPMF_TYPE_SIGNED_64BIT_INT:  MACRO_BSWAP_CAST_SCALE(BYTESWAP64, int64_t, uint64_t) break;
 					case GPMF_TYPE_UNSIGNED_64BIT_INT:  MACRO_BSWAP_CAST_UNSIGNED_SCALE(BYTESWAP64, uint64_t, uint64_t) break;
+					case GPMF_TYPE_FOURCC: // Don't scale, just store, if it will fit.
+						{					
+						uint32_t* out = (uint32_t*)output;
+						switch (outputType) {
+							case GPMF_TYPE_FLOAT:	
+							case GPMF_TYPE_SIGNED_LONG:	
+							case GPMF_TYPE_UNSIGNED_LONG:	
+								*out++ = *(uint32_t*)data;
+								data += 4;
+								output += 4;
+								break;
+							case GPMF_TYPE_DOUBLE:			
+								*out++ = *(uint32_t*)data;
+								*out++ = 0;
+								data += 4;
+								output += 8;
+								break;
+							default: //bytes and shorts
+								ret = GPMF_ERROR_SCALE_NOT_SUPPORTED; // FourCC can't fit in these target buffers
+								goto cleanup;
+								break;
+							}			
+						} break;
 					default:
 						ret = GPMF_ERROR_SCALE_NOT_SUPPORTED;
 						goto cleanup;
