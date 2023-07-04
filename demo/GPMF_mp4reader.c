@@ -558,7 +558,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 									mp4->metasizes = 0;
 								}
 								//either the samples are different sizes or they are all the same size
-								if(num > 0)
+								if(num > 0 && num < 5184000) // number of frame in 24hours at 60fps (crude limiter for corrupted num data.)
 								{
 									mp4->metasize_count = num;
 									mp4->metasizes = (uint32_t *)malloc(num * 4);
@@ -618,7 +618,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 										free(mp4->metaoffsets);
 										mp4->metaoffsets = 0;
 									}
-									if (mp4->metastco_count && qtsize > (num * 4))
+									if (mp4->metastco_count && qtsize > (num * 4) && num < 5184000) // number of frame in 24hours at 60fps (crude limiter for corrupted num data.)
 									{
 										mp4->metaoffsets = (uint64_t*)malloc(mp4->metasize_count * 8);
 										if (mp4->metaoffsets)
@@ -643,7 +643,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 												num = 1;
 												while (num < mp4->metasize_count)
 												{
-													if (num != mp4->metastsc[stsc_pos].chunk_num - 1 && 0 == (num - (mp4->metastsc[stsc_pos].chunk_num - 1)) % mp4->metastsc[stsc_pos].samples)
+													if (mp4->metastsc[stsc_pos].samples && num != mp4->metastsc[stsc_pos].chunk_num - 1 && 0 == (num - (mp4->metastsc[stsc_pos].chunk_num - 1)) % mp4->metastsc[stsc_pos].samples)
 													{
 														stco_pos++;
 														fileoffset = (uint64_t)metaoffsets32[stco_pos];
@@ -683,7 +683,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 										free(mp4->metaoffsets);
 										mp4->metaoffsets = 0;
 									}
-									if (num > 0 && mp4->metasize_count && mp4->metasizes && qtsize > (num*4))
+									if (num > 0 && mp4->metasize_count && mp4->metasizes && qtsize > (num*4) && num < 5184000) // number of frame in 24hours at 60fps (crude limiter for corrupted num data.)
 									{
 										mp4->metaoffsets = (uint64_t*)malloc(num * 8);
 										if (mp4->metaoffsets)
@@ -738,7 +738,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 								break;
 							}
 
-							if (num <= ((qtsize - 8 - len) / sizeof(uint64_t)))
+							if (num <= ((qtsize - 8 - len) / sizeof(uint64_t)) && num < 5184000) // number of frame in 24hours at 60fps (crude limiter for corrupted num data.)
 							{
 								mp4->metastco_count = num;
 
@@ -847,7 +847,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 							len += fread(&num, 1, 4, mp4->mediafp);
 							num = BYTESWAP32(num);
 
-							if (num <= (qtsize / 8))
+							if (num <= (qtsize / 8) && num < 5184000) // number of frame in 24hours at 60fps (crude limiter for corrupted num data.))
 							{
 								entries = num;
 
