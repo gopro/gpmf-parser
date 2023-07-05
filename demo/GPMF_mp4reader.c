@@ -611,7 +611,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 							{
 								mp4->metastco_count = num;
 
-								if (mp4->metastsc_count > 0 && num != mp4->metasize_count)
+								if (mp4->metastsc_count > 0 && mp4->metasize_count > 0 && num != mp4->metasize_count)
 								{
 									if (mp4->metaoffsets)
 									{
