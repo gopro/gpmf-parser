@@ -615,6 +615,8 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | --- | --- | --- | --- | --- |
 | FACE | version 4, confidence, ID, face boxes, smile and blink | at half base frame rate 12/12.5/15Hz | n/a | struct ver,confidence %,ID,x,y,w,h,smile %, blink % |
 
+#### BONES is a HERO10, but has no GPS board, so GPS5 will be missing
+
 ### HERO11 changes, otherwise supports All HERO10 metadata
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
@@ -622,7 +624,13 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | GPS5 | latitude, longitude, altitude, 2D ground speed, and 3D speed | 10 | deg, deg, m, m/s, m/s | unchanged but deprecated, might not be in future cameras |  
 | GPS9 | lat, long, alt, 2D speed, 3D speed, days since 2000, secs since midnight (ms precision), DOP, fix (0, 2D or 3D) | 10 | deg, deg, m, m/s, m/s,-,s,-,- | improved precision over GPS5 for time and fix information |
 
-### BONES is a HERO10, but has no GPS board, so GPS5 will be missing
+### HERO12 changes, otherwise supports All HERO11 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| GPS5 | removed | --- | --- | --- |
+| GPS9 | removed | --- | --- | No GPS receiver in HERO12 |
+
 
 ```
 GoPro is trademark of GoPro, Inc.
