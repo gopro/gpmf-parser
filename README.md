@@ -191,8 +191,8 @@ Current types:
 | **f** | 32-bit float (IEEE 754) | float |   |
 | **F** | 32-bit four character key -- FourCC | char fourcc\[4\] |   |
 | **G** | 128-bit ID (like UUID) | uint8\_t guid\[16\] |   |
-| **j** | 64-bit signed unsigned number | int64\_t |   |
-| **J** | 64-bit unsigned unsigned number | uint64\_t |   |
+| **j** | 64-bit signed long number | int64\_t |   |
+| **J** | 64-bit unsigned long number | uint64\_t |   |
 | **l** | 32-bit signed integer | int32\_t |   |
 | **L** | 32-bit unsigned integer | uint32\_t |   |
 | **q** | 32-bit Q Number Q15.16 | uint32\_t | 16-bit integer (A) with 16-bit fixed point (B) for A.B value (range -32768.0 to 32767.99998) |
