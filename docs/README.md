@@ -550,7 +550,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | --- | --- | --- | --- | --- |
 | ACCL | 3-axis accelerometer | 200 | m/s² | Data order -Y,X,Z |
 | GYRO | 3-axis gyroscope | 3200 | rad/s | Data order -Y,X,Z |
-| STMP | microsecond timestampes | 1 | µs | Increased precision for post stablization | |
+| STMP | microsecond timestamps | 1 | µs | Increased precision for post stablization | |
 | MAGN | magnetometer  | 24 | µT | Camera pointing direction |
 | ISOG | Image sensor gain | increased to 60 | n/a | per frame exposure metadata |   
 | SHUT | Exposure time | increased to 60 | s | per frame exposure metadata | 
