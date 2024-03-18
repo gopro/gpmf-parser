@@ -7,7 +7,7 @@
 *  coding of the delta between samples, with addition codewords for runs of zeros, 
 *  and optional quantization. The compression scheme is similar to the Huffman coding 
 *  in JPEG. As it intended for lossless compression (with quantize set to 1) it can 
-*  only comrpess/decompress integer based streams.  
+*  only compress/decompress integer based streams.  
 *
 *  @version 1.2.0
 *
