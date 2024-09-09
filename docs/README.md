@@ -631,6 +631,11 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | GPS5 | removed | --- | --- | --- |
 | GPS9 | removed | --- | --- | No GPS receiver in HERO12 |
 
+### HERO13 changes, otherwise supports All HERO12 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| GPS9 | lat, long, alt, 2D speed, 3D speed, days since 2000, secs since midnight (ms precision), DOP, fix (0, 2D or 3D) | 10 | deg, deg, m, m/s, m/s,-,s,-,- | GPS returns for HERO13 |
 
 ```
 GoPro is trademark of GoPro, Inc.
