@@ -636,6 +636,7 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
 | GPS9 | lat, long, alt, 2D speed, 3D speed, days since 2000, secs since midnight (ms precision), DOP, fix (0, 2D or 3D) | 10 | deg, deg, m, m/s, m/s,-,s,-,- | GPS returns for HERO13 |
+| LOGS | health logs | --- | --- | GoPro internal |
 
 ```
 GoPro is trademark of GoPro, Inc.
