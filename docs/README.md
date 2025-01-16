@@ -718,11 +718,11 @@ Here is an example of the some of the header metadata.
 | MYCF | Mapping Y CoeFficients, Superview/HyperView | e.g. "y1", "y3", "y5", "y1x2", "y3x2", "yx4" or "y1" |
 | MAPY | new_y = ay + by^3 + cy^5 + dyx^2 + ey^3x^2 + fyx^4 | e.g. 0.9364, 0.4465, -0.7683, -0.3574, 1.1584, 0.3529 or 1.0 |
 
-An example of map a GoPro Lens to world corrdinates (removing distortion https://www.desmos.com/calculator/cakjy98ysc)
+An example of map a GoPro Lens to world corrdinates (removing distortion)[https://www.desmos.com/calculator/cakjy98ysc]
 
 ### DVID USRM, User Metadata - GoPro Labs settings, extensions and metadata
 
-(see https://gopro.github.io/labs/control/tech/)
+(see info)[https://gopro.github.io/labs/control/tech/]
 
 
 ```
