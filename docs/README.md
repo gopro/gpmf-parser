@@ -696,10 +696,10 @@ Here is an example of the some of the header metadata.
 | TZON | Time Zone offset in minutes | e.g. -480 |
 | DZMX | Digital Zoom amount | e.g. 1.4000 |
 | CTRL | Control Level | "Easy", "Pro" |
-| PWPR | Power Profile | "Performance", "Battery", "Stationary" 
+| PWPR | Power Profile | "Performance", "Battery", "Stationary" |
 | ORDP | Orientation Data Present | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
 | CLDP | Classification Data Present | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
-| PIMD | Protune ISO Mode | "auto" or "manual" |=
+| PIMD | Protune ISO Mode | "auto" or "manual" |
 
 
 ### DVID FOVL, Large FOV - Lens distortion
