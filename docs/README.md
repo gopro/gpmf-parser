@@ -644,6 +644,7 @@ While there is a lot of metadata is the header for all MP4 and JPG files, these 
 Here is an example of the some of the header metadata.
  
 ### DVID 1, Global Settings
+
 | FourCC | Property | Values |
 | ------ | -------- | ------ |
 | VERS | version of the metadata library that created the camera data | |
