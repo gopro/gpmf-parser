@@ -27,8 +27,8 @@ GPMF -- GoPro Metadata Format or General Purpose Metadata Format -- is a modifie
 
 GPMF-parser is licensed under either:
 
-* Apache License, Version 2.0, (LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0)
-* MIT license (LICENSE-MIT or http://opensource.org/licenses/MIT)
+* Apache License, Version 2.0, [LICENSE-APACHE](http://www.apache.org/licenses/LICENSE-2.0)
+* MIT license [LICENSE-MIT](http://opensource.org/licenses/MIT)
 
 at your option.
 
@@ -38,7 +38,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## GPMF Writing
 
-A new open source repository has been created for the purpose (GPMF-Write https://github.com/gopro/gpmf-write)
+A new open source repository has been created for the purpose [GPMF-Write](https://github.com/gopro/gpmf-write)
 
 ## Quick Start for Developers using Docker
 
@@ -495,7 +495,7 @@ Just as video and audio tracks can have different formats within, the 'meta' tra
 	      'stco' < GPMF byte offset with the MP4 for each payload >
 ```
 
-for more details on MP4 structure 'stts', 'stsz' and 'stco' (see https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-61112 )
+for more details on MP4 structure 'stts', 'stsz' and 'stco' [see Apple dev info](https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-61112)
 
 ## GPMF Timing and Clocks
 
@@ -542,7 +542,7 @@ GoPro HERO5, HERO6 and Fusion cameras have a GPMF track. HERO4 Black will have G
 | GPSF | GPS Fix | 1 | n/a | Within the GPS stream: 0 - no lock, 2 or 3 - 2D or 3D Lock |  
 | GPSP | GPS Precision - Dilution of Precision (DOP x100) | 1 | n/a | Within the GPS stream, under 500 is good |  
 
-For more information of GPSP (or DOP) (see https://en.wikipedia.org/wiki/Dilution_of_precision_(navigation) )
+For more information of GPSP (or DOP) [wikipedia info](https://en.wikipedia.org/wiki/Dilution_of_precision_(navigation))
 
 ### Fusion Adds and Changes
 
@@ -645,7 +645,7 @@ Here is an example of the some of the header metadata.
  
 ### DVID 1, Global Settings
 | FourCC | Property | Values |
-| --- | --- | --- |
+| ------ | -------- | ------ |
 | VERS | version of the metadata library that created the camera data | |
 | FMWR | Firmware version | |
 | LINF | Internal IDs | |
@@ -654,7 +654,7 @@ Here is an example of the some of the header metadata.
 | MINF | Camera model | |
 | MUID | Media ID | |
 | CPID | Capture Identifier | |
-| CPIN | Capture number in group | | |
+| CPIN | Capture number in group | |
 | CMOD | Camera Mode | Internal |
 | MTYP | Media type | Internal |
 | HDRV | HDR Video | Y or N |
@@ -705,6 +705,7 @@ Here is an example of the some of the header metadata.
 ### DVID FOVL, Large FOV - Lens distortion
 
 | FourCC | Property | Values |
+| ------ | -------- | ------ |
 | ABSC | AutoBoost SCore - Used for Autoboost variable prescription modes | 0 use on LFOV values, 1 use only FOVS value, between blend |
 | ZFOV | Diagon Field Of View in degrees (from corner to corner) | e.g. 156.7230 |
 | VFOV | Visual FOV style | L - Linear, W - wide, S - Superview 4:3 -> 16:9, H - Hyperview 8:7 -> 16:9 |
@@ -718,11 +719,11 @@ Here is an example of the some of the header metadata.
 | MYCF | Mapping Y CoeFficients, Superview/HyperView | e.g. "y1", "y3", "y5", "y1x2", "y3x2", "yx4" or "y1" |
 | MAPY | new_y = ay + by^3 + cy^5 + dyx^2 + ey^3x^2 + fyx^4 | e.g. 0.9364, 0.4465, -0.7683, -0.3574, 1.1584, 0.3529 or 1.0 |
 
-An example of map a GoPro Lens to world corrdinates (removing distortion)[https://www.desmos.com/calculator/cakjy98ysc]
+An example of map a GoPro Lens to world coordinates [removing distortion curve](https://www.desmos.com/calculator/cakjy98ysc)
 
 ### DVID USRM, User Metadata - GoPro Labs settings, extensions and metadata
 
-(see info)[https://gopro.github.io/labs/control/tech/]
+[Tech info on Labs](https://gopro.github.io/labs/control/tech/)
 
 
 ```
