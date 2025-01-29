@@ -27,8 +27,8 @@ GPMF -- GoPro Metadata Format or General Purpose Metadata Format -- is a modifie
 
 GPMF-parser is licensed under either:
 
-* Apache License, Version 2.0, (LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0)
-* MIT license (LICENSE-MIT or http://opensource.org/licenses/MIT)
+* Apache License, Version 2.0, [LICENSE-APACHE](http://www.apache.org/licenses/LICENSE-2.0)
+* MIT license [LICENSE-MIT](http://opensource.org/licenses/MIT)
 
 at your option.
 
@@ -38,7 +38,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## GPMF Writing
 
-A new open source repository has been created for the purpose (GPMF-Write https://github.com/gopro/gpmf-write)
+A new open source repository has been created for the purpose [GPMF-Write](https://github.com/gopro/gpmf-write)
 
 ## Quick Start for Developers using Docker
 
@@ -191,8 +191,8 @@ Current types:
 | **f** | 32-bit float (IEEE 754) | float |   |
 | **F** | 32-bit four character key -- FourCC | char fourcc\[4\] |   |
 | **G** | 128-bit ID (like UUID) | uint8\_t guid\[16\] |   |
-| **j** | 64-bit signed long number | int64\_t |   |
-| **J** | 64-bit unsigned long number | uint64\_t |   |
+| **j** | 64-bit signed unsigned number | int64\_t |   |
+| **J** | 64-bit unsigned unsigned number | uint64\_t |   |
 | **l** | 32-bit signed integer | int32\_t |   |
 | **L** | 32-bit unsigned integer | uint32\_t |   |
 | **q** | 32-bit Q Number Q15.16 | uint32\_t | 16-bit integer (A) with 16-bit fixed point (B) for A.B value (range -32768.0 to 32767.99998) |
@@ -495,7 +495,7 @@ Just as video and audio tracks can have different formats within, the 'meta' tra
 	      'stco' < GPMF byte offset with the MP4 for each payload >
 ```
 
-for more details on MP4 structure 'stts', 'stsz' and 'stco' see  https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-61112
+for more details on MP4 structure 'stts', 'stsz' and 'stco' [see Apple dev info](https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-61112)
 
 ## GPMF Timing and Clocks
 
@@ -542,7 +542,7 @@ GoPro HERO5, HERO6 and Fusion cameras have a GPMF track. HERO4 Black will have G
 | GPSF | GPS Fix | 1 | n/a | Within the GPS stream: 0 - no lock, 2 or 3 - 2D or 3D Lock |  
 | GPSP | GPS Precision - Dilution of Precision (DOP x100) | 1 | n/a | Within the GPS stream, under 500 is good |  
 
-For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution_of_precision_(navigation)
+For more information of GPSP (or DOP) [wikipedia info](https://en.wikipedia.org/wiki/Dilution_of_precision_(navigation))
 
 ### Fusion Adds and Changes
 
@@ -637,6 +637,95 @@ For more information of GPSP (or DOP) see https://en.wikipedia.org/wiki/Dilution
 | --- | --- | --- | --- | --- |
 | GPS9 | lat, long, alt, 2D speed, 3D speed, days since 2000, secs since midnight (ms precision), DOP, fix (0, 2D or 3D) | 10 | deg, deg, m, m/s, m/s,-,s,-,- | GPS returns for HERO13 |
 | LOGS | health logs | --- | --- | GoPro internal |
+
+## Header metadata
+
+While there is a lot of metadata is the header for all MP4 and JPG files, these are mostly for internal usage, and/or storing the camera setting used for creating the shot.
+Here is an example of the some of the header metadata.
+ 
+### DVID 1, Global Settings
+
+| FourCC | Property | Values |
+| ------ | -------- | ------ |
+| VERS | version of the metadata library that created the camera data | |
+| FMWR | Firmware version | |
+| LINF | Internal IDs | |
+| CINF | Internal IDs | |
+| CASN | Camera Serial Number | |
+| MINF | Camera model | |
+| MUID | Media ID | |
+| CPID | Capture Identifier | |
+| CPIN | Capture number in group | |
+| CMOD | Camera Mode | Internal |
+| MTYP | Media type | Internal |
+| HDRV | HDR Video | Y or N |
+| OREN | Orientation | "U" - up, "D" - down, "L" - left, "R" - right |
+| DZOM | Digital Zoom enable | "Y" - Yes/enabled, "N" - No/disabled |
+| DZST | Digital Zoom Setting | 0 - no zoom, 100 - maximum zoom |
+| SMTR | Spot Meter | "Y" - Yes/enabled, "N" - No/disabled |
+| PRTN | Protune Enabled | "Y" - Yes/enabled, "N" - No/disabled |
+| PTWB | Protune White balance | "NATIVE", "AUTO", "3200K","5500K" etc. |
+| PTSH | Protune Sharpness | "LOW" - Low, "MED" - Medium, "HIGH" - High |
+| PTCL | Protune Color | "GOPRO"/"VIBRANT" - GoPro Color, "FLAT", "NATURAL", "HDR", “LOG” |
+| EXPT | Exposure Type | “AUTO” or “1_120SEC", “1_500SEC", etc. “AUTO Cinematic" |
+| PIMX | Protune ISO Max | 100 to 6400 | 
+| PIMN | Protune ISO Min | 100 to 6400 | 
+| PTEV | Protune EV | -2.0 to 2.0 | 
+| RATE | Burst Rate, TimeWarp Rate, Timelapse Rate | "2_1SEC", "1_1SEC", ..  "2X", "5X", "AUTO" |
+| SROT | Sensor Read Out Time (in ms) | |
+| EISE | Electric Stabilization | "N" - EIS off, "Y" - EIS on |
+| EISA | EIS Applied | "N/A", "HS EIS", "HS High", "HS Boost" & "HS AutoBoost" |
+| HCTL | In camera Horizon control | "Off", "Level", "Locked" |
+| AUPT | Audio Protune | "Y" - Yes/enabled, "N" - No/disabled |
+| APTO | Audio Protune Option | "OFF", "RAW", "GAIN", "DYNM" |
+| AUDO | Audio Option | "AUTO", "STEREO", "WIND" |
+| AUBT | Audio BlueTooth | "Y" - Yes/connected/enabled, "N" - No/disconnect/disabled |
+| PRJT | Lens Projection | "GPRO" |
+| CDAT | Creation Date/Time | local time epoch time (seconds since Jan 1, 1970) |
+| SCTM | Schedule Capture Time | Seconds since UTC midnight |
+| PRNA | Preset IDs | |
+| PRNU | Preset IDs | |
+| SCAP | Schedule Capture | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
+| CDTM | Capture Delay Timer (in ms) | 0, 3000, 10000 |
+| DUST | Duration Settings | "15SEC", "30SEC", "1MIN", "5MIN", ... "NO_LIMIT" |
+| VRES | Video Resolution | e.g. 5312, 4648 |
+| VFPS | Video Framerate ratio | e.g. 30000, 1001 = 29.97 |
+| HSGT | Hindsight Settings | "15SEC", "30SEC", "OFF" |
+| BITR | Bitrate | "STANDARD", "HIGH" |
+| MMOD | Media Mod | "STEREO", "FRONT", "REAR", "FRONT_REAR" |
+| RAMP | Speed Ramp Settings | "REAL_SPEED", "HALF_SPEED" |
+| TZON | Time Zone offset in minutes | e.g. -480 |
+| DZMX | Digital Zoom amount | e.g. 1.4000 |
+| CTRL | Control Level | "Easy", "Pro" |
+| PWPR | Power Profile | "Performance", "Battery", "Stationary" |
+| ORDP | Orientation Data Present | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
+| CLDP | Classification Data Present | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
+| PIMD | Protune ISO Mode | "auto" or "manual" |
+
+
+### DVID FOVL, Large FOV - Lens distortion
+
+| FourCC | Property | Values |
+| ------ | -------- | ------ |
+| ABSC | AutoBoost SCore - Used for Autoboost variable prescription modes | 0 use on LFOV values, 1 use only FOVS value, between blend |
+| ZFOV | Diagon Field Of View in degrees (from corner to corner) | e.g. 156.7230 |
+| VFOV | Visual FOV style | L - Linear, W - wide, S - Superview 4:3 -> 16:9, H - Hyperview 8:7 -> 16:9 |
+| PYCF | Polynomial power | e.g. "r0", "r1", "r2", "r3", "r4" |
+| POLY | Polynomial values | e.g. 0.0, 2.111, 0.143, -1.03, 0.641 so that world_radians = 2.111r + 0.143r^2 - 1.03r^3 + 0.641r^4 ]
+| ZMPL | Zoom scale normalization | r = ZMPL x normal_radius_form center |
+| ARUW | Aspect Ratio of the UnWarped input image | e.g. 1.1429 for 8:7 |
+| ARWA | Aspect Ratio of the WArped output image | e.g. 1.7777 for a 16:9 |
+| MXCF | Mapping X CoeFficients, Superview/HyperView | e.g. "x1", "x3", "x5" or "x1"|
+| MAPX | new_x = ax + bx^3 + cx^5 | e.g. 1.21003927, -1.27584021, 1.77518453 or 1.0|
+| MYCF | Mapping Y CoeFficients, Superview/HyperView | e.g. "y1", "y3", "y5", "y1x2", "y3x2", "yx4" or "y1" |
+| MAPY | new_y = ay + by^3 + cy^5 + dyx^2 + ey^3x^2 + fyx^4 | e.g. 0.9364, 0.4465, -0.7683, -0.3574, 1.1584, 0.3529 or 1.0 |
+
+An example of map a GoPro Lens to world coordinates [removing distortion curve](https://www.desmos.com/calculator/cakjy98ysc)
+
+### DVID USRM, User Metadata - GoPro Labs settings, extensions and metadata
+
+[Tech info on Labs](https://gopro.github.io/labs/control/tech/)
+
 
 ```
 GoPro is trademark of GoPro, Inc.
