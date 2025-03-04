@@ -21,6 +21,8 @@
 
 /* This is not an elegant MP4 parser, only used to help demonstrate extraction of GPMF */
 
+#define _FILE_OFFSET_BITS 64
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,12 +32,12 @@
 
 #include "GPMF_mp4reader.h"
 
-#define PRINT_MP4_STRUCTURE		0
+#define PRINT_MP4_STRUCTURE		1
 
 #ifdef _WINDOWS
 #define LONGTELL	_ftelli64
 #else
-#define LONGTELL	ftell
+#define LONGTELL	ftello
 #endif
 
 
