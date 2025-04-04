@@ -718,11 +718,9 @@ Here is an example of the some of the header metadata.
 | MXCF | Mapping X CoeFficients, Superview/HyperView | e.g. "x1", "x3", "x5" or "x1"|
 | MAPX | new_x = ax + bx^3 + cx^5 | e.g. 1.21003927, -1.27584021, 1.77518453 or 1.0|
 | MYCF | Mapping Y CoeFficients, Superview/HyperView | e.g. "y1", "y3", "y5", "y1x2", "y3x2", "yx4" or "y1" |
-| MAPY | new_y = ay + by^3 + cy^5 + dy(new_x)^2 + ey^3(new_x)^2 + fy(new_x)^4 | e.g. 0.9364, 0.4465, -0.7683, -0.3574, 1.1584, 0.3529 or 1.0 |
+| MAPY | new_y = ay + by^3 + cy^5 + dyx^2 + ey^3x^2 + fyx^4 | e.g. 0.9364, 0.4465, -0.7683, -0.3574, 1.1584, 0.3529 or 1.0 |
 
 An example of map a GoPro Lens to world coordinates [removing distortion curve](https://www.desmos.com/calculator/cakjy98ysc)
-
-Note: for Superview and Hyperview projections, MAPX is computed first, as the computed new_X is used with the MAPY calculations.
 
 ### DVID USRM, User Metadata - GoPro Labs settings, extensions and metadata
 
