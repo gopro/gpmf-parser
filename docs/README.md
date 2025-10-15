@@ -140,7 +140,7 @@ if(GPMF_OK == GPMF_Init(&gs_stream, buffer_with_GPMF_data, size_of_the_buffer))
 
 All data is Big Endian.
 
-![](readmegfx/KLVDesign.png "KLV Design")
+![](/docs/readmegfx/KLVDesign.png "KLV Design")
 
 ### FourCC
 
@@ -209,19 +209,19 @@ All GPMF data is 32-bit aligned and stored as big-endian. For data types that ar
 
 DEMO,  &#39;b&#39; 1  1,  &lt;byte value&gt; 0 0 0
 
-![](readmegfx/demo1.png)
+![](/docs/readmegfx/demo1.png)
 
 The same data type stored 15 times would have only a only byte pad at the end.
 
 DEMO,  &#39;b&#39; 1  15,  &lt;15 bytes data&gt; 0
 
-![](readmegfx/demo2.png)
+![](/docs/readmegfx/demo2.png)
 
 Packed data will all maintain a 32-bit alignment between GPMF KLV 3-tuples.
 
 DMO1, b  1 1, &lt;byte value&gt; 0 0 0 DMO2 b 1 15 &lt;values&gt; 0 DMO3 L 4 1 &lt;32-bit values&gt;
 
-![](readmegfx/demo3.png)
+![](/docs/readmegfx/demo3.png)
 
 While padding is shown as null values, any value can be used, as this data is simply ignored.
 
@@ -231,7 +231,7 @@ The packed data size with in a GPMF KLV is the structure size times the number o
 
 As sensor data like gyro and accelerometer commonly have three (or more) axes of the same data type, the combination of Type and Structure Size, will indicate the type of data within. Three axis GYRO data could have a Type of &#39;s&#39; (short 16-bit signed integer) with a Structure size of 6. As the size of the Type is known, the number of axes in each sample is Structure size / sizeof (Type). An examples of 6 samples of a 6 byte x,y,z structure GYRO data is shown here:
 
-![](readmegfx/demo4.png)
+![](/docs/readmegfx/demo4.png)
 
 ## GPMF Nesting
 
@@ -245,7 +245,7 @@ DEVC null 4 7
 
 This is a valid nested GPMF structure. DEVC describe 4\*7 = 28 bytes of data, which are packed and aligned GPMF KLV values describing a camera device with a Device ID and a Device Name.
 
-![](readmegfx/demo5.png)
+![](/docs/readmegfx/demo5.png)
 
 ### Property Hierarchy
 
@@ -522,7 +522,7 @@ GoPro HERO5, HERO6 and Fusion cameras have a GPMF track. HERO4 Black will have G
 
 ### IMU Orientation Uses These Axis Labels
 
-![](readmegfx/CameraIMUOrientationSM.png "IMU Orientation")
+![](/docs/readmegfx/CameraIMUOrientationSM.png "IMU Orientation")
 
 ### HERO5 Black and Session 
 
@@ -584,7 +584,7 @@ For more information of GPSP (or DOP) [wikipedia info](https://en.wikipedia.org/
 
 | FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
 | --- | --- | --- | --- | --- |
-| FACE | Face boxes, confidence and smile | 8 - 10 | n/a | struct ID,x,y,w,h,confidence %,smile % |
+| FACE | Face boxes, confidence and smile | 8-10 | n/a | struct ID,x,y,w,h,confidence %,smile % |
 | CORI | Camera ORIentation | frame rate | n/a | Quaternions for the camera orientation since capture start |
 | IORI | Image ORIentation | frame rate | n/a | Quaternions for the image orientation relative to the camera body |
 | GRAV | GRAvity Vector | frame rate | n/a | Vector for the direction for gravitiy |
@@ -638,6 +638,17 @@ For more information of GPSP (or DOP) [wikipedia info](https://en.wikipedia.org/
 | GPS9 | lat, long, alt, 2D speed, 3D speed, days since 2000, secs since midnight (ms precision), DOP, fix (0, 2D or 3D) | 10 | deg, deg, m, m/s, m/s,-,s,-,- | GPS returns for HERO13 |
 | LOGS | health logs | --- | --- | GoPro internal |
 
+### MAX2 changes, otherwise supports All HERO13 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| MAGN | Raw Hall sensor Magnetometer data | 24 | µT |  |
+| MNOR | Magnetic North vector (sensor fused) | fps | - |  |
+| OCNF | Confidence in MNOR value | fps | - | 0 (low) to 0xff (high) confidence |
+| CSCT | Compression Score Top (EAC Slice) | fps | - | GoPro internal |
+| CSCB | Compression Score Bottom (EAC Slice) | fps | - | GoPro internal |
+
+
 ## Header metadata
 
 While there is a lot of metadata is the header for all MP4 and JPG files, these are mostly for internal usage, and/or storing the camera setting used for creating the shot.
@@ -680,7 +691,7 @@ Here is an example of the some of the header metadata.
 | APTO | Audio Protune Option | "OFF", "RAW", "GAIN", "DYNM" |
 | AUDO | Audio Option | "AUTO", "STEREO", "WIND" |
 | AUBT | Audio BlueTooth | "Y" - Yes/connected/enabled, "N" - No/disconnect/disabled |
-| PRJT | Lens Projection | "GPRO" |
+| PRJT | Lens Projection | "GPRO" or "EACO" for 360 modes |
 | CDAT | Creation Date/Time | local time epoch time (seconds since Jan 1, 1970) |
 | SCTM | Schedule Capture Time | Seconds since UTC midnight |
 | PRNA | Preset IDs | |
@@ -701,6 +712,7 @@ Here is an example of the some of the header metadata.
 | ORDP | Orientation Data Present | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
 | CLDP | Classification Data Present | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
 | PIMD | Protune ISO Mode | "auto" or "manual" |
+| DNSC | Denoise setting | "HIGH", "MEDIUM", "LOW" |
 
 
 ### DVID FOVL, Large FOV - Lens distortion

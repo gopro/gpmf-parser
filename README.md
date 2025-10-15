@@ -638,6 +638,17 @@ For more information of GPSP (or DOP) [wikipedia info](https://en.wikipedia.org/
 | GPS9 | lat, long, alt, 2D speed, 3D speed, days since 2000, secs since midnight (ms precision), DOP, fix (0, 2D or 3D) | 10 | deg, deg, m, m/s, m/s,-,s,-,- | GPS returns for HERO13 |
 | LOGS | health logs | --- | --- | GoPro internal |
 
+### MAX2 changes, otherwise supports All HERO13 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| MAGN | Raw Hall sensor Magnetometer data | 24 | µT |  |
+| MNOR | Magnetic North vector (sensor fused) | fps | - |  |
+| OCNF | Confidence in MNOR value | fps | - | 0 (low) to 0xff (high) confidence |
+| CSCT | Compression Score Top (EAC Slice) | fps | - | GoPro internal |
+| CSCB | Compression Score Bottom (EAC Slice) | fps | - | GoPro internal |
+
+
 ## Header metadata
 
 While there is a lot of metadata is the header for all MP4 and JPG files, these are mostly for internal usage, and/or storing the camera setting used for creating the shot.
@@ -680,7 +691,7 @@ Here is an example of the some of the header metadata.
 | APTO | Audio Protune Option | "OFF", "RAW", "GAIN", "DYNM" |
 | AUDO | Audio Option | "AUTO", "STEREO", "WIND" |
 | AUBT | Audio BlueTooth | "Y" - Yes/connected/enabled, "N" - No/disconnect/disabled |
-| PRJT | Lens Projection | "GPRO" |
+| PRJT | Lens Projection | "GPRO" or "EACO" for 360 modes |
 | CDAT | Creation Date/Time | local time epoch time (seconds since Jan 1, 1970) |
 | SCTM | Schedule Capture Time | Seconds since UTC midnight |
 | PRNA | Preset IDs | |
@@ -701,6 +712,7 @@ Here is an example of the some of the header metadata.
 | ORDP | Orientation Data Present | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
 | CLDP | Classification Data Present | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
 | PIMD | Protune ISO Mode | "auto" or "manual" |
+| DNSC | Denoise setting | "HIGH", "MEDIUM", "LOW" |
 
 
 ### DVID FOVL, Large FOV - Lens distortion
