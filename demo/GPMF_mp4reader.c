@@ -618,13 +618,18 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 										free(mp4->metaoffsets);
 										mp4->metaoffsets = 0;
 									}
-									if (mp4->metastco_count && qtsize > (num * 4) && num < 5184000) // number of frame in 24hours at 60fps (crude limiter for corrupted num data.)
+									if (mp4->metastco_count && qtsize > (num * 4) && num < 5184000 && mp4->metasize_count < 5184000) // number of frame in 24hours at 60fps (crude limiter for corrupted num data.)
 									{
 										mp4->metaoffsets = (uint64_t*)malloc(mp4->metasize_count * 8);
 										if (mp4->metaoffsets)
 										{
 											uint32_t* metaoffsets32 = NULL;
-											metaoffsets32 = (uint32_t*)malloc(num * 4);
+
+											uint32_t num_alloc_offsets = num;
+											if (num_alloc_offsets < mp4->metasize_count)
+												num_alloc_offsets = mp4->metasize_count;
+
+											metaoffsets32 = (uint32_t*)malloc(num_alloc_offsets * 4);
 											if (metaoffsets32)
 											{
 												uint64_t fileoffset = 0;
@@ -738,7 +743,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 								break;
 							}
 
-							if (num <= ((qtsize - 8 - len) / sizeof(uint64_t)) && num < 5184000) // number of frame in 24hours at 60fps (crude limiter for corrupted num data.)
+							if (num <= ((qtsize - 8 - len) / sizeof(uint64_t)) && num < 5184000 && mp4->metasize_count < 5184000) // number of frame in 24hours at 60fps (crude limiter for corrupted num data.)
 							{
 								mp4->metastco_count = num;
 
@@ -755,7 +760,11 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 										if (mp4->metaoffsets)
 										{
 											uint64_t* metaoffsets64 = NULL;
-											metaoffsets64 = (uint64_t*)malloc(num * 8);
+											uint32_t num_alloc_offsets = num;
+ 											if (num_alloc_offsets < mp4->metasize_count)
+												num_alloc_offsets = mp4->metasize_count;
+											metaoffsets64 = (uint64_t*)malloc(num_alloc_offsets * 8);
+
 											if (metaoffsets64)
 											{
 												uint64_t fileoffset = 0;
