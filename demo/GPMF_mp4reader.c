@@ -2,9 +2,9 @@
 *
 *  @brief Way Too Crude MP4|MOV reader
 *
-*  @version 2.0.1
+*  @version 2.0.2
 *
-*  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
+*  (C) Copyright 2017-2026 GoPro Inc (http://gopro.com/).
 *
 *  Licensed under either:
 *  - Apache License, Version 2.0, http://www.apache.org/licenses/LICENSE-2.0
@@ -774,7 +774,7 @@ size_t OpenMP4Source(char *filename, uint32_t traktype, uint32_t traksubtype, in
 												num = 1;
 												while (num < mp4->metasize_count)
 												{
-													if (num != mp4->metastsc[stsc_pos].chunk_num - 1 && 0 == (num - (mp4->metastsc[stsc_pos].chunk_num - 1)) % mp4->metastsc[stsc_pos].samples)
+													if (mp4->metastsc[stsc_pos].samples && num != mp4->metastsc[stsc_pos].chunk_num - 1 && 0 == (num - (mp4->metastsc[stsc_pos].chunk_num - 1)) % mp4->metastsc[stsc_pos].samples)
 													{
 														stco_pos++;
 														fileoffset = (uint64_t)metaoffsets64[stco_pos];
