@@ -648,6 +648,13 @@ For more information of GPSP (or DOP) [wikipedia info](https://en.wikipedia.org/
 | CSCT | Compression Score Top (EAC Slice) | fps | - | GoPro internal |
 | CSCB | Compression Score Bottom (EAC Slice) | fps | - | GoPro internal |
 
+### MISSION 1 changes, otherwise supports All HERO13 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| EVTG | Exposure Value Target | fps | eV | internal exposure logic |
+| GPDP | GpDump data | - | - | GoPro internal camera health monitoring |
+| GPDH | GpDump Header | - | - | GoPro internal camera health monitoring |
 
 ## Header metadata
 
@@ -658,61 +665,79 @@ Here is an example of the some of the header metadata.
 
 | FourCC | Property | Values |
 | ------ | -------- | ------ |
-| VERS | version of the metadata library that created the camera data | |
-| FMWR | Firmware version | |
-| LINF | Internal IDs | |
-| CINF | Internal IDs | |
+| APTO | Audio Protune Option | "OFF", "RAW", "GAIN", "DYNM" |
+| AUBT | Audio BlueTooth | "Y" - Yes/connected/enabled, "N" - No/disconnect/disabled |
+| AUDO | Audio Option | "AUTO", "STEREO", "WIND" |
+| AUDT | Audio Tuning | "STANDARD", "VOICE" |
+| AUPT | Audio Protune | "Y" - Yes/enabled, "N" - No/disabled |
+| BITR | Bitrate | "STANDARD", "HIGH", "MAX" |
 | CASN | Camera Serial Number | |
-| MINF | Camera model | |
-| MUID | Media ID | |
+| CDAT | Creation Date/Time | local time epoch time (seconds since Jan 1, 1970) |
+| CDTM | Capture Delay Timer (in ms) | 0, 3000, 10000 |
+| CINF | Internal IDs | |
+| CLDP | Classification Data Present | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
+| CMOD | Camera Mode | Internal |
 | CPID | Capture Identifier | |
 | CPIN | Capture number in group | |
-| CMOD | Camera Mode | Internal |
-| MTYP | Media type | Internal |
-| HDRV | HDR Video | Y or N |
-| OREN | Orientation | "U" - up, "D" - down, "L" - left, "R" - right |
+| CTRL | Control Level | "Easy", "Pro" |
+| DNSC | Denoise setting | "HIGH", "MEDIUM", "LOW" |
+| DUST | Duration Settings | "15SEC", "30SEC", "1MIN", "5MIN", ... "NO_LIMIT" |
+| DZMX | Digital Zoom amount | e.g. 1.4000 |
 | DZOM | Digital Zoom enable | "Y" - Yes/enabled, "N" - No/disabled |
 | DZST | Digital Zoom Setting | 0 - no zoom, 100 - maximum zoom |
-| SMTR | Spot Meter | "Y" - Yes/enabled, "N" - No/disabled |
-| PRTN | Protune Enabled | "Y" - Yes/enabled, "N" - No/disabled |
-| PTWB | Protune White balance | "NATIVE", "AUTO", "3200K","5500K" etc. |
-| PTSH | Protune Sharpness | "LOW" - Low, "MED" - Medium, "HIGH" - High |
-| PTCL | Protune Color | "GOPRO"/"VIBRANT" - GoPro Color, "FLAT", "NATURAL", "HDR", “LOG” |
-| EXPT | Exposure Type | “AUTO” or “1_120SEC", “1_500SEC", etc. “AUTO Cinematic" |
-| PIMX | Protune ISO Max | 100 to 6400 | 
-| PIMN | Protune ISO Min | 100 to 6400 | 
-| PTEV | Protune EV | -2.0 to 2.0 | 
-| RATE | Burst Rate, TimeWarp Rate, Timelapse Rate | "2_1SEC", "1_1SEC", ..  "2X", "5X", "AUTO" |
-| SROT | Sensor Read Out Time (in ms) | |
-| EISE | Electric Stabilization | "N" - EIS off, "Y" - EIS on |
 | EISA | EIS Applied | "N/A", "HS EIS", "HS High", "HS Boost" & "HS AutoBoost" |
+| EISE | Electric Stabilization | "N" - EIS off, "Y" - EIS on |
+| EXMD | Exposure Mode (Shutter type) | "AUTO", "MANUAL", "RANGE" |
+| EXMN | Exposure Min Time | seconds etc 0.0002 |
+| EXMX | Exposure Max Time | seconds etc 0.0052 |
+| EXPT | Exposure Type | "AUTO" or "1_120SEC", "1_500SEC", etc. "AUTO Cinematic" |
+| FOCL | ILS Linear Lens Focal Length | in mm e.g. 25.0000 |
+| GFRE | Guided Framing Enable | "N", "Y" |
+| FMWR | Firmware version | |
 | HCTL | In camera Horizon control | "Off", "Level", "Locked" |
-| AUPT | Audio Protune | "Y" - Yes/enabled, "N" - No/disabled |
-| APTO | Audio Protune Option | "OFF", "RAW", "GAIN", "DYNM" |
-| AUDO | Audio Option | "AUTO", "STEREO", "WIND" |
-| AUBT | Audio BlueTooth | "Y" - Yes/connected/enabled, "N" - No/disconnect/disabled |
+| HDRV | HDR Video | Y or N |
+| HSGT | Hindsight Settings | "15SEC", "30SEC", "OFF" |
+| LINF | Internal IDs | |
+| LPID | ILS lens model | TBD |
+| IMGT | Image Tuning | "BALANCED", "FACE", "SPORT", "UNDERWATER" |
+| MBLR | Motion Blur control | "ADAPTIVE", "REDUCTION", "LOW", MEDIUM", HIGH" |
+| MINF | Camera model | |
+| MMOD | Media Mod | "STEREO", "FRONT", "REAR", "FRONT_REAR" |
+| MTYP | Media type | Internal |
+| MUID | Media ID | |
+| ORDP | Orientation Data Present | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
+| OREN | Orientation | "U" - up, "D" - down, "L" - left, "R" - right |
+| PIMD | Protune ISO Mode | "auto" or "manual" |
+| PIMN | Protune ISO Min | 100 to 6400 | 
+| PIMX | Protune ISO Max | 100 to 6400 | 
 | PRJT | Lens Projection | "GPRO" or "EACO" for 360 modes |
-| CDAT | Creation Date/Time | local time epoch time (seconds since Jan 1, 1970) |
-| SCTM | Schedule Capture Time | Seconds since UTC midnight |
 | PRNA | Preset IDs | |
 | PRNU | Preset IDs | |
-| SCAP | Schedule Capture | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
-| CDTM | Capture Delay Timer (in ms) | 0, 3000, 10000 |
-| DUST | Duration Settings | "15SEC", "30SEC", "1MIN", "5MIN", ... "NO_LIMIT" |
-| VRES | Video Resolution | e.g. 5312, 4648 |
-| VFPS | Video Framerate ratio | e.g. 30000, 1001 = 29.97 |
-| HSGT | Hindsight Settings | "15SEC", "30SEC", "OFF" |
-| BITR | Bitrate | "STANDARD", "HIGH" |
-| MMOD | Media Mod | "STEREO", "FRONT", "REAR", "FRONT_REAR" |
-| RAMP | Speed Ramp Settings | "REAL_SPEED", "HALF_SPEED" |
-| TZON | Time Zone offset in minutes | e.g. -480 |
-| DZMX | Digital Zoom amount | e.g. 1.4000 |
-| CTRL | Control Level | "Easy", "Pro" |
+| PRTN | Protune Enabled | "Y" - Yes/enabled, "N" - No/disabled |
+| PTCL | Protune Color | "GOPRO"/"VIBRANT" - GoPro Color, "FLAT", "NATURAL", "HDR", "LOG", "GPLOG2", "CINEMATIC" |
+| PTEV | Protune EV | -2.0 to 2.0 | 
+| PTSH | Protune Sharpness | "LOW" - Low, "MED" - Medium, "HIGH" - High |
+| PTWB | Protune White balance | "NATIVE", "AUTO", "3200K","5500K" etc. |
 | PWPR | Power Profile | "Performance", "Battery", "Stationary" |
-| ORDP | Orientation Data Present | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
-| CLDP | Classification Data Present | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
-| PIMD | Protune ISO Mode | "auto" or "manual" |
-| DNSC | Denoise setting | "HIGH", "MEDIUM", "LOW" |
+| RAMP | Speed Ramp Settings | "REAL_SPEED", "HALF_SPEED" |
+| RATE | Burst Rate, TimeWarp Rate, Timelapse Rate | "2_1SEC", "1_1SEC", ..  "2X", "5X", "AUTO" |
+| SCAP | Schedule Capture | "Y" - Yes/enabled/active, "N" - No/disabled/not-active |
+| SCTM | Schedule Capture Time | Seconds since UTC midnight |
+| SMTR | Spot Meter | "Y" - Yes/enabled, "N" - No/disabled |
+| SROT | Sensor Read Out Time (in ms) | |
+| TZON | Time Zone offset in minutes | e.g. -480 |
+| VERS | version of the metadata library that created the camera data | |
+| VFPS | Video Framerate ratio | e.g. 30000, 1001 = 29.97 |
+| VRES | Video Resolution | e.g. 5312, 4648 |
+| ZOOM | Digital Zoom level | e.g. 1.0000, 2.4000 |
+
+### MISSION 1 changes, otherwise supports All HERO13 metadata
+
+| FourCC | Property | approximate frequency (Hz) | SIUN or UNIT | Comment |
+| --- | --- | --- | --- | --- |
+| EVTG | Exposure Value Target | fps | eV | internal exposure logic |
+| GPDP | GpDump data | - | - | GoPro internal camera health monitoring |
+| GPDH | GpDump Header | - | - | GoPro internal camera health monitoring |
 
 
 ### DVID FOVL, Large FOV - Lens distortion
