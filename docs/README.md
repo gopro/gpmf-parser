@@ -761,9 +761,10 @@ An example of map a GoPro Lens to world coordinates [removing distortion curve](
 
 ### DVID USRM, User Metadata - GoPro Labs settings, extensions and metadata
 
+docs folder
+
 [Tech info on Labs](https://gopro.github.io/labs/control/tech/)
 
-docs folder
 
 ```
 GoPro is trademark of GoPro, Inc.

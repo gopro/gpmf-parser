@@ -753,9 +753,9 @@ An example of map a GoPro Lens to world coordinates [removing distortion curve](
 
 ### DVID USRM, User Metadata - GoPro Labs settings, extensions and metadata
 
-[Tech info on Labs](https://gopro.github.io/labs/control/tech/)
-
 root folder
+
+[Tech info on Labs](https://gopro.github.io/labs/control/tech/)
 
 
 ```
