@@ -86,12 +86,12 @@ GPMF_ERR GPMF_Modify(GPMF_stream* gs,                                           
 
 // Get information about where the GPMF KLV is nested
 uint32_t GPMF_NestLevel(GPMF_stream *gs);														//return the current nest level
-uint32_t GPMF_DeviceID(GPMF_stream *gs);														//return the current device ID (DVID), to seperate match sensor data from difference devices.
-GPMF_ERR GPMF_DeviceName(GPMF_stream *gs, char *devicename_buf, uint32_t devicename_buf_size);	//return the current device name (DVNM), to seperate match sensor data from difference devices.
+uint32_t GPMF_DeviceID(GPMF_stream *gs);														//return the current device ID (DVID), to separate match sensor data from different devices.
+GPMF_ERR GPMF_DeviceName(GPMF_stream *gs, char *devicename_buf, uint32_t devicename_buf_size);	//return the current device name (DVNM), to separate match sensor data from different devices.
 
 // Utilities for data types
 uint32_t GPMF_SizeofType(GPMF_SampleType type);													// GPMF equivalent to sizeof(type)
-uint32_t GPMF_ExpandComplexTYPE(char *src, uint32_t srcsize, char *dst, uint32_t *dstsize);		// GPMF using TYPE for cmple structure.  { float val[16],uin32_t flags; } has type "f[8]L", this tools expands to the simpler format "ffffffffL"
+uint32_t GPMF_ExpandComplexTYPE(char *src, uint32_t srcsize, char *dst, uint32_t *dstsize);		// GPMF using TYPE for complex structure.  { float val[16],uint32_t flags; } has type "f[8]L", this tool expands to the simpler format "ffffffffL"
 uint32_t GPMF_SizeOfComplexTYPE(char *typearray, uint32_t typestringlength);					// GPMF equivalent to sizeof(typedef) for complex types. 
 GPMF_ERR GPMF_Reserved(uint32_t key);															// Test for a reverse GPMF Key, returns GPMF_OK is not reversed.
 
@@ -107,7 +107,7 @@ typedef struct GPMF_codebook
 {
 	int16_t value;			//value to store
 	uint8_t offset;			//0 to 128+ bytes to skip before store (leading zeros)
-	uint8_t bits_used;		//1 to 16,32 (if escape code > 16 then read from bit-steam), 
+	uint8_t bits_used;		//1 to 16,32 (if escape code > 16 then read from bitstream), 
 	int8_t bytes_stored;	//bytes stored in value: 0, 1 or 2
 	int8_t command;		//0 - OKAY,  -1 valid code, 1 - end
 } GPMF_codebook;
