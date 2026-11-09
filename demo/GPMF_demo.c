@@ -2,7 +2,7 @@
  *
  *  @brief Demo to extract GPMF from an MP4
  *
- *  @version 2.5.0
+ *  @version 2.6.0
  *
  *  (C) Copyright 2017-2020 GoPro Inc (http://gopro.com/).
  *
@@ -36,6 +36,9 @@
 #define	SHOW_SCALED_DATA			1
 #define	SHOW_THIS_FOUR_CC			STR2FOURCC("ACCL")
 #define SHOW_COMPUTED_SAMPLERATES	1
+#define	SHOW_SCALED_PRECISION		3
+#define	MAX_FOUR_CCS				32
+#define	MAX_SCALED_PRECISION		17
 
 
 
@@ -51,13 +54,14 @@ void printHelp(char* name)
 	printf("       -c - %s computed sample rates\n", SHOW_COMPUTED_SAMPLERATES ? "disable" : "show");
 	printf("       -v - %s video framerate\n", SHOW_VIDEO_FRAMERATE ? "disable" : "show");
 	printf("       -t - %s time of the payload\n", SHOW_PAYLOAD_TIME ? "disable" : "show");
-	printf("       -fWXYZ - show only this fourCC , e.g. -f%c%c%c%c (default) just -f for all\n", PRINTF_4CC(SHOW_THIS_FOUR_CC));
+	printf("       -fWXYZ[,ABCD...] - show only these comma-separated fourCCs, e.g. -f%c%c%c%c (default) just -f for all\n", PRINTF_4CC(SHOW_THIS_FOUR_CC));
+	printf("       -pX - decimal places for scaled data (default %d)\n", SHOW_SCALED_PRECISION);
 	printf("       -FX - fuzz loop for X times (defaults to GPMF fuzzing only)\n");
 	printf("       -MX - fuzz the mp4 index with X random changes\n");
 	printf("       -GX - fuzz each GPMF payload X random changes\n");
 	printf("       -h - this help\n");
 	printf("       \n");
-	printf("       ver 2.0\n");
+	printf("       ver 2.6\n");
 }
 
 
@@ -68,7 +72,40 @@ uint32_t show_scaled_data = SHOW_SCALED_DATA;
 uint32_t show_computed_samplerates = SHOW_COMPUTED_SAMPLERATES;
 uint32_t show_video_framerate = SHOW_VIDEO_FRAMERATE;
 uint32_t show_payload_time = SHOW_PAYLOAD_TIME;
-uint32_t show_this_four_cc = 0;
+uint32_t show_this_four_cc[MAX_FOUR_CCS];
+uint32_t show_this_four_cc_count = 0;  // 0 means show all streams
+int show_scaled_precision = SHOW_SCALED_PRECISION;
+
+static void ParseFourCCList(const char* list)
+{
+	show_this_four_cc_count = 0;
+
+	while (*list && show_this_four_cc_count < MAX_FOUR_CCS)
+	{
+		size_t len = 0;
+		while (list[len] && list[len] != ',') len++;
+
+		if (len == 4)
+			show_this_four_cc[show_this_four_cc_count++] = STR2FOURCC(list);
+		else if (len)
+			fprintf(stderr, "ignoring fourCC that is not 4 characters: %.*s\n", (int)len, list);
+
+		list += len;
+		if (*list == ',') list++;
+	}
+}
+
+static int IsFourCCSelected(uint32_t key)
+{
+	uint32_t i;
+
+	if (show_this_four_cc_count == 0) return 1;
+
+	for (i = 0; i < show_this_four_cc_count; i++)
+		if (show_this_four_cc[i] == key) return 1;
+
+	return 0;
+}
 
 int mp4fuzzchanges = 0;
 int gpmffuzzchanges = 4;
@@ -81,7 +118,8 @@ int main(int argc, char* argv[])
 {
 	GPMF_ERR ret = GPMF_OK;
 
-	show_this_four_cc = SHOW_THIS_FOUR_CC;
+	show_this_four_cc[0] = SHOW_THIS_FOUR_CC;
+	show_this_four_cc_count = 1;
 
 	// get file return data
 	if (argc < 2)
@@ -103,7 +141,12 @@ int main(int argc, char* argv[])
 			case 'c': show_computed_samplerates ^= 1;		break;
 			case 'v': show_video_framerate ^= 1;			break;
 			case 't': show_payload_time ^= 1;				break;
-			case 'f': show_this_four_cc = STR2FOURCC((&(argv[i][2])));  break;
+			case 'f': ParseFourCCList(&argv[i][2]);			break;
+			case 'p':
+				show_scaled_precision = atoi(&argv[i][2]);
+				if (show_scaled_precision < 0) show_scaled_precision = 0;
+				if (show_scaled_precision > MAX_SCALED_PRECISION) show_scaled_precision = MAX_SCALED_PRECISION;
+				break;
 			case 'h': printHelp(argv[0]);  break;
 
 			case 'M':  mp4fuzzchanges = atoi(&argv[i][2]);	break;
@@ -125,7 +168,7 @@ int main(int argc, char* argv[])
 		show_computed_samplerates = 1;
 		show_video_framerate = 1;
 		show_payload_time = 1;
-		show_this_four_cc = 0;
+		show_this_four_cc_count = 0;
 	}
 
 	do
@@ -400,9 +443,10 @@ GPMF_ERR readMP4File(char* filename)
 					if (fuzzloopcount == 0) printf("SCALED DATA:\n");
 					while (GPMF_OK == GPMF_FindNext(ms, STR2FOURCC("STRM"), GPMF_RECURSE_LEVELS|GPMF_TOLERANT)) //GoPro Hero5/6/7 Accelerometer)
 					{
-						if (GPMF_VALID_FOURCC(show_this_four_cc))
+						if (show_this_four_cc_count)
 						{
-							if (GPMF_OK != GPMF_FindNext(ms, show_this_four_cc, GPMF_RECURSE_LEVELS|GPMF_TOLERANT))
+							// Select within the current STRM only, so a list can't skip ahead past other streams.
+							if (GPMF_OK != GPMF_SeekToSamples(ms) || !IsFourCCSelected(GPMF_Key(ms)))
 								continue;
 						}
 						else
@@ -490,11 +534,11 @@ GPMF_ERR readMP4File(char* filename)
 											}
 											else if (type_samples == 0) //no TYPE structure
 											{
-												if (fuzzloopcount == 0) printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
+												if (fuzzloopcount == 0) printf("%.*f%s, ", show_scaled_precision, *ptr++, units[j % unit_samples]);
 											}
 											else if (complextype[j] != 'F')
 											{
-												if (fuzzloopcount == 0) printf("%.3f%s, ", *ptr++, units[j % unit_samples]);
+												if (fuzzloopcount == 0) printf("%.*f%s, ", show_scaled_precision, *ptr++, units[j % unit_samples]);
 												pos += GPMF_SizeofType((GPMF_SampleType)complextype[j]);
 											}
 											else if (type_samples && complextype[j] == GPMF_TYPE_FOURCC)
