@@ -2,7 +2,7 @@
  * 
  *  @brief GPMF Parser library
  *
- *  @version 2.2.3
+ *  @version 2.2.4
  * 
  *  (C) Copyright 2017-2023 GoPro Inc (http://gopro.com/).
  *	
@@ -39,7 +39,7 @@
 #endif
 
 
-GPMF_ERR IsValidSize(GPMF_stream *ms, uint32_t size) // size is in longs not bytes.
+GPMF_ERR IsValidSize(GPMF_stream *ms, uint32_t size) // size is in bytes.
 {
 	if (ms)
 	{
@@ -47,7 +47,7 @@ GPMF_ERR IsValidSize(GPMF_stream *ms, uint32_t size) // size is in longs not byt
 		if (nestsize == 0 && ms->nest_level == 0)
 			nestsize = ms->buffer_size_longs;
 
-		if (size + 2 <= nestsize) return GPMF_OK;
+		if (size + 8 <= nestsize*4) return GPMF_OK;
 	}
 	return GPMF_ERROR_BAD_STRUCTURE;
 }
@@ -57,11 +57,14 @@ GPMF_ERR SkipLevel(GPMF_stream* ms)
 	if (ms)
 	{
 		ms->pos += ms->nest_size[ms->nest_level];
+		if (ms->pos + 1 >= ms->buffer_size_longs)
+			return GPMF_ERROR_BAD_STRUCTURE;
+		
 		ms->nest_size[ms->nest_level] = 0;
 		while (ms->nest_level > 0 && ms->nest_size[ms->nest_level] == 0)
 			ms->nest_level--;
-
-		uint32_t size = (GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]) >> 2);
+		
+		uint32_t size = GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]);
 		if (GPMF_OK != IsValidSize(ms, size))
 			return GPMF_ERROR_BAD_STRUCTURE;
 		else
@@ -226,7 +229,7 @@ GPMF_ERR GPMF_Init(GPMF_stream *ms, uint32_t *buffer, uint32_t datasize)
 		memset(ms, 0, sizeof(GPMF_stream));
 
 		//Validate DEVC GPMF
-		while((pos+1) * 4 < datasize && buffer[pos] == GPMF_KEY_DEVICE)
+		while((pos+2) * 4 < datasize && buffer[pos] == GPMF_KEY_DEVICE)
 		{
 			uint32_t size = GPMF_DATA_SIZE(buffer[pos+1]);
 			pos += 2 + (size >> 2);
@@ -271,7 +274,7 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 		{
 
 			uint32_t key, type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
-			uint32_t size = (GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]) >> 2);
+			uint32_t size = GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]);
 
 			if (GPMF_OK != IsValidSize(ms, size))
 			{
@@ -280,6 +283,7 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 				else
 					return GPMF_ERROR_BAD_STRUCTURE;
 			}
+			size >>= 2; //size in longs
 
 			if (GPMF_TYPE_NEST == type && GPMF_KEY_DEVICE == ms->buffer[ms->pos] && ms->nest_level == 0)
 			{
@@ -410,7 +414,7 @@ GPMF_ERR GPMF_Next(GPMF_stream *ms, GPMF_LEVELS recurse)
 			}
 			
 
-			size = (GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]) >> 2);
+			size = GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]);
 			if (GPMF_OK != IsValidSize(ms, size))
 			{
 				if (recurse & GPMF_TOLERANT && recurse & GPMF_RECURSE_LEVELS) // Skip this nest level as the sizes within this level are corrupt.
@@ -595,12 +599,13 @@ GPMF_ERR GPMF_SeekToSamples(GPMF_stream *ms)
 					return GPMF_ERROR_BAD_STRUCTURE;
 				}
 
-				size = (GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]) >> 2);
+				size = GPMF_DATA_SIZE(ms->buffer[ms->pos + 1]);
 				if (GPMF_OK != IsValidSize(ms, size))
 				{
 					memcpy(ms, &prevstate, sizeof(GPMF_stream));
 					return GPMF_ERROR_BAD_STRUCTURE;
 				}
+				size >>= 2; // size in longs
 
 				type = GPMF_SAMPLE_TYPE(ms->buffer[ms->pos + 1]);
 
@@ -798,9 +803,9 @@ uint32_t GPMF_RawDataSize(GPMF_stream *ms)
 	if (ms && ms->pos+1 < ms->buffer_size_longs)
 	{
 		uint32_t size = GPMF_DATA_PACKEDSIZE(ms->buffer[ms->pos + 1]);
-		if (GPMF_OK != IsValidSize(ms, size >> 2)) return 0;
+		if (GPMF_OK != IsValidSize(ms, size)) return 0;
 
-		return size;
+		return (size>>2); //return size in longs
 	}
 	return 0;
 }
@@ -1170,7 +1175,7 @@ GPMF_ERR GPMF_FormattedData(GPMF_stream *ms, void *buffer, uint32_t buffersize, 
 		if (type == GPMF_TYPE_NEST)
 			return GPMF_ERROR_BAD_STRUCTURE;
 		
-		if (GPMF_OK != IsValidSize(ms, remaining_sample_size>>2))
+		if (GPMF_OK != IsValidSize(ms, remaining_sample_size))
 			return GPMF_ERROR_BAD_STRUCTURE;
 
 		if (type == GPMF_TYPE_COMPRESSED)
