@@ -4,11 +4,10 @@
     gpmf-parser clip.360 -a -c -fCORI,IORI,GRAV -p9 | gpmf2euler.py --state allon -o euler.csv
 
 Input is a file argument or, by default, stdin. Angles are SciPy intrinsic 'YXZ' in degrees: yaw about Y (up),
-pitch about X, roll about Z. These are directly the yaw/pitch/roll of ffmpeg's v360 filter (default rorder ypr)
-that stabilize EAC input. reset_rot=1 is required: without it v360 treats each command as a relative rotation.
+pitch about X, roll about Z. For v360 (default) these go to sendcmd directly, used with reset_rot=1. For
+--filter v360_vulkan the negated angles are written, used with rorder=rpy. An example ffmpeg command is printed.
 
-    gpmf-parser clip.360 -a -c -fCORI,IORI,GRAV -p9 | gpmf2euler.py --sendcmd cmds.txt
-    ffmpeg -i eac.mp4 -vf sendcmd=f=cmds.txt,v360=input=eac:output=e:reset_rot=1 out.mp4
+    gpmf-parser clip.360 -a -c -fCORI,IORI,GRAV -p9 | gpmf2euler.py --sendcmd cmds.txt [--filter v360_vulkan]
 """
 
 import argparse
@@ -291,16 +290,28 @@ def exact_fps(fps):
     return fps
 
 
-def write_sendcmd(path, euler, fps):
+def write_sendcmd(path, euler, fps, filt):
     if fps is None:
         raise SystemExit("--sendcmd needs the VIDEO FRAMERATE line in the dump")
 
+    # v360_vulkan has no reset_rot and applies the inverse rotation: negated angles with rorder=rpy
+    sign = -1 if filt == "v360_vulkan" else 1
     fps = exact_fps(fps)
     with open(path, "w") as out:
         for i, (yaw, pitch, roll) in enumerate(euler):
             # half a frame early so rounding can't push a command onto the next frame
             t = max(0.0, (i - 0.5) / fps)
-            out.write(f"{t:.6f} v360 yaw {yaw:.6f}, v360 pitch {pitch:.6f}, v360 roll {roll:.6f};\n")
+            out.write(f"{t:.6f} {filt} yaw {sign * yaw:.6f}, {filt} pitch {sign * pitch:.6f}, "
+                      f"{filt} roll {sign * roll:.6f};\n")
+
+
+def example_command(filt, cmds):
+    if filt == "v360_vulkan":
+        return ("ffmpeg -hide_banner -init_hw_device vulkan=vk -filter_hw_device vk -hwaccel vulkan \\\n"
+                "  -hwaccel_device vk -hwaccel_output_format vulkan -i INPUT.360 -filter_complex \\\n"
+                f"  \"[0:0]sendcmd=f={cmds}[vf];[vf][0:4]v360_vulkan=input=gopromax:output=e:w=7680:h=3840:rorder=rpy[vout]\" \\\n"
+                "  -map \"[vout]\" -c:v hevc_vulkan -map 0:a:0 -c:a copy -y out.mp4")
+    return f"ffmpeg -i eac.mp4 -vf sendcmd=f={cmds},v360=input=eac:output=e:reset_rot=1 out.mp4"
 
 
 def build_clip(samples, fps, frames, rate, fsfb):
@@ -346,7 +357,9 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("dump", nargs="?", default="-", help="gpmf-parser output (default: stdin)")
     ap.add_argument("-o", "--output", help="CSV file (default stdout, unless --sendcmd is given)")
-    ap.add_argument("--sendcmd", metavar="FILE", help="write an ffmpeg sendcmd file with one v360 line per frame")
+    ap.add_argument("--sendcmd", metavar="FILE", help="write an ffmpeg sendcmd file with one line per frame")
+    ap.add_argument("--filter", choices=("v360", "v360_vulkan"), default="v360",
+                    help="ffmpeg filter the sendcmd file targets (default: v360)")
     ap.add_argument("--state", choices=STATES, default="allon")
     ap.add_argument("--rate", type=float, help="timewarp speed, e.g. 5 for RATE=5X (not in the dump)")
     ap.add_argument("--fsfb", action="store_true", help="PRJT is FSFB: ignore IORI (not in the dump)")
@@ -368,7 +381,8 @@ def main():
     euler = Rotation.from_quat(quats.astype(np.float64)).as_euler("YXZ", degrees=True)
 
     if args.sendcmd:
-        write_sendcmd(args.sendcmd, euler, fps)
+        write_sendcmd(args.sendcmd, euler, fps, args.filter)
+        print(f"\nExample:\n{example_command(args.filter, args.sendcmd)}", file=sys.stderr)
 
     if args.output or not args.sendcmd:
         with (open(args.output, "w") if args.output else sys.stdout) as out:
